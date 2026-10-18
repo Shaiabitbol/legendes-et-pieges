@@ -1,0 +1,1183 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0e1024">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Légendes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icon-180.png"><link rel="icon" type="image/png" href="icon-192.png"><link rel="manifest" href="manifest.webmanifest">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+</head><body>
+<title>Légendes et Pièges</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Russo+One&family=Chakra+Petch:wght@400;600;700&family=Rubik:wght@400;600;800&display=swap">
+<style>
+/* Layout : une console de jeu — bandeau de stats en haut, scène au centre, barre d'onglets fixe en bas. */
+:root{
+  --night:#0e1024; --deep:#171a3a; --panel:#1f2350; --line:#353b7a; --ink:#eef0ff; --mute:#a3a8d6;
+  --ember:#ff8a3d; --gold:#ffd166; --arc:#5ee6ff; --ok:#5dd39e; --bad:#ff5d73;
+  --display:'Russo One','Arial Black',Impact,sans-serif; --body:'Chakra Petch','Trebuchet MS',Verdana,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}[hidden]{display:none!important}
+html,body{height:100%}
+body{background:radial-gradient(120% 80% at 50% 0%,#232863 0%,var(--night) 60%) fixed,var(--night);color:var(--ink);font:16px/1.45 var(--body)}
+#app{max-width:980px;margin:0 auto;padding-inline:16px;padding-block:10px 96px;display:flex;flex-direction:column;gap:12px}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.logo{font:22px/1 var(--display);letter-spacing:.5px;text-shadow:0 0 18px rgba(94,230,255,.45)}
+.logo b{color:var(--ember);font-weight:400}
+.stats{display:flex;gap:8px;flex-wrap:wrap}
+.chip{background:var(--deep);border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+#invbar{background:#123a4d;border:1px solid var(--arc);border-radius:10px;padding:8px 12px;font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:12px;text-align:center}.duo>div{display:flex;flex-direction:column;gap:4px;min-width:0}.flip{transform:scaleX(-1)}
+.mvs{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}.mvs button{display:flex;flex-direction:column;gap:2px;align-items:center}.mvs small{font-weight:400;color:var(--mute);font-size:12px}
+:root[lang=he]{--display:'Rubik','Arial Hebrew',Arial,sans-serif;--body:'Rubik','Arial Hebrew',Arial,sans-serif}
+:root[lang=he] h1,:root[lang=he] h2,:root[lang=he] h3,:root[lang=he] .q,:root[lang=he] .card .nm{font-weight:800}
+[dir=rtl] .pad,[dir=rtl] .fhud,[dir=rtl] .duo,[dir=rtl] .recipe,[dir=rtl] .scene,[dir=rtl] .logo{direction:ltr}
+[dir=rtl] .opts button{text-align:right}
+#hlang{min-height:0;padding:4px 12px;cursor:pointer;color:var(--arc)}
+.fhud{grid-template-columns:1fr auto 1fr!important;align-items:start}
+#fwrap{display:flex;flex-direction:column;gap:12px}
+#fwrap.fs{position:fixed;inset:0;z-index:30;background:#05060f;display:block}
+.fs #arena{position:absolute;inset:0;width:100%;height:100%;max-height:none;border:0;border-radius:0;object-fit:contain}
+.fs .fhud{position:absolute;top:0;left:0;right:0;padding:calc(8px + env(safe-area-inset-top,0px)) 12px 14px;z-index:2;background:linear-gradient(rgba(5,6,15,.85),rgba(5,6,15,0))}
+.fs .pad{position:absolute;left:0;right:0;bottom:calc(12px + env(safe-area-inset-bottom,0px));padding:0 16px;z-index:2;pointer-events:none}
+.fs .pad>*{pointer-events:auto;opacity:.82}
+.fs #fres{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;z-index:3;pointer-events:none}
+.fs #fres>*{pointer-events:auto;max-width:420px}
+#bsp.rdy{box-shadow:0 0 20px #c77dff;animation:pulse .6s infinite alternate}
+@keyframes pulse{to{filter:brightness(1.8)}}
+.code{font:700 17px ui-monospace,Menlo,Consolas,monospace;letter-spacing:2px;color:var(--gold);user-select:all;-webkit-user-select:all}
+.chip.pts{color:var(--gold);border-color:#7a6230}
+#evbar{background:linear-gradient(90deg,#5b1d4f,#8a2d2d,#5b1d4f);background-size:200% 100%;animation:slide 6s linear infinite;border:1px solid var(--ember);border-radius:10px;padding:8px 12px;font-weight:700;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+@keyframes slide{to{background-position:200% 0}}
+h1,h2,h3{font-family:var(--display);font-weight:400;margin:0;text-wrap:balance;letter-spacing:.4px}
+h2{font-size:20px}h3{font-size:16px}
+p{margin:0}
+.mute{color:var(--mute)}.small{font-size:13px}
+.panel{background:linear-gradient(180deg,rgba(31,35,80,.95),rgba(23,26,58,.95));border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.grow{flex:1;min-width:0}
+.grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.split{display:grid;gap:12px;grid-template-columns:1fr}
+@media(min-width:720px){.split{grid-template-columns:1fr 1fr}}
+button{font:700 15px var(--body);color:var(--ink);cursor:pointer;border:1px solid var(--line);background:var(--deep);border-radius:10px;padding:10px 14px;min-height:42px}
+button:hover:not(:disabled){border-color:var(--arc)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--arc);outline-offset:2px}
+button:disabled{opacity:.45;cursor:not-allowed}
+.btn{background:linear-gradient(180deg,#ffa35a,#e2622a);border-color:#ffc08a;color:#22100a;text-shadow:none;box-shadow:0 4px 0 #8b3413}
+.btn:active:not(:disabled){transform:translateY(2px);box-shadow:0 2px 0 #8b3413}
+.btn2{background:linear-gradient(180deg,#3fd4f2,#1f8fc4);border-color:#a5f0ff;color:#04202c;box-shadow:0 4px 0 #0f5578}
+input,select,textarea{font:16px var(--body);color:var(--ink);background:#10122b;border:1px solid var(--line);border-radius:8px;padding:9px 10px;min-width:0;max-width:100%}
+label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--mute);font-weight:600;min-width:0}
+nav{position:fixed;left:0;right:0;bottom:0;background:rgba(14,16,36,.96);border-top:1px solid var(--line);padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center;gap:4px;z-index:20}
+nav button{flex:1;max-width:150px;min-width:0;padding:8px 2px;font-size:13px;border-color:transparent;background:none;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--mute)}
+nav button svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+nav button.on{color:var(--gold);background:var(--deep);border-color:var(--line)}
+canvas.pt{width:100%;max-width:160px;aspect-ratio:18/19;display:block;margin:0 auto}
+.card{position:relative;background:linear-gradient(180deg,#262b63,#161938);border:2px solid var(--rc,var(--line));border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:4px;text-align:center;cursor:pointer;min-height:0;font-weight:600}
+.card.sel{box-shadow:0 0 0 2px var(--gold),0 0 22px rgba(255,209,102,.45)}
+.card.lock canvas{filter:brightness(.18) saturate(0)}
+.card .nm{font:15px var(--display)}
+.rar{color:var(--rc);font-size:12px;text-transform:uppercase;letter-spacing:1.2px;font-weight:700}
+.stars{color:var(--gold);letter-spacing:2px}
+.bar{height:12px;background:#0b0c1e;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.bar i{display:block;height:100%;width:50%;background:var(--ok);transition:width .12s}
+.bar.en i{background:linear-gradient(90deg,#2aa7ff,var(--arc))}.bar.sh{height:6px}.bar.sh i{background:var(--gold)}
+.bar.xp i{background:linear-gradient(90deg,#b06cff,#ff7ad9)}
+.diff{display:flex;gap:6px;flex-wrap:wrap}
+.diff button.on{background:var(--panel);border-color:var(--gold);color:var(--gold)}
+.rid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px}
+.rid button{aspect-ratio:1;font:20px var(--display);padding:0}
+.rid button.done{background:#1d4a3c;border-color:var(--ok);color:var(--ok)}
+.rid button.fail{background:#4a1a26;border-color:var(--bad);color:var(--bad)}
+.rid button:disabled.done,.rid button:disabled.fail{opacity:1}
+.good{outline:3px solid var(--ok)!important;outline-offset:2px;opacity:1!important;border-radius:8px}
+.scene.act,.scene.act .it{touch-action:none}.scene.act .it{cursor:grab}.it.sel{outline:3px solid var(--gold);outline-offset:2px;border-radius:8px}
+.rid button.day{border-color:var(--gold);box-shadow:0 0 14px rgba(255,209,102,.5)}
+.q{font:20px/1.3 var(--display);text-wrap:balance}
+.q .w{font:inherit;padding:0 2px;min-height:0;border:none;background:none;display:inline;color:inherit;cursor:pointer}
+.opts{display:grid;gap:8px;grid-template-columns:1fr}
+@media(min-width:560px){.opts{grid-template-columns:1fr 1fr}}
+.opts button{text-align:left;font-size:16px}
+.scene{position:relative;aspect-ratio:16/10;border-radius:12px;overflow:hidden;border:1px solid var(--line);container-type:inline-size;max-width:100%}
+.scene.plage{background:linear-gradient(#58c7ff 0 45%,#1b7fc4 45% 62%,#f0d08a 62%)}
+.scene.savane{background:linear-gradient(#ffcf7a 0 55%,#b98a3c 55%)}
+.scene.nuit{background:linear-gradient(#0b1030,#2a2060 70%,#1b3a2a 70%)}
+.scene.labo{background:repeating-linear-gradient(90deg,#20264f 0 40px,#252c5c 40px 80px)}
+.it{position:absolute;transform:translate(-50%,-50%);font-size:calc(var(--s)*1cqw);line-height:1;background:none;border:none;padding:0;min-height:0;cursor:pointer}
+.it.t{font-family:var(--display);padding:2cqw 4cqw;border-radius:2cqw;color:#fff;border:2px solid #fff}
+.res{border-radius:10px;padding:10px 12px;font-weight:700}
+.res.ok{background:#17402f;border:1px solid var(--ok)}.res.ko{background:#4a1a26;border:1px solid var(--bad)}
+#arena{width:100%;aspect-ratio:16/9;display:block;border-radius:12px;border:1px solid var(--line);background:#090a18;max-height:62vh;margin:0 auto;touch-action:none}
+.fhud{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fhud>div{display:flex;flex-direction:column;gap:3px;min-width:0}
+.fhud .r{text-align:right}.fhud .r .bar i{margin-left:auto}
+.pad{display:flex;justify-content:space-between;align-items:center;gap:10px;touch-action:none;user-select:none;-webkit-user-select:none}
+#joy{width:118px;height:118px;border-radius:50%;background:radial-gradient(#2a2f6a,#14173a);border:2px solid var(--line);position:relative;flex:none;touch-action:none}
+#knob{position:absolute;left:50%;top:50%;width:48px;height:48px;margin:-24px;border-radius:50%;background:radial-gradient(#8ff0ff,#2a8fc0);box-shadow:0 0 16px var(--arc)}
+.acts{display:grid;grid-template-columns:repeat(3,minmax(0,74px));gap:8px;touch-action:none}
+.acts button{aspect-ratio:1;border-radius:50%;padding:0;font-size:12px;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;touch-action:none}
+.acts button kbd{font:11px var(--body);color:var(--mute)}
+.acts .a1{background:#7a2b22;border-color:var(--ember)}.acts .a2{background:#134a66;border-color:var(--arc)}
+.acts .a3{background:#5a4712;border-color:var(--gold)}.acts .a4{background:#1d4a3c;border-color:var(--ok)}.acts .a5{background:#4b1e66;border-color:#c77dff}
+.acts button.dn{filter:brightness(1.6)}
+.recipe{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:center;gap:4px;text-align:center;font:20px var(--display)}
+.recipe canvas{max-width:92px}
+.mach{background:radial-gradient(circle at 50% 30%,#3a2a6e,#151734);border:2px solid #7c5cff;box-shadow:inset 0 0 40px rgba(124,92,255,.35)}
+.mach.run canvas{animation:spin 1.2s ease-in-out infinite alternate}
+@keyframes spin{to{transform:scale(.86) rotate(6deg);filter:brightness(1.8)}}
+#modal{position:fixed;inset:0;background:rgba(6,7,18,.86);z-index:40;display:flex;align-items:center;justify-content:center;padding:16px}
+#modal .panel{max-width:360px;width:100%;text-align:center;align-items:center;border-color:var(--rc,var(--gold));box-shadow:0 0 60px var(--rc,var(--gold));animation:pop .35s cubic-bezier(.2,1.6,.4,1)}
+@keyframes pop{from{transform:scale(.6);opacity:0}}
+#toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#000;border:1px solid var(--gold);color:var(--gold);padding:8px 16px;border-radius:999px;font-weight:700;z-index:50;max-width:90vw;text-align:center}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+td,th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left}
+.tw{overflow-x:auto}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div id="app">
+  <header>
+    <div class="row" style="gap:8px;flex-wrap:nowrap"><div id="hlogo" style="width:38px;flex:none;line-height:0"></div><div><div class="logo">LÉGENDES <b>&amp;</b> PIÈGES</div><div id="hnick" class="small mute" hidden></div></div></div>
+    <div class="stats"><span class="chip pts" id="hpts">◆ 0</span><span class="chip" id="hlvl">Niv. 1</span><span class="chip" id="hstk">Série 0</span><button class="chip" id="hlang" data-a="lang" data-nt>עברית</button></div>
+  </header>
+  <div id="evbar" hidden></div>
+  <div id="invbar" hidden></div>
+  <main id="view" style="display:flex;flex-direction:column;gap:12px"></main>
+</div>
+<nav id="nav"></nav>
+<div id="modal" hidden></div>
+<div id="toast" hidden></div>
+
+<script>
+'use strict';
+/* ================== CONTENU DU JEU (facile à modifier) ================== */
+const RAR=[{n:'Commun',c:'#9fb0c8',p:60,t:8},{n:'Rare',c:'#4fb6ff',p:180,t:15},{n:'Épique',c:'#c77dff',p:450,t:25},{n:'Légendaire',c:'#ffb238',p:1100,t:40},{n:'Mythique',c:'#ff4d6d',p:0,t:60}];
+// Héros : rig 'human' ou 'dragon', couleurs, options de dessin, stats de base, attaque spéciale (beam, nova, meteor, dash)
+const H=[
+ {id:'braskar',n:'Braskar',ti:'Guerrier de braise',r:0,rig:'human',c1:'#c8432b',c2:'#5a1d1a',c3:'#2b0f14',glow:'#ffb347',blade:1,cape:1,armor:1,hp:220,atk:14,spd:230,en:100,sp:'dash',spn:'Charge ardente'},
+ {id:'sylvar',n:'Sylvar',ti:'Rôdeur des ronces',r:0,rig:'human',c1:'#3f8f5a',c2:'#1d4031',c3:'#12261d',glow:'#b6ff6a',horns:2,cape:1,hp:200,atk:13,spd:265,en:110,sp:'meteor',spn:'Pluie d\'épines'},
+ {id:'givrelame',n:'Givrelame',ti:'Chevalière de givre',r:1,rig:'human',c1:'#7fc8ff',c2:'#2c4f8a',c3:'#16264d',glow:'#d8f6ff',blade:1,armor:1,crown:1,hp:260,atk:17,spd:240,en:105,sp:'beam',spn:'Lance glaciale'},
+ {id:'tonnerok',n:'Tonnerok',ti:'Golem d\'orage',r:1,rig:'human',bulk:1.25,c1:'#6d6f8f',c2:'#33354f',c3:'#1c1d30',glow:'#ffe45e',armor:1,horns:2,hp:320,atk:18,spd:185,en:90,sp:'nova',spn:'Onde de foudre'},
+ {id:'ombrax',n:'Ombrax',ti:'Spectre du crépuscule',r:2,rig:'human',fly:1,ghost:1,cape:1,c1:'#5b3fa8',c2:'#24174f',c3:'#120a2c',glow:'#ff6ad5',blade:1,hp:280,atk:21,spd:270,en:120,sp:'dash',spn:'Faux fantôme'},
+ {id:'pyralis',n:'Pyralis',ti:'Phénix des cendres',r:2,rig:'dragon',fly:1,beak:1,wings:1,c1:'#ff7b2e',c2:'#b3261e',c3:'#ffd166',glow:'#fff1a8',hp:290,atk:20,spd:280,en:125,sp:'meteor',spn:'Pluie de braises'},
+ {id:'drakonir',n:'Drakonir',ti:'Dragon d\'obsidienne',r:3,rig:'dragon',fly:1,wings:1,horns:2,bulk:1.15,c1:'#3a3f5c',c2:'#191b2e',c3:'#7a2cff',glow:'#b98cff',hp:360,atk:24,spd:245,en:115,sp:'beam',spn:'Souffle du vide'},
+ {id:'aethon',n:'Aethon',ti:'Titan solaire',r:3,rig:'human',bulk:1.3,halo:1,armor:1,blade:1,c1:'#ffd166',c2:'#b5651d',c3:'#5a2d0c',glow:'#fff7c2',hp:400,atk:23,spd:200,en:110,sp:'nova',spn:'Éruption solaire'},
+ {id:'neantis',n:'Néantis',ti:'Dragon du néant',r:4,rig:'dragon',fly:1,wings:1,horns:3,halo:1,bulk:1.3,c1:'#1b1036',c2:'#07040f',c3:'#ff2e88',glow:'#ff7ad9',hp:430,atk:28,spd:260,en:130,sp:'beam',spn:'Rayon d\'effacement'},
+ {id:'kaelthar',n:'Kael\'Thar',ti:'Seigneur des runes',r:4,rig:'human',bulk:1.15,fly:1,wings:1,crown:1,halo:1,cape:1,armor:1,blade:1,c1:'#16c5b5',c2:'#0b4a57',c3:'#06242c',glow:'#7dfff0',hp:420,atk:29,spd:255,en:135,sp:'nova',spn:'Sceau runique'}
+];
+H.forEach((c,i)=>{c.seed=i*1.7;c.bulk=c.bulk||1});
+const HB=Object.fromEntries(H.map(c=>[c.id,c]));
+// Coffres : prix en points et chances (en %) par rareté, de Commun à Mythique
+const BOX=[{n:'Coffre de bronze',p:100,col:'#c98a4b',o:[62,27,8.5,2.2,.3]},{n:'Coffre runique',p:350,col:'#c77dff',o:[0,55,32,11,2]}];
+function give(id){const o=S.chars[id];if(o){o.n++;return true}S.chars[id]={n:1,lvl:1,xp:0,st:1};return false}
+// Recettes qui tournent : [ingrédient A, ingrédient B, résultat, rare?]
+const POOL=[['braskar','sylvar','givrelame'],['braskar','givrelame','pyralis'],['sylvar','tonnerok','ombrax'],['givrelame','tonnerok','ombrax'],['sylvar','givrelame','tonnerok'],['ombrax','pyralis','drakonir'],['pyralis','tonnerok','aethon'],['ombrax','givrelame','aethon'],['drakonir','aethon','neantis',1],['drakonir','ombrax','kaelthar',1]];
+const DIFF=['Facile','Moyen','Difficile','Extrême'], DPTS=[10,20,35,60];
+// Énigmes : type 'c' choix, 'n' nombre, 's' scène à toucher. d = difficulté 0..3
+const RIDDLES=[
+ {id:'r1',d:0,type:'s',q:'Qu\'est-ce qui est le plus chaud ?',bg:'plage',it:[{e:'☀️',x:82,y:18,s:9,ok:1},{e:'🔥',x:35,y:74,s:20},{e:'🧨',x:66,y:80,s:11},{e:'🌴',x:12,y:52,s:22,deco:1}],ex:'Le Soleil ! Sa surface dépasse 5 500 °C, bien plus qu\'un feu de camp.'},
+ {id:'r2',d:0,type:'n',q:'J\'ai quatre frères. Chacun de mes frères a quatre frères. Combien sommes-nous ?',a:5,ex:'Cinq frères : chacun compte les quatre autres.'},
+ {id:'r3',d:0,type:'c',q:'Le père de Léa a trois filles : Lundi, Mardi et… ?',o:['Mercredi','Léa','Jeudi','Dimanche'],a:1,ex:'La troisième fille, c\'est Léa elle-même.'},
+ {id:'r4',d:0,type:'s',q:'Touche le plus gros animal.',bg:'savane',it:[{e:'🐭',x:30,y:55,s:30},{e:'🐘',x:68,y:62,s:13},{e:'🐋',x:86,y:22,s:6,ok:1}],ex:'La baleine, même dessinée toute petite.'},
+ {id:'r5',d:0,type:'n',q:'Combien de mois ont 28 jours ?',a:12,ex:'Les douze : tous les mois ont au moins 28 jours.'},
+ {id:'r6',d:0,type:'c',q:'Tu fais une course et tu doubles le deuxième. Tu es… ?',o:['Premier','Deuxième','Troisième','Dernier'],a:1,ex:'Tu prends sa place : deuxième.'},
+ {id:'r7',d:1,type:'c',q:'Qu\'est-ce qui a des dents mais ne mord jamais ?',o:['Un requin endormi','Un peigne','Un chien poli','Une pomme'],a:1,ex:'Un peigne.'},
+ {id:'r8',d:1,type:'s',q:'Touche le plus lourd : 1 kg de plumes ou 1 kg de fer ?',bg:'labo',it:[{e:'🪶',x:22,y:52,s:20},{e:'🔩',x:78,y:52,s:20},{e:'⚖️',x:50,y:22,s:9,ok:1}],ex:'Égalité : un kilo, c\'est un kilo.'},
+ {id:'r9',d:1,type:'n',q:'Un escargot monte un mur de 10 m. Il grimpe 3 m le jour et glisse de 2 m la nuit. En combien de jours arrive-t-il en haut ?',a:8,ex:'Après 7 jours il est à 7 m ; le 8e jour il monte de 3 m et arrive.'},
+ {id:'r10',d:1,type:'s',q:'Trouve le chat caché.',word:'chat',bg:'nuit',it:[{e:'🐶',x:25,y:60,s:16},{e:'🐕',x:55,y:70,s:14},{e:'🦊',x:80,y:58,s:14},{e:'🌙',x:85,y:15,s:9,deco:1}],ex:'Il était dans la question : il fallait toucher le mot « chat ».'},
+ {id:'r11',d:1,type:'n',q:'Une batte et une balle coûtent 1,10 € ensemble. La batte coûte 1 € de plus que la balle. Combien coûte la balle, en centimes ?',a:5,ex:'5 centimes : la batte coûte alors 1,05 €.'},
+ {id:'r12',d:1,type:'s',q:'Touche le nombre le plus grand.',bg:'labo',it:[{t:'9',x:28,y:50,s:26,col:'#b3261e'},{t:'88',x:68,y:35,s:12,col:'#1f8fc4'},{t:'1 000',x:78,y:82,s:4,col:'#3f8f5a',ok:1}],ex:'1 000, même écrit en minuscule.'},
+ {id:'r13',d:2,type:'c',q:'Plus j\'en ai, moins tu vois. Qui suis-je ?',o:['Des lunettes','L\'obscurité','Un miroir','La pluie'],a:1,ex:'L\'obscurité.'},
+ {id:'r14',d:2,type:'n',q:'Un nénuphar double de taille chaque jour. Il couvre toute la mare en 30 jours. Au bout de combien de jours couvrait-il la moitié ?',a:29,ex:'29 : la veille, il couvrait la moitié.'},
+ {id:'r15',d:2,type:'s',q:'Touche ce qui est le plus froid.',bg:'nuit',it:[{e:'🧊',x:25,y:68,s:16},{e:'⛄',x:60,y:66,s:20},{e:'🌌',x:50,y:14,s:8,ok:1}],ex:'L\'espace : environ −270 °C.'},
+ {id:'r16',d:2,type:'c',q:'Deux pères et deux fils vont pêcher. Chacun attrape un poisson, et ils en rapportent trois. Comment ?',o:['Un poisson s\'est échappé','Ils sont trois : grand-père, père et fils','Ils en ont mangé un','Ils ont mal compté'],a:1,ex:'Le père est à la fois père et fils.'},
+ {id:'r17',d:2,type:'n',q:'Combien de fois peut-on soustraire 5 de 25 ?',a:1,ex:'Une seule fois : après, on soustrait 5 de 20.'},
+ {id:'r18',d:2,type:'c',q:'Qu\'est-ce qui monte et ne redescend jamais ?',o:['Un ballon','La fumée','Ton âge','Un ascenseur'],a:2,ex:'Ton âge.'},
+ {id:'r19',d:3,type:'n',q:'Un fermier a 17 moutons. Tous sauf 9 s\'échappent. Combien lui en reste-t-il ?',a:9,ex:'« Tous sauf 9 » : il en reste 9.'},
+ {id:'r20',d:3,type:'c',q:'Je parle sans bouche et j\'entends sans oreilles. Je n\'ai pas de corps, mais le vent me donne vie.',o:['Un fantôme','L\'écho','Une radio','Le tonnerre'],a:1,ex:'L\'écho.'},
+ {id:'r21',d:3,type:'n',q:'3 chats attrapent 3 souris en 3 minutes. Combien de chats faut-il pour attraper 100 souris en 100 minutes ?',a:3,ex:'Les mêmes 3 chats : une souris par minute à eux trois.'},
+ {id:'r22',d:3,type:'s',q:'Appuie sur le bouton vert.',bg:'labo',it:[{t:'VERT',x:28,y:50,s:9,col:'#c62828'},{t:'ROUGE',x:72,y:50,s:9,col:'#2e9e4f',ok:1}],ex:'Il fallait regarder la couleur, pas lire le mot.'},
+ {id:'r23',d:3,type:'c',q:'Un médecin te donne 3 comprimés à prendre un toutes les demi-heures. Combien de temps dure le traitement ?',o:['1 h 30','1 heure','2 heures','30 minutes'],a:1,ex:'Un tout de suite, un à 30 min, un à 1 h.'},
+ {id:'r24',d:3,type:'n',q:'Combien d\'animaux de chaque espèce Moïse a-t-il emmenés dans l\'arche ?',a:0,ex:'Zéro : l\'arche, c\'était Noé.'}
+];
+
+// Indices des énigmes (demander l'indice divise le gain par 2)
+const HINTS={r1:'Pense à ce qui chauffe toute la plage.',r2:'Tu es un des frères, toi aussi.',r3:'Relis le début de la question : de qui est-ce le père ?',r4:'La taille du dessin ne compte pas, pense au vrai animal.',r5:'On ne demande pas « seulement » 28 jours.',r6:'Tu prends la place de celui que tu doubles.',r7:'On s\'en sert pour les cheveux.',r8:'Regarde bien le poids de chacun dans la question.',r9:'Le dernier jour, il arrive en haut avant de glisser.',r10:'Le chat n\'est pas dans l\'image. Regarde ailleurs sur l\'écran.',r11:'Si la balle coûtait 10 centimes, la batte coûterait 1,10 € et le total ferait 1,20 €.',r12:'Lis les nombres, ne regarde pas leur taille.',r13:'On la trouve la nuit, quand on éteint la lumière.',r14:'Il double chaque jour : que couvrait-il la veille du dernier jour ?',r15:'Regarde tout en haut de l\'image.',r16:'Une même personne peut être à la fois un père et un fils.',r17:'Après la première soustraction, il ne reste plus 25.',r18:'Tu en gagnes un de plus à chaque anniversaire.',r19:'« Tous sauf 9 » : combien ne se sont pas échappés ?',r20:'On l\'entend en criant dans la montagne.',r21:'Combien de temps met un seul chat pour attraper une souris ?',r22:'Ne lis pas les mots, regarde les couleurs.',r23:'Le premier comprimé se prend tout de suite.',r24:'Vérifie le prénom dans la question.'};
+RIDDLES.forEach(r=>r.h=HINTS[r.id]);
+// Énigmes en images à manipuler. Options d'un objet : drag (déplaçable), ok (le toucher = gagné), n (neutre au toucher),
+// on:i (le déposer sur l'objet n° i = gagné), out (le sortir de l'image = gagné), taps:n (le toucher n fois), hold:s (garder le doigt s secondes),
+// shake:n (le secouer), o:k (ordre à respecter). Un objet sans option est un piège : le toucher = raté. « a » = nombre à écrire.
+const PICS=[
+ {id:'p1',d:0,bg:'savane',q:'Trouve la souris.',sol:'déplacer le fromage : la souris était cachée derrière',h:'Les souris se cachent près de ce qu\'elles aiment manger.',he:{q:'מצא את העכבר.',sol:'להזיז את הגבינה: העכבר התחבא מאחוריה',h:'עכברים מתחבאים ליד מה שהם אוהבים לאכול.'},
+  it:[{e:'🐭',x:62,y:66,s:7,ok:1},{e:'🧀',x:62,y:64,s:20,drag:1},{e:'🐱',x:22,y:62,s:18},{e:'🪴',x:88,y:60,s:14,drag:1}]},
+ {id:'p2',d:0,bg:'savane',q:'Fais fondre le bonhomme de neige.',sol:'faire glisser le soleil sur le bonhomme de neige',h:'Qu\'est-ce qui chauffe, là-haut ?',he:{q:'המס את איש השלג.',sol:'לגרור את השמש אל איש השלג',h:'מה מחמם שם למעלה?'},
+  it:[{e:'⛄',x:30,y:62,s:22,n:1},{e:'☀️',x:82,y:18,s:11,drag:1,on:0,rad:16},{e:'🧣',x:70,y:78,s:9,drag:1}]},
+ {id:'p3',d:0,bg:'savane',q:'Donne à manger au chien.',sol:'faire glisser l\'os jusqu\'au chien',h:'Tu peux déplacer des objets avec ton doigt.',he:{q:'האכל את הכלב.',sol:'לגרור את העצם אל הכלב',h:'אפשר להזיז חפצים עם האצבע.'},
+  it:[{e:'🐶',x:75,y:62,s:20,n:1},{e:'🦴',x:20,y:76,s:10,drag:1,on:0,rad:16},{e:'🐱',x:45,y:32,s:13}]},
+ {id:'p4',d:0,bg:'plage',a:5,q:'Combien y a-t-il de canards ?',sol:'5 : deux canards se cachaient derrière le rocher et la caisse',h:'Certains canards sont timides. Regarde derrière les objets.',he:{q:'כמה ברווזים יש?',sol:'5: שני ברווזים התחבאו מאחורי הסלע והארגז',h:'יש ברווזים ביישנים. הסתכל מאחורי החפצים.'},
+  it:[{e:'🦆',x:18,y:50,s:10,n:1},{e:'🦆',x:46,y:55,s:10,n:1},{e:'🦆',x:74,y:50,s:10,n:1},{e:'🦆',x:30,y:82,s:7,n:1},{e:'🪨',x:30,y:80,s:22,drag:1},{e:'🦆',x:82,y:84,s:7,n:1},{e:'📦',x:82,y:82,s:20,drag:1}]},
+ {id:'p5',d:0,bg:'labo',q:'Casse l\'œuf.',sol:'toucher l\'œuf 5 fois, ou lui donner un coup de marteau',h:'Un seul coup ne suffit pas.',he:{q:'שבור את הביצה.',sol:'לגעת בביצה 5 פעמים, או להכות בה עם הפטיש',h:'מכה אחת לא מספיקה.'},
+  it:[{e:'🥚',x:50,y:55,s:24,taps:5},{e:'🔨',x:15,y:72,s:12,drag:1,on:0,rad:16},{e:'🥄',x:85,y:72,s:10,drag:1}]},
+ {id:'m1',d:1,bg:'savane',q:'Fais tomber les pommes de l\'arbre.',sol:'secouer l\'arbre : le faire glisser vite de gauche à droite',h:'Attrape l\'arbre avec ton doigt et secoue-le.',he:{q:'הפל את התפוחים מהעץ.',sol:'לנער את העץ: לגרור אותו מהר ימינה ושמאלה',h:'תפוס את העץ עם האצבע ונער אותו.'},
+  it:[{e:'🌳',x:50,y:50,s:40,drag:1,shake:6},{e:'🍎',x:42,y:36,s:5,deco:1},{e:'🍎',x:58,y:42,s:5,deco:1},{e:'🍎',x:50,y:28,s:5,deco:1},{e:'🧺',x:85,y:82,s:12,drag:1}]},
+ {id:'m2',d:1,bg:'nuit',q:'Trouve la clé.',sol:'déplacer le rocher : la clé était dessous',h:'La porte n\'est pas la clé. Regarde sous les objets.',he:{q:'מצא את המפתח.',sol:'להזיז את הסלע: המפתח היה מתחתיו',h:'הדלת היא לא המפתח. הסתכל מתחת לחפצים.'},
+  it:[{e:'🔑',x:72,y:76,s:6,ok:1},{e:'🪨',x:72,y:74,s:20,drag:1},{e:'📦',x:28,y:74,s:18,drag:1},{e:'🚪',x:50,y:36,s:18}]},
+ {id:'m3',d:1,bg:'savane',q:'Éteins le feu.',sol:'faire glisser le nuage de pluie au-dessus du feu',h:'L\'eau peut tomber du ciel.',he:{q:'כבה את האש.',sol:'לגרור את ענן הגשם אל מעל האש',h:'מים יכולים לרדת מהשמיים.'},
+  it:[{e:'🔥',x:50,y:68,s:20,n:1},{e:'🌧️',x:15,y:18,s:14,drag:1,on:0,rad:22},{e:'☀️',x:85,y:16,s:10,drag:1},{e:'🪵',x:84,y:80,s:10,drag:1}]},
+ {id:'m4',d:1,bg:'plage',q:'Réveille le hibou.',sol:'sortir le soleil de l\'image : le hibou se réveille la nuit',h:'Le hibou dort tant qu\'il fait jour.',he:{q:'הער את הינשוף.',sol:'להוציא את השמש מהתמונה: הינשוף מתעורר בלילה',h:'הינשוף ישן כל עוד יש אור יום.'},
+  it:[{e:'🦉',x:30,y:55,s:20,n:1},{e:'☀️',x:78,y:20,s:12,drag:1,out:1},{e:'⏰',x:76,y:78,s:10}]},
+ {id:'m5',d:1,bg:'nuit',a:7,q:'Combien y a-t-il d\'étoiles ?',sol:'7 : une étoile derrière la lune et deux derrière le nuage',h:'Le ciel cache des choses. Déplace ce qui gêne.',he:{q:'כמה כוכבים יש?',sol:'7: כוכב אחד מאחורי הירח ושניים מאחורי הענן',h:'השמיים מסתירים דברים. הזז את מה שמפריע.'},
+  it:[{e:'⭐',x:12,y:16,s:6,n:1},{e:'⭐',x:36,y:30,s:6,n:1},{e:'⭐',x:58,y:12,s:6,n:1},{e:'⭐',x:90,y:42,s:6,n:1},{e:'⭐',x:78,y:20,s:5,n:1},{e:'🌕',x:78,y:20,s:15,drag:1},{e:'⭐',x:22,y:56,s:5,n:1},{e:'⭐',x:32,y:57,s:5,n:1},{e:'☁️',x:27,y:55,s:26,drag:1}]},
+ {id:'m6',d:1,bg:'labo',q:'Touche les nombres du plus petit au plus grand.',sol:'7, puis 23, puis 100',h:'La taille de l\'écriture ne compte pas.',he:{q:'גע במספרים מהקטן לגדול.',sol:'7, אחר כך 23, ואז 100',h:'גודל הכתב לא משנה.'},
+  it:[{t:'7',x:25,y:45,s:24,col:'#b3261e',o:1},{t:'23',x:64,y:28,s:11,col:'#1f8fc4',o:2},{t:'100',x:78,y:80,s:5,col:'#3f8f5a',o:3}]},
+ {id:'d1',d:2,bg:'savane',q:'Fais éclore l\'œuf.',sol:'garder le doigt posé sur l\'œuf 2 secondes, ou poser la poule dessus',h:'Un œuf a besoin de chaleur, longtemps et sans bouger.',he:{q:'גרום לביצה לבקוע.',sol:'להחזיק את האצבע על הביצה 2 שניות, או להניח עליה את התרנגולת',h:'ביצה צריכה חום, הרבה זמן ובלי לזוז.'},
+  it:[{e:'🥚',x:50,y:62,s:20,hold:2},{e:'🐔',x:16,y:62,s:16,drag:1,on:0,rad:16},{e:'🔨',x:86,y:72,s:10,drag:1}]},
+ {id:'d2',d:2,bg:'plage',q:'Trouve le trésor.',sol:'déplacer le rocher, puis la caisse cachée derrière : le diamant était dessous',h:'Il y a parfois une cachette derrière la cachette.',he:{q:'מצא את האוצר.',sol:'להזיז את הסלע ואז את הארגז שמאחוריו: היהלום היה מתחת',h:'לפעמים יש מחבוא מאחורי המחבוא.'},
+  it:[{e:'💎',x:60,y:80,s:5,ok:1},{e:'📦',x:60,y:78,s:14,drag:1},{e:'🪨',x:60,y:76,s:26,drag:1},{e:'🦀',x:20,y:80,s:9},{e:'🐚',x:88,y:86,s:7,drag:1}]},
+ {id:'d3',d:2,bg:'savane',q:'Aide la tortue à gagner la course.',sol:'faire glisser la tortue jusqu\'à l\'arrivée',h:'Personne n\'a dit que tu ne pouvais pas la porter.',he:{q:'עזור לצב לנצח במרוץ.',sol:'לגרור את הצב עד קו הסיום',h:'אף אחד לא אמר שאסור לך לסחוב אותו.'},
+  it:[{e:'🏁',x:88,y:60,s:14,n:1},{e:'🐢',x:12,y:74,s:12,drag:1,on:0,rad:14},{e:'🐇',x:58,y:60,s:12}]},
+ {id:'d4',d:2,bg:'plage',a:5,q:'Combien y a-t-il de poissons ?',sol:'5 : le dauphin et la baleine sont des mammifères, et un poisson se cachait derrière le rocher',h:'Tout ce qui nage n\'est pas un poisson.',he:{q:'כמה דגים יש?',sol:'5: הדולפין והלווייתן הם יונקים, ודג אחד התחבא מאחורי הסלע',h:'לא כל מה ששוחה הוא דג.'},
+  it:[{e:'🐳',x:86,y:50,s:13,n:1},{e:'🐬',x:50,y:34,s:11,n:1},{e:'🐟',x:10,y:54,s:7,n:1},{e:'🐟',x:28,y:50,s:7,n:1},{e:'🐟',x:64,y:56,s:7,n:1},{e:'🐡',x:42,y:58,s:6,n:1},{e:'🐠',x:20,y:84,s:6,n:1},{e:'🪨',x:20,y:82,s:20,drag:1}]},
+ {id:'d5',d:2,bg:'nuit',q:'Trouve le fantôme.',sol:'déplacer la maison hantée : le fantôme était derrière',h:'Où habite un fantôme ?',he:{q:'מצא את רוח הרפאים.',sol:'להזיז את הבית הרדוף: רוח הרפאים הייתה מאחוריו',h:'איפה גרה רוח רפאים?'},
+  it:[{e:'👻',x:50,y:62,s:7,ok:1},{e:'🏚️',x:50,y:58,s:26,drag:1},{e:'🌳',x:14,y:62,s:20,drag:1},{e:'🌙',x:86,y:15,s:10,drag:1},{e:'🦇',x:30,y:20,s:8}]},
+ {id:'e1',d:3,bg:'savane',a:22,q:'Combien de pattes y a-t-il en tout ?',sol:'22 : deux poules (4), une vache (4), une araignée (8) et une fourmi cachée sous le rocher (6)',h:'Une araignée a 8 pattes. Et il manque peut-être un animal.',he:{q:'כמה רגליים יש בסך הכול?',sol:'22: שתי תרנגולות (4), פרה (4), עכביש (8) ונמלה שהתחבאה מתחת לסלע (6)',h:'לעכביש יש 8 רגליים. ואולי חסרה עוד חיה.'},
+  it:[{e:'🐔',x:18,y:62,s:12,n:1},{e:'🐔',x:36,y:70,s:12,n:1},{e:'🐄',x:70,y:58,s:20,n:1},{e:'🕷️',x:88,y:20,s:8,n:1},{e:'🐜',x:52,y:88,s:5,n:1},{e:'🪨',x:52,y:86,s:14,drag:1}]},
+ {id:'e2',d:3,bg:'nuit',q:'Fais disparaître le fantôme.',sol:'déplacer la lune et toucher le soleil caché derrière : les fantômes disparaissent le jour',h:'Les fantômes ont peur du jour. Où est passé le soleil ?',he:{q:'העלם את רוח הרפאים.',sol:'להזיז את הירח ולגעת בשמש שמאחוריו: רוחות רפאים נעלמות ביום',h:'רוחות רפאים מפחדות מאור היום. לאן נעלמה השמש?'},
+  it:[{e:'👻',x:30,y:60,s:18,n:1},{e:'☀️',x:78,y:20,s:8,ok:1},{e:'🌕',x:78,y:20,s:17,drag:1},{e:'🕯️',x:62,y:78,s:9}]},
+ {id:'e3',d:3,bg:'savane',q:'Mets la pomme dans le panier.',sol:'amener le panier jusqu\'à la pomme, car la pomme ne bouge pas',h:'Si la pomme ne veut pas bouger, qu\'est-ce qui peut bouger ?',he:{q:'שים את התפוח בסל.',sol:'להביא את הסל אל התפוח, כי התפוח לא זז',h:'אם התפוח לא רוצה לזוז, מה כן יכול לזוז?'},
+  it:[{e:'🍎',x:24,y:72,s:10,n:1},{e:'🧺',x:78,y:68,s:18,drag:1,on:0,rad:14},{e:'🐛',x:50,y:36,s:7}]},
+ {id:'e4',d:3,bg:'nuit',q:'Réveille le chien.',sol:'toucher le chien 8 fois de suite : il dort très profondément',h:'Il dort très profondément. Insiste.',he:{q:'הער את הכלב.',sol:'לגעת בכלב 8 פעמים ברצף: הוא ישן עמוק מאוד',h:'הוא ישן עמוק מאוד. אל תוותר.'},
+  it:[{e:'🐶',x:50,y:62,s:22,taps:8},{e:'💤',x:66,y:36,s:8,deco:1},{e:'🔔',x:14,y:72,s:10,drag:1},{e:'⏰',x:86,y:72,s:10}]},
+ {id:'e5',d:3,bg:'savane',q:'Touche les animaux du plus petit au plus grand.',sol:'la fourmi, la souris, le chien, puis l\'éléphant',h:'Pense à leur vraie taille, pas à celle du dessin.',he:{q:'גע בחיות מהקטנה לגדולה.',sol:'הנמלה, העכבר, הכלב ואז הפיל',h:'חשוב על הגודל האמיתי שלהן, לא על גודל הציור.'},
+  it:[{e:'🐜',x:24,y:48,s:26,o:1},{e:'🐭',x:56,y:28,s:12,o:2},{e:'🐕',x:80,y:64,s:9,o:3},{e:'🐘',x:50,y:86,s:5,o:4}]}
+];
+PICS.forEach(r=>{r.type='s';r.act=1;r.ex='';RIDDLES.push(r)});
+
+
+const LOGO=`<svg viewBox="0 0 120 120" role="img" aria-label="Légendes et Pièges"><defs><linearGradient id="lgb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b2f78"/><stop offset="1" stop-color="#0e1024"/></linearGradient><radialGradient id="lgg" cx=".5" cy=".3" r=".5"><stop offset="0" stop-color="#ff7ad9" stop-opacity=".55"/><stop offset="1" stop-color="#ff7ad9" stop-opacity="0"/></radialGradient></defs>
+<rect width="120" height="120" rx="26" fill="url(#lgb)"/><circle cx="60" cy="34" r="34" fill="url(#lgg)"/>
+<g fill="#ff9ecf" stroke="#b83280" stroke-width="2" stroke-linejoin="round"><path d="M60 16c-6-7-19-4-19 6-7 2-8 12-2 16-2 8 7 13 13 9 2 4 6 4 8 0z"/><path d="M60 16c6-7 19-4 19 6 7 2 8 12 2 16 2 8-7 13-13 9-2 4-6 4-8 0z"/></g>
+<path d="M60 17v30M50 24c4 0 6 3 5 7M47 36c4-2 8 0 8 4M70 24c-4 0-6 3-5 7M73 36c-4-2-8 0-8 4" fill="none" stroke="#b83280" stroke-width="1.8" stroke-linecap="round"/>
+<g stroke-linecap="round" stroke-linejoin="round" fill="none"><g stroke="#ff8a3d" stroke-width="7"><path d="M26 108l8-22 10 22M34 86V68M34 72l14-4"/></g><circle cx="34" cy="58" r="8" fill="#ff8a3d"/><path d="M48 68l26-20" stroke="#ffd166" stroke-width="4"/>
+<g stroke="#5ee6ff" stroke-width="7"><path d="M94 108l-8-22-10 22M86 86V68M86 72l-14-4"/></g><circle cx="86" cy="58" r="8" fill="#5ee6ff"/><path d="M72 68L46 48" stroke="#eaffff" stroke-width="4"/></g>
+<path d="M60 52l3 5 6 1-4 4 1 6-6-3-6 3 1-6-4-4 6-1z" fill="#fff" opacity=".95"/></svg>`;
+
+
+
+/* ================== ÉTAT ================== */
+const DEF={nick:'',pts:30,total:30,streak:0,solved:{},failed:{},miss:{},daily:'',chars:{braskar:{n:1,lvl:1,xp:0,st:1},sylvar:{n:1,lvl:1,xp:0,st:1}},sel:'braskar',arena:1,craft:null,boss:0,wins:0,gifted:{},codes:{}};
+let S=JSON.parse(JSON.stringify(DEF));
+try{const s=JSON.parse(localStorage.getItem('lp1'));if(s&&s.chars)S=Object.assign(S,s)}catch(e){}
+let CFG={rot:60,recipes:[],riddles:[],event:null}, db=null, user=null, isAdmin=false, uid=null, PLAYERS=[];
+let view='home', sub={}, F=null, syncDead=false, lastSync=0, lastSig='', syncing=false;
+const $=s=>document.querySelector(s), esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const INF=999999999;let admStage=0,ready=false,CODES=[],fsOn=false,codeUnsub=null;
+const cleanN=x=>String(x||'').replace(/[^\p{L}\p{N} _.\-']/gu,'').trim().slice(0,16).trim();
+function gated(){return !isAdmin&&!S.joined}
+// Avantages du propriétaire (points infinis, tout ouvert)
+function boss(){return isAdmin}
+function unlockAll(){H.forEach(c=>{if(!S.chars[c.id])S.chars[c.id]={n:1,lvl:1,xp:0,st:1}})}
+const typing=()=>/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName||'');
+function save(){if(boss())S.pts=INF;try{localStorage.setItem('lp1',JSON.stringify(S))}catch(e){} hud(); syncPlayer(); pushPres()}
+if(S.esc){if(S.esc.st==='wait')S.pts+=S.esc.bet;S.esc=null}
+S.hint=S.hint||{};S.trd=S.trd||{};S.failed=S.failed||{};
+function plvl(){return Math.floor(Math.sqrt(S.total/50))+1}
+function ev(){const e=CFG.event;return e&&e.end>Date.now()?e:null}
+function mult(){return ev()?.mult||1}
+function gain(p){p=Math.round(p);S.pts+=p;S.total+=p;return p}
+function today(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()}
+function allR(){return RIDDLES.concat((CFG.riddles||[]).map(r=>({...r,type:'c',custom:1})))}
+const fin=id=>!!(S.solved[id]||S.failed[id]);
+function ordered(d){return allR().filter(r=>r.d===d)}
+function locked(r){if(boss())return false;for(const x of ordered(r.d)){if(x.id===r.id)return false;if(!fin(x.id))return true}return false}
+function diffOpen(k){return boss()||k===0||ordered(k-1).filter(r=>fin(r.id)).length>=3}
+// Énigme du jour : la prochaine énigme à faire, jouée pour la première fois de la journée
+function dailyR(){for(let k=0;k<4;k++){if(!diffOpen(k))break;const r=ordered(k).find(x=>!fin(x.id));if(r)return r}return null}
+function ansText(r){if(r.sol)return r.sol;if(r.type==='c')return r.o[+r.a];if(r.type==='n')return String(r.a);if(r.word)return 'le mot « '+r.word+' » dans la question';const i=r.it.find(x=>x.ok);return i?(i.e||i.t):''}
+function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>t.hidden=true,2400)}
+function stat(c,lvl,st,k){return Math.round(c[k]*(1+.08*(lvl-1))*(1+.25*(st-1)))}
+function fmt(ms){const s=Math.max(0,Math.ceil(ms/1000));return (s>=3600?Math.floor(s/3600)+' h ':'')+String(Math.floor(s%3600/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
+function rng(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function recipes(){
+  let out=[]; const e=ev();
+  if(e&&HB[e.a]&&HB[e.b]&&HB[e.out])out.push({a:e.a,b:e.b,out:e.out,ev:1});
+  if(CFG.recipes?.length)return out.concat(CFG.recipes.filter(r=>HB[r.a]&&HB[r.b]&&HB[r.out]));
+  const per=Math.floor(Date.now()/((CFG.rot||60)*60000)), r=rng(per*7919+13);
+  const pool=POOL.filter(p=>!p[3]||r()<.25).map(p=>[r(),p]).sort((x,y)=>x[0]-y[0]).slice(0,3);
+  return out.concat(pool.map(([,p])=>({a:p[0],b:p[1],out:p[2]})));
+}
+function nextRot(){const m=(CFG.rot||60)*60000;return m-Date.now()%m}
+// Coffres : prix et chances (en %) par rareté [Commun, Rare, Épique, Légendaire, Mythique]
+const BOXES=[{id:'b1',n:'Coffre de bronze',p:100,o:[70,22,7,1,0]},{id:'b2',n:'Coffre runique',p:400,o:[30,40,22,7,1]}];
+function grant(id){const o=S.chars[id];if(o){o.n++;return false}S.chars[id]={n:1,lvl:1,xp:0,st:1};return true}
+function takeGifts(items){let got=null;for(const it of items||[]){if(!it||!HB[it.h]||S.gifted[it.id])continue;S.gifted[it.id]=1;grant(it.h);got=it.h}
+  if(got){save();if(view!=='fight'){render();reward(got,S.chars[got].st,'Cadeau du maître du jeu !')}}}
+
+/* ================== LANGUES (français / hébreu) ================== */
+// Le jeu est écrit en français. En hébreu, chaque texte affiché est remplacé grâce à ce dictionnaire.
+let LANG=S.lang==='he'?'he':'fr';
+const HE={
+ 'Accueil':'בית','Énigmes':'חידות','Combat':'קרב','Héros':'גיבורים','Forge':'נפחייה','Admin':'ניהול',
+ 'Chargement…':'טוען…','Entre ton code':'הכנס את הקוד שלך','Pour jouer, il te faut un code personnel. Demande-le à l\'admin du jeu.':'כדי לשחק צריך קוד אישי. בקש אותו ממנהל המשחק.',
+ 'Ton code':'הקוד שלך','Ton pseudo':'הכינוי שלך','Sans compte Claude, tu joues en solo : pas de duels ni d\'échanges avec tes potes.':'בלי חשבון Claude משחקים לבד: אין דו־קרבות ואין החלפות עם חברים.','Écris aussi ton pseudo (2 caractères minimum).':'כתוב גם את הכינוי שלך (לפחות 2 תווים).','Entrer':'כניסה','Écris ton code (lettres et chiffres).':'כתוב את הקוד שלך (אותיות ומספרים).',
+ 'Ce code n\'existe pas. Vérifie-le ou demande-en un à l\'admin.':'הקוד הזה לא קיים. בדוק אותו או בקש קוד ממנהל המשחק.',
+ 'Connexion au serveur impossible. Vérifie ta connexion internet et recharge la page.':'אין חיבור לשרת. בדוק את חיבור האינטרנט וטען את הדף מחדש.',
+ 'Impossible de vérifier le code pour le moment. Réessaie.':'לא ניתן לבדוק את הקוד כרגע. נסה שוב.','Vérification…':'בודק…','Ton code a été désactivé.':'הקוד שלך בוטל.',
+ 'Facile':'קל','Moyen':'בינוני','Difficile':'קשה','Extrême':'קיצוני',
+ 'Commun':'נפוץ','Rare':'נדיר','Épique':'אפי','Légendaire':'אגדי','Mythique':'מיתי',
+ 'Braskar':'ברסקר','Sylvar':'סילבר','Givrelame':'גיברלם','Tonnerok':'טונרוק','Ombrax':'אומברקס','Pyralis':'פיראליס','Drakonir':'דרקוניר','Aethon':'אתון','Néantis':'נאנטיס','Kael\'Thar':'קאל׳תאר',
+ 'Guerrier de braise':'לוחם הגחלים','Rôdeur des ronces':'סייר הקוצים','Chevalière de givre':'אבירת הכפור','Golem d\'orage':'גולם הסערה','Spectre du crépuscule':'רוח הדמדומים','Phénix des cendres':'עוף החול של האפר','Dragon d\'obsidienne':'דרקון האובסידיאן','Titan solaire':'טיטאן השמש','Dragon du néant':'דרקון הריק','Seigneur des runes':'אדון הרונות',
+ 'Charge ardente':'הסתערות לוהטת','Pluie d\'épines':'גשם קוצים','Lance glaciale':'חנית הקרח','Onde de foudre':'גל ברקים','Faux fantôme':'חרמש הרפאים','Pluie de braises':'גשם גחלים','Souffle du vide':'נשיפת הריק','Éruption solaire':'התפרצות שמש','Rayon d\'effacement':'קרן המחיקה','Sceau runique':'חותם הרונות',
+ // accueil
+ 'À toi de jouer':'תורך לשחק','Énigme du jour':'חידת היום','Énigme du jour (déjà jouée)':'חידת היום (כבר שוחקה)','Arène':'זירה','Forge de fusion':'נפחיית המיזוג','prête !':'מוכן!','en cours':'בתהליך',
+ 'Résous des énigmes pour gagner des points, ouvre des coffres pour obtenir des héros, améliore-les, puis fais-les combattre et fusionner.':'פתור חידות כדי להרוויח נקודות, פתח תיבות כדי לקבל גיבורים, שדרג אותם, ואז שלח אותם לקרב ומזג אותם.',
+ 'Boss vaincu':'הבוס הובס','Défier le boss':'אתגר את הבוס','Progression':'התקדמות','énigmes résolues':'חידות שנפתרו','dans l\'arène':'בזירה','héros débloqués':'גיבורים שנפתחו','points gagnés au total':'נקודות שנצברו בסך הכול','Classement':'טבלת דירוג','Joueur':'שחקן',
+ // énigmes
+ 'Énigmes pièges':'חידות מלכודת',
+ 'Les énigmes se font dans l\'ordre et tu n\'as qu\'un seul essai. Si tu te trompes, la réponse s\'affiche, tu gagnes 0 point et tu passes à la suivante. Tu peux refaire une énigme ratée pour le plaisir, sans points. Une série de bonnes réponses augmente tes gains (+10 % par réponse, jusqu\'à ×2).':'את החידות פותרים לפי הסדר ויש רק ניסיון אחד. אם טעית, התשובה מוצגת, לא מקבלים נקודות וממשיכים לחידה הבאה. אפשר לשחק שוב בחידה שנכשלת בה בשביל הכיף, בלי נקודות. רצף של תשובות נכונות מגדיל את הרווח (10% יותר לכל תשובה, עד פי 2).',
+ 'Réussie':'הצלחת','Ratée':'נכשלת','Termine d\'abord la précédente':'קודם סיים את החידה הקודמת','À faire':'לפתור','← Liste':'→ לרשימה','Liste':'לרשימה','Énigme du jour ×3':'חידת היום ×3','Ta réponse':'התשובה שלך','Valider':'אישור','Énigme suivante':'החידה הבאה',
+ 'Raté… La bonne réponse :':'טעות… התשובה הנכונה:','. Tu gagnes 0 point pour celle-ci.':'. לא קיבלת נקודות על החידה הזאת.','La bonne réponse :':'התשובה הנכונה:',
+ 'Écris un nombre':'כתוב מספר','Termine d\'abord l\'énigme précédente':'קודם סיים את החידה הקודמת','Toutes les énigmes disponibles sont terminées':'סיימת את כל החידות הזמינות',
+ 'Trouve le':'מצא את','chat':'החתול','caché.':'המוסתר.','le mot « chat » dans la question':'המילה "חתול" בתוך השאלה','VERT':'ירוק','ROUGE':'אדום',
+ // combat
+ 'Changer de héros':'החלף גיבור','Chaque victoire rapporte des points et de l\'expérience, et ouvre l\'étage suivant, plus dur.':'כל ניצחון נותן נקודות וניסיון ופותח את הקומה הבאה, הקשה יותר.',
+ 'Étage à jouer (réservé à toi)':'קומה לשחק (רק בשבילך)','Combattre':'להילחם','Commandes':'שליטה',
+ 'Téléphone : joystick à gauche, boutons à droite. Pousse le joystick vers le haut pour voler.':'בטלפון: ג׳ויסטיק משמאל, כפתורים מימין. דחוף את הג׳ויסטיק למעלה כדי לעוף.',
+ 'Clavier : flèches ou ZQSD pour bouger et voler, J frapper, K tirer (12 d\'énergie), L bouclier (dégâts −50 %, 2,5 s max), U recharger l\'énergie, I attaque spéciale.':'במקלדת: חיצים או ZQSD לתזוזה ולתעופה, J מכה, K ירייה (12 אנרגיה), L מגן (חצי נזק, עד 2.5 שניות), U טעינת אנרגיה, I מתקפה מיוחדת.',
+ 'L\'attaque spéciale se lance seulement quand ta barre d\'énergie est pleine, et elle la vide d\'un coup. Bouclier et recharge t\'immobilisent. Un bouclier vidé met 3 s à revenir.':'המתקפה המיוחדת זמינה רק כשמד האנרגיה מלא, והיא מרוקנת אותו בבת אחת. בזמן מגן או טעינה אי אפשר לזוז. מגן שהתרוקן חוזר אחרי 3 שניות.',
+ 'Bouclier':'מגן','Recharge':'טעינה','Recharger':'טעינה','Spécial':'מיוחד','Frapper':'מכה','Tirer':'ירייה','Quitter':'יציאה','Plein écran':'מסך מלא','Réduire':'הקטן',
+ 'VICTOIRE':'ניצחון','DÉFAITE':'הפסד','PRÊT ?':'מוכן?','COMBAT !':'קרב!','Victoire !':'ניצחון!','Défaite…':'הפסד…',
+ 'Astuce : améliore ton héros dans « Héros », ou recharge ton énergie à distance.':'טיפ: שדרג את הגיבור שלך במסך "גיבורים", או טען אנרגיה כשאתה רחוק מהיריב.',
+ 'Combat suivant':'הקרב הבא','Revanche':'קרב חוזר','Retour':'חזרה','Termine d\'abord ton duel':'קודם סיים את הדו־קרב שלך',
+ // duels
+ 'Duels entre joueurs':'דו־קרב בין שחקנים',
+ 'Connexion au serveur impossible pour le moment. Recharge la page.':'כדי לשחק מול חברים (דו־קרבות, החלפות), פתח את המשחק כשאתה מחובר לחשבון Claude. בלי חשבון משחקים לבד.',
+ 'Joueurs en ligne':'שחקנים מחוברים','Défie un joueur connecté ou propose-lui un échange de héros. En duel, chacun mise des points et le gagnant prend tout. Le combat se joue au tour par tour : vous choisissez chacun une action en secret, 30 secondes par manche.':'הזמן שחקן מחובר לדו־קרב או הצע לו החלפת גיבורים. בדו־קרב כל אחד מהמר על נקודות והמנצח לוקח הכול. הקרב מתנהל בתורות: כל אחד בוחר פעולה בסוד, 30 שניות לכל סיבוב.',
+ 'Ta mise':'ההימור שלך','Sans mise':'בלי הימור','En duel':'בדו־קרב','Défier':'הזמן',
+ 'Personne d\'autre n\'est en ligne pour le moment. Envoie le lien du jeu à tes potes : ils apparaîtront ici dès qu\'ils ouvrent le jeu.':'אף אחד אחר לא מחובר כרגע. שלח את הקישור למשחק לחברים: הם יופיעו כאן ברגע שיפתחו את המשחק.',
+ 'Accepter':'קבל','Refuser':'סרב','Annuler le défi':'בטל את ההזמנה','Duel':'דו־קרב','Toi':'אתה','Toi :':'אתה:',
+ 'Vous choisissez chacun une action en secret. Elles se jouent en même temps.':'כל אחד בוחר פעולה בסוד. שתי הפעולות מתבצעות באותו זמן.',
+ 'Victoire par abandon':'ניצחון טכני','Égalité':'תיקו','Chacun récupère sa mise.':'כל אחד מקבל את ההימור שלו בחזרה.','Fermer':'סגור',
+ 'Gratuit':'חינם','Dégâts ×1,4':'נזק ×1.4','Dégâts reçus −50 %':'חצי מהנזק שסופגים','pas 2 fois de suite':'לא פעמיים ברצף','+20 % de dégâts reçus':'סופגים 20% יותר נזק','Dégâts ×3,2':'נזק ×3.2','énergie pleine':'אנרגיה מלאה',
+ 'Choisis ton action':'בחר פעולה','Adversaire absent : réclamer la victoire':'היריב לא מגיב: דרוש ניצחון','Confirmer l\'abandon (mise perdue)':'אשר כניעה (ההימור אבוד)','Abandonner':'כניעה',
+ 'Ce joueur est parti':'השחקן הזה עזב','Tu n\'as pas assez de points pour cette mise':'אין לך מספיק נקודות להימור הזה','Ce joueur n\'a pas assez de points pour cette mise':'לשחקן הזה אין מספיק נקודות להימור הזה','Défi annulé':'ההזמנה בוטלה','Défi refusé':'ההזמנה נדחתה',
+ // héros, coffres
+ 'volant':'מעופף','Vie':'חיים','Attaque':'התקפה','Vitesse':'מהירות','Énergie':'אנרגיה','Spéciale :':'מתקפה מיוחדת:','(quand l\'énergie est pleine)':'(כשהאנרגיה מלאה)','Pas encore débloqué.':'עדיין לא נפתח.',
+ 'Héros actif':'הגיבור הפעיל','Choisir ce héros':'בחר בגיבור הזה','Niveau +1':'רמה +1','S\'obtient dans les coffres ou à la forge.':'משיגים אותו בתיבות או בנפחייה.',
+ 'Coffres':'תיבות','Un coffre donne un héros au hasard. Plus la rareté est haute, plus la chance est faible. Un héros déjà possédé devient un double pour la forge.':'תיבה נותנת גיבור אקראי. ככל שהנדירות גבוהה יותר, הסיכוי קטן יותר. גיבור שכבר יש לך הופך לכפיל לנפחייה.',
+ 'Coffre de bronze':'תיבת ארד','Coffre runique':'תיבת רונות','Ouvrir':'פתח','Collection':'אוסף','Coffre':'תיבה',
+ 'Double obtenu : utilise-le à la forge':'קיבלת כפיל: השתמש בו בנפחייה','Nouveau héros débloqué !':'גיבור חדש נפתח!','Évolution réussie : +25 % de puissance':'האבולוציה הצליחה: 25% יותר כוח','Un exemplaire de plus !':'עוד עותק אחד!','Nouveau héros forgé !':'גיבור חדש חושל!','Cadeau de l\'admin !':'מתנה מהמנהל!','Continuer':'המשך',
+ // forge
+ 'Machine de fusion':'מכונת המיזוג','en fabrication…':'בייצור…','est prêt !':'מוכן!','Récupérer':'אסוף',
+ 'Choisis une recette ci-dessous. La machine consomme les doubles de tes héros, jamais ton dernier exemplaire.':'בחר מתכון למטה. המכונה משתמשת בכפילים של הגיבורים שלך, אף פעם לא בעותק האחרון.',
+ 'Recettes du moment':'המתכונים של עכשיו','Aucune recette pour le moment.':'אין מתכונים כרגע.','Évolutions':'אבולוציות','Tous tes héros sont au maximum.':'כל הגיבורים שלך ברמה המקסימלית.','Fusionner':'מזג',
+ 'Appuie encore une fois pour voir la réponse (0 point)':'לחץ שוב כדי לראות את התשובה (0 נקודות)','Je ne trouve pas : voir la réponse':'לא מצאתי: הצג את התשובה','Déplace, touche ou secoue les objets de l\'image avec ton doigt.':'הזז, גע או נער את החפצים שבתמונה עם האצבע.',
+ 'Réessayer · 0 point':'נסה שוב · 0 נקודות','Bravo ! Trouvée, mais sans points cette fois.':'כל הכבוד! מצאת, אבל הפעם בלי נקודות.',
+ 'Indice · gain divisé par 2':'רמז · חצי מהנקודות','Indice :':'רמז:',
+ 'Échanges entre joueurs':'החלפות בין שחקנים','Échange un de tes héros contre celui d\'un joueur connecté. Le héros reçu arrive au niveau 1. Si tu donnes ton dernier exemplaire, tu perds ce héros et ses niveaux.':'החלף אחד מהגיבורים שלך בגיבור של שחקן מחובר. הגיבור שמקבלים מגיע ברמה 1. אם תיתן את העותק האחרון שלך, תאבד את הגיבור הזה ואת הרמות שלו.',
+ 'Échanger':'החלף','Tu donnes':'אתה נותן','Tu reçois':'אתה מקבל','Proposer l\'échange':'הצע החלפה','Annuler':'בטל','Annuler la proposition':'בטל את ההצעה',
+ 'Échange refusé':'ההחלפה נדחתה','Échange réussi !':'ההחלפה הצליחה!','Échange impossible : ce héros n\'est plus disponible':'אי אפשר להחליף: הגיבור הזה כבר לא זמין','Tu ne peux pas donner ton seul héros':'אי אפשר לתת את הגיבור היחיד שלך',
+ 'Personne d\'autre n\'est en ligne pour le moment.':'אף אחד אחר לא מחובר כרגע.','Les échanges ne sont pas disponibles dans cette vue.':'החלפות לא זמינות בתצוגה הזאת.','L\'admin a modifié ton compte':'המנהל שינה את החשבון שלך',
+ 'Machine occupée':'המכונה תפוסה','Il faut un double':'צריך כפיל','Recette d\'événement':'מתכון של אירוע','Évolution : plus fort, nouvelle aura':'אבולוציה: חזק יותר, הילה חדשה','Un double de chaque est consommé':'משתמשים בכפיל אחד מכל גיבור'
+};
+const RHE={
+ r1:{q:'מה הכי חם?',ex:'השמש! על פני השמש יש יותר מ־5,500 מעלות, הרבה יותר ממדורה.'},
+ r2:{q:'יש לי ארבעה אחים. לכל אחד מהאחים שלי יש ארבעה אחים. כמה אנחנו?',ex:'חמישה אחים: כל אחד סופר את ארבעת האחרים.'},
+ r3:{q:'לאבא של לאה יש שלוש בנות: יום שני, יום שלישי ו…?',o:['יום רביעי','לאה','יום חמישי','יום ראשון'],ex:'הבת השלישית היא לאה עצמה.'},
+ r4:{q:'גע בחיה הכי גדולה.',ex:'הלווייתן, גם אם הוא מצויר קטן מאוד.'},
+ r5:{q:'בכמה חודשים יש 28 ימים?',ex:'בכל שנים־עשר החודשים: בכולם יש לפחות 28 ימים.'},
+ r6:{q:'אתה בתחרות ריצה ועוקף את הרץ שבמקום השני. באיזה מקום אתה עכשיו?',o:['ראשון','שני','שלישי','אחרון'],ex:'תפסת את המקום שלו: שני.'},
+ r7:{q:'למי יש שיניים אבל הוא אף פעם לא נושך?',o:['כריש ישן','מסרק','כלב מנומס','תפוח'],ex:'מסרק.'},
+ r8:{q:'גע במה שכבד יותר: קילו נוצות או קילו ברזל?',ex:'תיקו: קילו זה קילו.'},
+ r9:{q:'חילזון מטפס על קיר בגובה 10 מטר. ביום הוא עולה 3 מטר ובלילה הוא מחליק 2 מטר. אחרי כמה ימים הוא מגיע למעלה?',ex:'אחרי 7 ימים הוא בגובה 7 מטר; ביום השמיני הוא עולה 3 מטר ומגיע.'},
+ r10:{ex:'הוא היה בשאלה: היה צריך לגעת במילה "חתול".'},
+ r11:{q:'מחבט וכדור עולים יחד 1.10 ₪. המחבט עולה שקל אחד יותר מהכדור. כמה עולה הכדור, באגורות?',ex:'5 אגורות: המחבט עולה 1.05 ₪.'},
+ r12:{q:'גע במספר הכי גדול.',ex:'1,000, גם אם הוא כתוב קטן מאוד.'},
+ r13:{q:'ככל שיש ממני יותר, אתה רואה פחות. מי אני?',o:['משקפיים','החושך','מראה','הגשם'],ex:'החושך.'},
+ r14:{q:'שושנת מים מכפילה את גודלה בכל יום. אחרי 30 יום היא מכסה את כל הבריכה. אחרי כמה ימים היא כיסתה חצי מהבריכה?',ex:'29: יום לפני כן היא כיסתה חצי.'},
+ r15:{q:'גע במה שהכי קר.',ex:'החלל: בערך 270 מעלות מתחת לאפס.'},
+ r16:{q:'שני אבות ושני בנים יוצאים לדוג. כל אחד תופס דג אחד, והם חוזרים עם שלושה דגים. איך?',o:['דג אחד ברח','הם שלושה: סבא, אבא ובן','הם אכלו אחד','הם טעו בספירה'],ex:'האבא הוא גם אבא וגם בן.'},
+ r17:{q:'כמה פעמים אפשר לחסר 5 מ־25?',ex:'פעם אחת בלבד: אחר כך כבר מחסרים 5 מ־20.'},
+ r18:{q:'מה עולה ואף פעם לא יורד?',o:['בלון','עשן','הגיל שלך','מעלית'],ex:'הגיל שלך.'},
+ r19:{q:'לחקלאי יש 17 כבשים. כולן חוץ מ־9 ברחו. כמה נשארו לו?',ex:'"כולן חוץ מ־9": נשארו 9.'},
+ r20:{q:'אני מדבר בלי פה ושומע בלי אוזניים. אין לי גוף, אבל הרוח מעירה אותי לחיים.',o:['רוח רפאים','ההד','רדיו','הרעם'],ex:'ההד.'},
+ r21:{q:'3 חתולים תופסים 3 עכברים ב־3 דקות. כמה חתולים צריך כדי לתפוס 100 עכברים ב־100 דקות?',ex:'אותם 3 חתולים: יחד הם תופסים עכבר אחד בדקה.'},
+ r22:{q:'לחץ על הכפתור הירוק.',ex:'היה צריך להסתכל על הצבע, לא לקרוא את המילה.'},
+ r23:{q:'רופא נותן לך 3 כדורים ואומר לקחת אחד כל חצי שעה. כמה זמן נמשך הטיפול?',o:['שעה וחצי','שעה אחת','שעתיים','30 דקות'],ex:'אחד מיד, אחד אחרי 30 דקות ואחד אחרי שעה.'},
+ r24:{q:'כמה חיות מכל מין משה הכניס לתיבה?',ex:'אפס: התיבה הייתה של נח.'}
+};
+const HHE={"r1": "חשוב על מה שמחמם את כל החוף.", "r2": "גם אתה אחד מהאחים.", "r3": "קרא שוב את תחילת השאלה: של מי האבא?", "r4": "גודל הציור לא משנה, חשוב על החיה האמיתית.", "r5": "לא שאלו על \"רק\" 28 ימים.", "r6": "אתה תופס את המקום של מי שעקפת.", "r7": "משתמשים בו לשיער.", "r8": "שים לב למשקל של כל אחד בשאלה.", "r9": "ביום האחרון הוא מגיע למעלה לפני שהוא מחליק.", "r10": "החתול לא נמצא בתמונה. חפש במקום אחר על המסך.", "r11": "אם הכדור היה עולה 10 אגורות, המחבט היה עולה 1.10 ₪ וביחד זה 1.20 ₪.", "r12": "קרא את המספרים, אל תסתכל על הגודל שלהם.", "r13": "הוא מגיע בלילה, כשמכבים את האור.", "r14": "היא מכפילה את עצמה כל יום: כמה היא כיסתה יום לפני הסוף?", "r15": "הסתכל בחלק העליון של התמונה.", "r16": "אותו אדם יכול להיות גם אבא וגם בן.", "r17": "אחרי החיסור הראשון כבר לא נשאר 25.", "r18": "בכל יום הולדת מתווסף לך עוד אחד.", "r19": "\"כולן חוץ מ־9\": כמה לא ברחו?", "r20": "שומעים אותו כשצועקים בין ההרים.", "r21": "כמה זמן לוקח לחתול אחד לתפוס עכבר אחד?", "r22": "אל תקרא את המילים, הסתכל על הצבעים.", "r23": "את הכדור הראשון לוקחים מיד.", "r24": "בדוק את השם שבשאלה."};
+RIDDLES.forEach(r=>{if(r.h&&HHE[r.id])HE[r.h]=HHE[r.id];if(r.he){HE[r.q]=r.he.q;HE[r.sol]=r.he.sol;HE[r.h]=r.he.h}});
+RIDDLES.forEach(r=>{const h=RHE[r.id];if(!h)return;if(h.q)HE[r.q]=h.q;if(h.ex)HE[r.ex]=h.ex;(h.o||[]).forEach((x,i)=>HE[r.o[i]]=x)});
+const N=x=>HE[x]||x;
+const HP=[
+ [/^[Nn]iv\. (\d+)$/,m=>'רמה '+m[1]],[/^[Nn]iveau (\d+)$/,m=>'רמה '+m[1]],[/^Niveau (\d+) \(max\)$/,m=>'רמה '+m[1]+' (מקסימום)'],[/^Niveau (\d+) !$/,m=>'רמה '+m[1]+'!'],
+ [/^Série (\d+)$/,m=>'רצף '+m[1]],[/^[ÉEé]tage (\d+)$/,m=>'קומה '+m[1]],[/^Événement : (.*)$/,m=>'אירוע: '+m[1]],[/^[Pp]oints ×(\d+)$/,m=>'נקודות ×'+m[1]],[/^[Ff]in dans (.+)$/,m=>'נגמר בעוד '+m[1]],
+ [/^Points ×(\d+) sur les énigmes et les combats\.( Recette spéciale à la forge :)?$/,m=>'נקודות ×'+m[1]+' על חידות ועל קרבות.'+(m[2]?' מתכון מיוחד בנפחייה:':'')],
+ [/^Bravo ! \+(\d+) points$/,m=>'כל הכבוד! קיבלת '+m[1]+' נקודות'],
+ [/^(\+?)([\d\s]+) points$/,m=>(m[1]?'‎+':'')+m[2].trim()+' נקודות'],[/^(\d+) pts \(verrouillé\)$/,m=>m[1]+' נק׳ (נעול)'],[/^([\d\s∞]+) pts$/,m=>m[1].trim()+' נק׳'],
+ [/^Termine encore (\d+) énigme\(s\) « (.+) » pour ouvrir « (.+) »\.$/,m=>'סיים עוד '+m[1]+' חידות ברמת "'+N(m[2])+'" כדי לפתוח את רמת "'+N(m[3])+'".'],
+ [/^Niveau « (.+) » terminé !$/,m=>'רמת "'+N(m[1])+'" הושלמה!'],
+ [/^Énigme déjà terminée \((réussie|ratée)\)\. La bonne réponse :$/,m=>'החידה כבר הסתיימה ('+(m[1]==='réussie'?'הצלחת':'נכשלת')+'). התשובה הנכונה:'],
+ [/^Vie (\d+)$/,m=>'חיים '+m[1]],[/^Attaque (\d+)$/,m=>'התקפה '+m[1]],[/^\+(\d+) XP pour (.+)$/,m=>m[1]+' ניסיון ל'+N(m[2])],
+ [/^Défi envoyé à (.+)$/,m=>'ההזמנה נשלחה אל '+m[1]],[/^Mise : (\d+) points chacun\. En attente de sa réponse…$/,m=>'הימור: '+m[1]+' נקודות לכל אחד. ממתין לתשובה…'],
+ [/^manche (\d+)$/,m=>'סיבוב '+m[1]],[/^Mise (\d+) pts$/,m=>'הימור '+m[1]+' נק׳'],[/^mise (\d+) points$/,m=>'הימור '+m[1]+' נקודות'],[/^(\d+) \/ (\d+) PV$/,m=>m[1]+' / '+m[2]+' חיים'],
+ [/^(\+?)(\d+) énergie$/,m=>(m[1]?'‎+':'')+m[2]+' אנרגיה'],[/^\((\d+) dégâts infligés\)$/,m=>'(גרמת '+m[1]+' נזק)'],[/^\((\d+) dégâts reçus\)$/,m=>'(ספגת '+m[1]+' נזק)'],
+ [/^Tu gagnes la mise : \+(\d+) points\.$/,m=>'זכית בהימור: '+m[1]+' נקודות.'],[/^Ton adversaire a quitté le duel : \+(\d+) points\.$/,m=>'היריב עזב את הדו־קרב: זכית ב־'+m[1]+' נקודות.'],[/^Tu perds ta mise de (\d+) points\.$/,m=>'הפסדת את ההימור שלך: '+m[1]+' נקודות.'],
+ [/^Action choisie\. En attente de (.+)…$/,m=>'הפעולה נבחרה. ממתין ל'+m[1]+'…'],[/^(\d+) s$/,m=>m[1]+' שנ׳'],
+ [/^(.+) te défie en duel$/,m=>m[1]+' מזמין אותך לדו־קרב'],[/^XP (\d+) \/ (\d+)$/,m=>'ניסיון '+m[1]+' / '+m[2]],[/^(\d+) exemplaire\(s\)$/,m=>m[1]+' עותקים'],
+ [/^(Commun|Rare|Épique|Légendaire|Mythique) ([\d,]+) %$/,m=>N(m[1])+' '+m[2].replace(',','.')+'%'],
+ [/^(\d+) cadeaux de l'admin reçus !$/,m=>'קיבלת '+m[1]+' מתנות מהמנהל!'],[/^(.+) passe niveau (\d+)$/,m=>N(m[1])+' עלה לרמה '+m[2]],[/^changent dans (.+)$/,m=>'מתחלפים בעוד '+m[1]],
+ [/^Double de (.+) requis$/,m=>'נדרש כפיל של '+N(m[1])],[/^Bienvenue, (.+) !$/,m=>'ברוך הבא, '+m[1]+'!'],[/^(.+) niv\. (\d+)$/,m=>N(m[1])+' רמה '+m[2]],
+ [/^(.+) te propose (.+) contre ton (.+)$/,m=>m[1]+' מציע לך את '+N(m[2])+' תמורת '+N(m[3])+' שלך'],
+ [/^Proposition envoyée à (.+) : (.+) contre (.+)\. En attente de sa réponse…$/,m=>'ההצעה נשלחה אל '+m[1]+': '+N(m[2])+' תמורת '+N(m[3])+'. ממתין לתשובה…'],
+ [/^(.+) ×(\d+)$/,m=>N(m[1])+' ×'+m[2]]
+];
+function L(s){return LANG==='he'&&HE[s]||s}
+function trSeg(t){if(Object.prototype.hasOwnProperty.call(HE,t))return HE[t];for(const [re,fn] of HP){const m=t.match(re);if(m)return fn(m)}return null}
+function trText(s){
+  const m=s.match(/^(\s*)([\s\S]*?)(\s*)$/),t=m[2];if(!t||!/[A-Za-zÀ-ÿ]/.test(t))return null;
+  let r=trSeg(t);
+  if(r==null&&t.includes('·')){let ch=0;r=t.split(/(\s*·\s*)/).map(x=>{if(!x||/^\s*·\s*$/.test(x))return x;const y=trSeg(x.trim());if(y!=null){ch=1;return y}return x}).join('');if(!ch)r=null}
+  return r==null?null:m[1]+r+m[3];
+}
+function trNode(n){
+  if(LANG!=='he')return;
+  if(n.nodeType===3){const p=n.parentElement;if(!p||p.closest('[data-nt],textarea,script,style'))return;const r=trText(n.nodeValue);if(r!=null&&r!==n.nodeValue)n.nodeValue=r}
+  else if(n.nodeType===1){if(n.closest('[data-nt]'))return;for(const a of['placeholder','title']){const v=n.getAttribute(a);if(v){const r=trText(v);if(r!=null)n.setAttribute(a,r)}}n.childNodes.forEach(trNode)}
+}
+new MutationObserver(ms=>{if(LANG!=='he')return;for(const m of ms){if(m.type==='characterData')trNode(m.target);else m.addedNodes.forEach(trNode)}}).observe(document.body,{childList:true,subtree:true,characterData:true});
+function applyLang(){const h=document.documentElement;h.lang=LANG;h.dir=LANG==='he'?'rtl':'ltr';const b=$('#hlang');if(b)b.textContent=LANG==='he'?'Français':'עברית'}
+
+
+/* ================== SERVEUR (Firebase) ================== */
+const FB_CONFIG={apiKey:"AIzaSyAlcMyXpXh-ZzPHw8tqKMkkFayixwsYwk8",authDomain:"legende-et-pieges.firebaseapp.com",databaseURL:"https://legende-et-pieges-default-rtdb.europe-west1.firebasedatabase.app",projectId:"legende-et-pieges",storageBucket:"legende-et-pieges.firebasestorage.app",messagingSenderId:"373215540222",appId:"1:373215540222:web:e7b31ccdb1bc93d21686af"};
+// Primitives : uid, get, set, remove, on(valeur), retrait à la déconnexion. window.__FB permet de les remplacer pour les tests.
+async function fbPrims(){
+  if(window.__FB)return window.__FB;
+  if(!window.firebase)throw new Error('no sdk');
+  const app=firebase.apps.length?firebase.app():firebase.initializeApp(FB_CONFIG),au=firebase.auth(),rt=firebase.database();
+  const u=await new Promise((res,rej)=>{const t=setTimeout(()=>rej(new Error('auth timeout')),12000);const off=au.onAuthStateChanged(x=>{if(x){clearTimeout(t);off();res(x)}});if(!au.currentUser)au.signInAnonymously().catch(e=>{clearTimeout(t);rej(e)})});
+  return {uid:u.uid,get:async p=>(await rt.ref(p).get()).val(),set:(p,v)=>rt.ref(p).set(v),remove:p=>rt.ref(p).remove(),
+    on:(p,cb)=>{const r=rt.ref(p),f=s=>cb(s.val());r.on('value',f,()=>{});return()=>r.off('value',f)},
+    dropOnDisconnect:p=>rt.ref(p).onDisconnect().remove()};
+}
+const clean=v=>v==null?null:JSON.parse(JSON.stringify(v));
+const asArr=v=>Array.isArray(v)?v.filter(x=>x!=null):v&&typeof v==='object'?Object.keys(v).sort((a,b)=>a-b).map(k=>v[k]):[];
+function fixLists(d){if(d&&typeof d==='object'){for(const k of['list','items','recipes','riddles','o'])if(k in d)d[k]=asArr(d[k]);if(Array.isArray(d.riddles))d.riddles.forEach(r=>{if(r&&r.o)r.o=asArr(r.o)})}return d}
+function mkDb(P){
+  const snap=v=>({exists:v!=null,data:()=>fixLists(clean(v)),metadata:{fromCache:false}});
+  return {doc:path=>({get:async()=>snap(await P.get(path)),set:d=>P.set(path,clean(d)),delete:()=>P.remove(path),onSnapshot:(cb,err)=>P.on(path,v=>cb(snap(v)))}),
+    collection:path=>({onSnapshot:(cb,err)=>P.on(path,v=>cb({docs:Object.entries(v||{}).map(([id,d])=>({id,data:()=>fixLists(clean(d))}))}))})};
+}
+function mkRoom(P){
+  let mine={},list=[],hs=[],live=false;const path='online/'+P.uid;
+  const build=v=>{list=Object.entries(v||{}).map(([id,pr])=>({peer:id,by:id,isMe:id===P.uid,sameTab:id===P.uid,kind:'viewer',guest:false,presence:Object.freeze(pr||{}),updatedAt:Date.now()}));hs.forEach(f=>{try{f({peers:list})}catch(e){console.error(e)}})};
+  P.on('online',build);
+  return {presence:async patch=>{for(const k in patch){if(patch[k]===null)delete mine[k];else mine[k]=patch[k]}
+      if(!live){live=true;try{P.dropOnDisconnect(path)}catch(e){}}await P.set(path,clean(mine))},
+    peers:()=>list,onPeers:(f)=>{hs.push(f);setTimeout(()=>f({peers:list}),0);return()=>{hs=hs.filter(x=>x!==f)}}};
+}
+const ADM_SALT='lp-admin-v1',ADM_CHECK='1389cc8fbc1827eddb0ad755ec2985e3780c70875d1efabc73c41fe375caa3b2';
+async function admKey(code){const k=hex(await derive(code,ADM_SALT)),h=hex(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(k))));return h===ADM_CHECK?k:null}
+async function derive(code,salt,bytes=16){const en=new TextEncoder(),k=await crypto.subtle.importKey('raw',en.encode(code),'PBKDF2',false,['deriveBits']),b=await crypto.subtle.deriveBits({name:'PBKDF2',salt:en.encode(salt),iterations:60000,hash:'SHA-256'},k,bytes*8);return new Uint8Array(b)}
+const hex=b=>[...b].map(x=>x.toString(16).padStart(2,'0')).join('');
+// Anciens codes des joueurs, chiffrés : seul le code admin peut les lire, pour les recopier une fois sur le serveur
+const SEED={"iv":"2j7jnlXMNiLR8g7D","d":"EpVS8vbH5e9Z9OU/9639vPZ83SghDNmBR8gG8DhkzCn5tuOz7UTtbbH2Y3/oFbPdoDTGouHaAXgOVWBGt4O/4ojsvdClNA+eLR/G12LjP3+/Cne74RCk+MHk6fkRCxIfq/HG7PDsbEZoZhcHZinuhnoO4jmQVgvJPRvDaduTDieHuHsH9SIdg+qtW/H9bJusPIy+vcXaDJ+lUSiEfK4CNFeyYO+XEj6lP4CFL2V01uuCbND9HrLLd94Jdn8EUiBAXO8MTUBR0GtN+9LO7jK3Ct+Q5by/BumffNucwE4QpIpeoBn7fW5VvJCOjtknbQoOUaT36nfnw3L9T8Rsy1HUfrKLgtju+j+zPX4zj7miYV4PO8ZT/il6BT2ijCoF7fODrmHciBVmM36jRQP1OS5Y1F9L5FeCe7ay7FURvrGj"};
+async function seedCodes(code){try{if(!db||CODES.length)return;const key=await crypto.subtle.importKey('raw',await derive(code,'lp-seed-v1',32),'AES-GCM',false,['decrypt']);
+  const b64=x=>Uint8Array.from(atob(x),c=>c.charCodeAt(0)),pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64(SEED.iv)},key,b64(SEED.d)),list=JSON.parse(new TextDecoder().decode(pt));
+  for(const c of list)await db.doc('codes/'+c.id).set({name:c.name,at:Date.now()});await db.doc('adm/codes').set({list});}catch(e){console.error('seed',e)}}
+
+/* ================== DESSIN DES HÉROS ================== */
+function rr(g,x,y,w,h,r){g.beginPath();g.roundRect?g.roundRect(x,y,w,h,r):g.rect(x,y,w,h);g.fill()}
+function glowOn(g,c,b){g.shadowColor=c;g.shadowBlur=b}
+function wings(g,c,t,x,y,s){
+  for(let i=1;i>=0;i--){g.save();g.translate(x-i*6,y);g.scale(s,s);g.rotate(-.35+Math.sin(t*6+c.seed+i*.5)*.32-i*.25);
+    g.fillStyle=i?c.c2:c.c3;g.globalAlpha=i?.9:.95;g.beginPath();g.moveTo(0,0);g.quadraticCurveTo(-28,-54,-74,-44);g.lineTo(-54,-28);g.lineTo(-64,-14);g.lineTo(-42,-10);g.lineTo(-46,6);g.lineTo(-22,2);g.closePath();g.fill();
+    if(!i){g.strokeStyle=c.glow;g.lineWidth=1.5;g.globalAlpha=.7;g.beginPath();g.moveTo(0,0);g.quadraticCurveTo(-28,-54,-74,-44);g.stroke()}
+    g.restore()}
+}
+function human(g,c,t,o,st){
+  const sw=Math.sin(t*3+c.seed), a=o.atk||0;
+  if(c.cape){g.fillStyle=c.c3;g.beginPath();g.moveTo(-10,-80);g.quadraticCurveTo(-36-sw*4,-46,-32-sw*7,-6);g.lineTo(-8,-16);g.closePath();g.fill()}
+  if(c.wings)wings(g,c,t,-6,-70,.85);
+  if(c.ghost){const gr=g.createLinearGradient(0,-50,0,4);gr.addColorStop(0,c.c2);gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.beginPath();g.moveTo(-16,-45);g.quadraticCurveTo(-14+sw*5,-10,-2+sw*8,4);g.quadraticCurveTo(8,-12,16,-45);g.fill()}
+  else{g.fillStyle=c.c2;rr(g,-14,-36,10,34,3);rr(g,4,-36,10,34,3);g.fillStyle=c.c3;rr(g,-16,-7,15,7,2);rr(g,3,-7,15,7,2)}
+  const gr=g.createLinearGradient(0,-82,0,-30);gr.addColorStop(0,c.c1);gr.addColorStop(1,c.c2);g.fillStyle=gr;
+  g.beginPath();g.moveTo(-21,-82);g.lineTo(21,-82);g.lineTo(14,-32);g.lineTo(-14,-32);g.closePath();g.fill();
+  g.save();glowOn(g,c.glow,14);g.fillStyle=c.glow;const rs=5+st;g.beginPath();g.moveTo(0,-58-rs);g.lineTo(rs,-58);g.lineTo(0,-58+rs);g.lineTo(-rs,-58);g.closePath();g.fill();g.restore();
+  if(c.armor){g.fillStyle=c.c3;g.beginPath();g.arc(-22,-80,9,0,7);g.arc(22,-80,9,0,7);g.fill();g.strokeStyle=c.glow;g.lineWidth=1.5;g.beginPath();g.arc(22,-80,9,3.4,6);g.stroke()}
+  g.fillStyle=c.c2;rr(g,-12,-108,24,25,7);g.fillStyle='#070812';rr(g,-7,-100,18,8,3);
+  g.save();glowOn(g,c.glow,10);g.fillStyle=c.glow;g.fillRect(1,-98,9,3);g.restore();
+  g.strokeStyle=c.c3;g.lineWidth=4;g.lineCap='round';
+  for(let i=0;i<(c.horns||0);i++){const s=i%2?1:-1;g.beginPath();g.moveTo(s*8,-106);g.quadraticCurveTo(s*18,-116,s*13,-126-st*2);g.stroke()}
+  if(c.crown){g.fillStyle=c.glow;g.beginPath();g.moveTo(-11,-107);g.lineTo(-11,-118);g.lineTo(-5,-112);g.lineTo(0,-121);g.lineTo(5,-112);g.lineTo(11,-118);g.lineTo(11,-107);g.closePath();g.fill()}
+  if(c.halo){g.save();glowOn(g,c.glow,16);g.strokeStyle=c.glow;g.lineWidth=3;g.beginPath();g.ellipse(0,-128,15,5,0,0,7);g.stroke();g.restore()}
+  g.save();g.translate(15,-74);g.rotate(a?-2.8+a*2.2:-.25+sw*.06);g.fillStyle=c.c2;rr(g,-4,0,8,26,4);
+  if(c.blade){g.translate(0,24);g.rotate(-1.75);glowOn(g,c.glow,14);g.strokeStyle=c.glow;g.lineWidth=5;g.beginPath();g.moveTo(0,0);g.lineTo(0,46+st*5);g.stroke();g.strokeStyle='#fff';g.lineWidth=1.5;g.beginPath();g.moveTo(0,4);g.lineTo(0,42+st*5);g.stroke();g.shadowBlur=0;g.fillStyle=c.c3;g.fillRect(-7,-2,14,4)}
+  else{glowOn(g,c.glow,12);g.fillStyle=c.glow;g.beginPath();g.arc(0,27,7,0,7);g.fill()}
+  g.restore();
+}
+function dragon(g,c,t,o,st){
+  const sw=Math.sin(t*3+c.seed), a=o.atk||0, lun=Math.sin(a*Math.PI)*16, ty=-56+sw*8;
+  g.strokeStyle=c.c2;g.lineWidth=10;g.lineCap='round';g.beginPath();g.moveTo(-22,-36);g.quadraticCurveTo(-58,-30+sw*5,-70,ty);g.stroke();
+  g.save();glowOn(g,c.glow,12);g.fillStyle=c.glow;g.beginPath();g.arc(-70,ty,c.beak?9:5,0,7);g.fill();g.restore();
+  wings(g,c,t,-4,-56,1.15);
+  g.fillStyle=c.c2;rr(g,-16,-22,9,22,3);rr(g,8,-22,9,22,3);
+  const gr=g.createLinearGradient(0,-62,0,-18);gr.addColorStop(0,c.c1);gr.addColorStop(1,c.c2);g.fillStyle=gr;g.beginPath();g.ellipse(0,-40,30,21,-.15,0,7);g.fill();
+  g.globalAlpha=.55;g.fillStyle=c.c3;g.beginPath();g.ellipse(5,-32,18,8,-.15,0,7);g.fill();g.globalAlpha=1;
+  g.strokeStyle=c.c1;g.lineWidth=14;g.beginPath();g.moveTo(18,-50);g.quadraticCurveTo(30,-70,34+lun,-84);g.stroke();
+  g.save();g.translate(34+lun,-88);const L=c.beak?18:30;
+  if(!c.beak){g.fillStyle=c.c2;g.beginPath();g.moveTo(-4,5);g.lineTo(L-4,6+Math.sin(a*Math.PI)*9);g.lineTo(-6,13);g.closePath();g.fill()}
+  g.fillStyle=c.c1;g.beginPath();g.moveTo(-11,-11);g.lineTo(L,-3);g.lineTo(L,4);g.lineTo(-9,9);g.closePath();g.fill();
+  if(c.beak){g.fillStyle=c.c3;g.beginPath();g.moveTo(8,-6);g.lineTo(26,2);g.lineTo(8,6);g.closePath();g.fill()}
+  g.save();glowOn(g,c.glow,10);g.fillStyle=c.glow;g.fillRect(2,-6,7,3);g.restore();
+  g.strokeStyle=c.c3;g.lineWidth=4;for(let i=0;i<(c.horns||0);i++){g.beginPath();g.moveTo(-6-i*4,-9);g.quadraticCurveTo(-14-i*5,-22,-24-i*5,-24-st*2);g.stroke()}
+  if(c.halo){g.save();glowOn(g,c.glow,16);g.strokeStyle=c.glow;g.lineWidth=3;g.beginPath();g.ellipse(0,-26,15,5,0,0,7);g.stroke();g.restore()}
+  g.restore();
+  g.save();glowOn(g,c.glow,14);g.fillStyle=c.glow;g.beginPath();g.arc(8,-44,4+st,0,7);g.fill();g.restore();
+}
+function drawHero(g,c,x,y,sc,t,o={}){
+  const st=o.st||1, k=sc*c.bulk*(1+.08*(st-1));
+  g.save();g.translate(x,y);
+  {const al=o.alt||0,sh=1/(1+al/160);g.fillStyle='rgba(0,0,0,'+(.4*sh)+')';g.beginPath();g.ellipse(0,al,28*k*sh,6*k*sh,0,0,7);g.fill()}
+  g.scale((o.face||1)*k,k);g.translate(0,(c.fly?-18+Math.sin(t*2.2+c.seed)*5:Math.sin(t*3+c.seed)*1.2));
+  if(st>1||o.charge){const R=58+st*12+(o.charge?10*Math.sin(t*20):0),gr=g.createRadialGradient(0,-50,6,0,-50,R);gr.addColorStop(0,c.glow+'88');gr.addColorStop(1,c.glow+'00');g.fillStyle=gr;g.beginPath();g.arc(0,-50,R,0,7);g.fill()}
+  (c.rig==='dragon'?dragon:human)(g,c,t,o,st);
+  if(o.hit>0){g.globalCompositeOperation='lighter';g.globalAlpha=Math.min(1,o.hit*4);g.fillStyle='#fff';g.beginPath();g.ellipse(0,-55,30,52,0,0,7);g.fill()}
+  g.restore();
+  if(o.shield){g.save();g.translate(x,y-50*k-(c.fly?18*k:0));const R=68*k;const gr=g.createRadialGradient(0,0,R*.5,0,0,R);gr.addColorStop(0,'rgba(94,230,255,0)');gr.addColorStop(1,'rgba(94,230,255,.45)');g.fillStyle=gr;g.beginPath();g.arc(0,0,R,0,7);g.fill();g.strokeStyle='#bff6ff';g.lineWidth=2;g.setLineDash([10,8]);g.lineDashOffset=-t*40;g.stroke();g.restore()}
+}
+function pt(id,st,cls=''){return `<canvas class="pt ${cls}" data-h="${id}" data-st="${st||1}" width="270" height="285"></canvas>`}
+function drawPortraits(t){
+  document.querySelectorAll('canvas.pt').forEach(cv=>{const c=HB[cv.dataset.h];if(!c)return;const g=cv.getContext('2d');g.clearRect(0,0,270,285);
+    const big=c.rig==='dragon'?1.75:(c.wings?1.8:2.1);drawHero(g,c,c.rig==='dragon'?168:(c.wings?150:128),272,big/Math.max(1,c.bulk*.95),t,{st:+cv.dataset.st})});
+}
+
+/* ================== COMBAT ================== */
+const W=800,HH=450,GY=392, inp={x:0,y:0,atk:0,shoot:0,shield:0,charge:0,sp:0};
+let bgCache={};
+function arenaBg(k){
+  if(bgCache[k])return bgCache[k];
+  const pal=[['#1a1446','#51236b','#ff8a3d'],['#06223a','#14506b','#5ee6ff'],['#2a0d1c','#6b1f2f','#ffd166']][k%3];
+  const cv=document.createElement('canvas');cv.width=W;cv.height=HH;const g=cv.getContext('2d'),r=rng(k+5);
+  let gr=g.createLinearGradient(0,0,0,GY);gr.addColorStop(0,pal[0]);gr.addColorStop(1,pal[1]);g.fillStyle=gr;g.fillRect(0,0,W,HH);
+  for(let i=0;i<90;i++){g.fillStyle='rgba(255,255,255,'+(.2+r()*.7)+')';g.fillRect(r()*W,r()*250,1.6,1.6)}
+  gr=g.createRadialGradient(620,95,10,620,95,130);gr.addColorStop(0,pal[2]);gr.addColorStop(.25,pal[2]+'99');gr.addColorStop(1,pal[2]+'00');g.fillStyle=gr;g.fillRect(450,0,350,260);
+  g.fillStyle='#fff6e0';g.beginPath();g.arc(620,95,34,0,7);g.fill();
+  [['rgba(10,10,30,.55)',250,90],['rgba(6,6,20,.85)',300,60]].forEach(([col,base,amp])=>{g.fillStyle=col;g.beginPath();g.moveTo(0,GY);let x=0;while(x<=W){g.lineTo(x,base-r()*amp);x+=40+r()*50}g.lineTo(W,GY);g.fill()});
+  for(const px of[90,250,560,720]){g.fillStyle='#0b0c1f';g.fillRect(px-14,210,28,GY-210);g.fillRect(px-22,200,44,14);g.fillStyle=pal[2];g.globalAlpha=.8;g.fillRect(px-3,240,6,26);g.fillRect(px-9,250,18,5);g.globalAlpha=1}
+  gr=g.createLinearGradient(0,GY-6,0,HH);gr.addColorStop(0,'#2b2d55');gr.addColorStop(1,'#0a0b18');g.fillStyle=gr;g.fillRect(0,GY-6,W,HH-GY+6);
+  g.strokeStyle=pal[2];g.lineWidth=2;g.globalAlpha=.7;for(let i=0;i<9;i++){let x=r()*W,y=GY+4;g.beginPath();g.moveTo(x,y);for(let j=0;j<4;j++){x+=(r()-.5)*70;y+=10+r()*8;g.lineTo(x,y)}g.stroke()}
+  g.globalAlpha=1;g.fillStyle=pal[2];g.fillRect(0,GY-7,W,2);
+  return bgCache[k]=cv;
+}
+function mkFighter(c,lvl,st,x,face,k=1){
+  return {c,lvl,st,x,y:GY,vx:0,vy:0,face,mhp:stat(c,lvl,st,'hp')*k,hp:0,men:c.en,en:c.en*.5,atk:stat(c,lvl,st,'atk')*k,spd:c.spd,
+    atkT:0,atkCd:0,shCd:0,spCd:0,sg:2.5,lock:0,hitT:0,spA:null,spOk:lvl>=3,shield:0,charge:0,ai:{t:0,o:{}}};
+}
+function startFight(mode){
+  const me=S.chars[S.sel], mc=HB[S.sel]; let ec,el,es,k=.72,stage=boss()&&admStage?admStage:S.arena;
+  if(mode==='boss'){const e=ev();ec=HB[e?.out]||HB.kaelthar;el=Math.max(5,me.lvl+2);es=2;k=.9}
+  else{const order=['sylvar','braskar','givrelame','tonnerok','ombrax','pyralis','drakonir','aethon','neantis','kaelthar'];ec=HB[order[(stage-1)%10]];el=stage;es=1+Math.min(2,Math.floor((stage-1)/10))}
+  F={mode,stage,p:mkFighter(mc,me.lvl,me.st,200,1),e:mkFighter(ec,el,es,600,-1,k),shots:[],parts:[],nums:[],shake:0,t:0,over:0,intro:1.6,bg:arenaBg(mode==='boss'?2:Math.floor((stage-1)/3))};
+  F.p.hp=F.p.mhp;F.e.hp=F.e.mhp;F.e.skill=Math.min(.85,.2+.04*(mode==='boss'?12:stage));
+  if(mc.fly)F.p.y=GY-80; if(ec.fly)F.e.y=GY-80;
+  view='fight';render();
+}
+const cy=e=>e.y-60*e.c.bulk-(e.c.fly?22:0);
+function burst(x,y,col,n,sp=220){for(let i=0;i<n;i++){const a=Math.random()*7,v=sp*(.3+Math.random());F.parts.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,l:.35+Math.random()*.4,col,r:2+Math.random()*3})}}
+function hurt(t,d,from){
+  if(F.over)return; if(t.shield)d*=.5; d=Math.round(d*(.9+Math.random()*.2)); t.hp=Math.max(0,t.hp-d); t.hitT=.25;
+  F.nums.push({x:t.x,y:cy(t)-40,v:d,l:.9,col:t.shield?'#5ee6ff':'#fff'});F.shake=Math.min(14,F.shake+d/6);burst(t.x,cy(t),t.shield?'#5ee6ff':from.c.glow,t.shield?6:14);
+  if(t.hp<=0){F.over=.01;F.win=t===F.e;burst(t.x,cy(t),t.c.glow,70,420);burst(t.x,cy(t),'#fff',30,300);F.shake=20}
+}
+function step(e,i,dt,foe){
+  e.atkCd-=dt;e.shCd-=dt;e.spCd-=dt;e.hitT-=dt;e.lock-=dt;e.face=foe.x>=e.x?1:-1;
+  if(e.atkT>0){const p=e.atkT;e.atkT-=dt/.26;if(p>.5&&e.atkT<=.5&&Math.abs(foe.x-e.x)<82*e.c.bulk&&Math.abs(cy(foe)-cy(e))<72)hurt(foe,e.atk,e)}
+  const sh=!!i.shield&&e.lock<=0&&e.sg>0&&!e.spA;
+  if(sh){e.sg-=dt;if(e.sg<=0)e.lock=3}else e.sg=Math.min(2.5,e.sg+dt*.55);
+  e.shield=sh;e.charge=!!i.charge&&!e.spA;
+  if(e.charge){e.en=Math.min(e.men,e.en+(sh?18:38)*dt);if(Math.random()<.5)F.parts.push({x:e.x+(Math.random()-.5)*70,y:cy(e)+40,vx:0,vy:-140,l:.5,col:e.c.glow,r:2.5})}
+  if(e.spA){const a=e.spA;a.t+=dt;
+    if(a.type==='dash'){e.x+=e.face*880*dt;F.parts.push({x:e.x,y:cy(e),vx:0,vy:0,l:.3,col:e.c.glow,r:9});if(!a.done&&Math.abs(e.x-foe.x)<64&&Math.abs(cy(e)-cy(foe))<85){a.done=1;hurt(foe,e.atk*2.6,e)}if(a.t>.33)e.spA=null}
+    else if(a.type==='meteor'){if(a.t>.3)e.spA=null}
+    else{if(!a.done&&a.t>.4){a.done=1;F.shake=12;
+        if(a.type==='beam'){if((foe.x-e.x)*a.face>0&&Math.abs(cy(foe)-a.y)<62)hurt(foe,e.atk*3.2,e)}
+        else{burst(e.x,cy(e),e.c.glow,50,480);if(Math.hypot(foe.x-e.x,cy(foe)-cy(e))<190)hurt(foe,e.atk*2.8,e)}}
+      if(a.t>.8)e.spA=null}
+  }
+  const still=sh||e.charge||(e.spA&&e.spA.type!=='meteor');
+  if(!still){
+    e.vx=(i.x||0)*e.spd*.55;e.vy=(i.y||0)*e.spd*.55;
+    if(!i.y&&!e.c.fly&&e.y<GY)e.vy=60;
+    if(i.atk&&e.atkCd<=0&&e.atkT<=0){e.atkT=1;e.atkCd=.4}
+    if(i.shoot&&e.shCd<=0&&e.en>=12){e.en-=12;e.shCd=.42;const ox=e.x+e.face*34,oy=cy(e)-8,dx=foe.x-ox,dy=cy(foe)-oy,d=Math.hypot(dx,dy)||1;F.shots.push({x:ox,y:oy,vx:dx/d*470,vy:dy/d*470,own:e,dmg:e.atk*.8,col:e.c.glow,r:9,l:2.2})}
+    if(i.sp&&e.spCd<=0&&e.en>=e.men-.5){e.en=0;e.spCd=2;e.spA={type:e.c.sp,t:0,face:e.face,y:cy(e)};F.nums.push({x:e.x,y:cy(e)-70,v:L(e.c.spn),l:1.2,col:e.c.glow});
+      if(e.c.sp==='meteor')for(let n=0;n<6;n++)F.shots.push({x:foe.x+(Math.random()-.5)*190,y:-30-n*70,vx:(Math.random()-.5)*60,vy:520,own:e,dmg:e.atk*.85,col:e.c.glow,r:12,l:3})}
+  }else{e.vx=0;e.vy=0}
+  e.x=Math.max(40,Math.min(W-40,e.x+e.vx*dt));e.y+=e.vy*dt;
+  if(e.y>GY){e.y=GY;e.vy=0} if(e.y<135)e.y=135;
+}
+function aiInput(e,foe,dt){
+  const i=e.ai;i.t-=dt;if(i.t>0)return i.o;
+  const dx=foe.x-e.x,d=Math.abs(dx),dy=foe.y-e.y,k=e.skill,o=i.o={x:0,y:0};i.t=.16+Math.random()*.22;
+  const inc=F.shots.some(p=>p.own!==e&&Math.hypot(p.x-e.x,p.y-cy(e))<150);
+  if((inc||(foe.spA&&d<240))&&e.lock<=0&&e.sg>.7&&Math.random()<k){o.shield=1;i.t=.45}
+  else if((e.en<14&&d>190)||(e.en<e.men-.5&&d>300&&Math.random()<.5)){o.charge=1;i.t=.7}
+  else if(e.en>=e.men-.5&&e.spCd<=0&&Math.random()<.12+.25*k&&(e.c.sp!=='nova'||d<170)&&(e.c.sp!=='beam'||Math.abs(cy(foe)-cy(e))<50))o.sp=1;
+  else if(d<76*e.c.bulk&&Math.abs(dy)<60){o.atk=1;if(Math.random()<.18)o.x=-Math.sign(dx)}
+  else{o.x=Math.sign(dx);if(d>170&&e.en>=12&&Math.random()<.3+.3*k)o.shoot=1}
+  o.y=Math.abs(dy)>18?Math.sign(dy):0;
+  return o;
+}
+function fightTick(dt,t){
+  const cv=$('#arena');if(!cv)return;const g=cv.getContext('2d');
+  F.t+=dt;
+  if(F.intro>0)F.intro-=dt;
+  else if(!F.over){step(F.p,inp,dt,F.e);step(F.e,aiInput(F.e,F.p,dt),dt,F.p)}
+  else{F.over+=dt;if(F.over>1.6&&!F.done){F.done=1;endFight()}}
+  for(const s of F.shots){s.x+=s.vx*dt;s.y+=s.vy*dt;s.l-=dt;const tg=s.own===F.p?F.e:F.p;
+    if(Math.random()<.6)F.parts.push({x:s.x,y:s.y,vx:0,vy:0,l:.25,col:s.col,r:s.r*.6});
+    if(!F.over&&Math.hypot(s.x-tg.x,s.y-cy(tg))<36*tg.c.bulk){hurt(tg,s.dmg,s.own);s.l=0}
+    if(s.y>GY+6){s.l=0;burst(s.x,GY,s.col,8)}}
+  F.shots=F.shots.filter(s=>s.l>0&&s.x>-40&&s.x<W+40);
+  for(const p of F.parts){p.x+=p.vx*dt;p.y+=p.vy*dt;p.l-=dt}F.parts=F.parts.filter(p=>p.l>0);if(F.parts.length>500)F.parts.splice(0,F.parts.length-500);
+  for(const n of F.nums){n.y-=45*dt;n.l-=dt}F.nums=F.nums.filter(n=>n.l>0);
+  F.shake*=Math.pow(.02,dt);
+  // --- rendu ---
+  const sc=cv.width/W;g.setTransform(sc,0,0,sc,0,0);g.save();g.translate((Math.random()-.5)*F.shake,(Math.random()-.5)*F.shake);
+  g.drawImage(F.bg,0,0);
+  for(let i=0;i<14;i++){const x=(i*61+t*18*(1+i%3))%W,y=GY-((i*97+t*30)%330);g.fillStyle='rgba(255,220,160,'+(.25+.25*Math.sin(t*2+i))+')';g.fillRect(x,y,2.5,2.5)}
+  for(const e of[F.e,F.p]){
+    if(e.hp<=0&&F.over>.25)continue;
+    const a=e.spA;
+    if(a&&a.type!=='dash'&&a.type!=='meteor'){g.save();g.globalCompositeOperation='lighter';
+      if(a.t<.4){g.fillStyle=e.c.glow;g.globalAlpha=.7;g.beginPath();g.arc(e.x+(a.type==='beam'?a.face*40:0),a.type==='beam'?a.y:cy(e),8+a.t*70,0,7);g.fill()}
+      else{const k=1-(a.t-.4)/.4;g.globalAlpha=k;
+        if(a.type==='beam'){const x0=e.x+a.face*30,x1=a.face>0?W:0;const gr=g.createLinearGradient(0,a.y-46,0,a.y+46);gr.addColorStop(0,e.c.glow+'00');gr.addColorStop(.5,'#fff');gr.addColorStop(1,e.c.glow+'00');g.fillStyle=gr;g.fillRect(Math.min(x0,x1),a.y-46*k,Math.abs(x1-x0),92*k);g.fillStyle=e.c.glow;g.fillRect(Math.min(x0,x1),a.y-18*k,Math.abs(x1-x0),36*k)}
+        else{const R=190*(1-k*.6);g.strokeStyle=e.c.glow;g.lineWidth=26*k;g.beginPath();g.arc(e.x,cy(e),R,0,7);g.stroke();g.strokeStyle='#fff';g.lineWidth=6*k;g.stroke()}}
+      g.restore()}
+    drawHero(g,e.c,e.x,e.y,1.25,t,{st:e.st,face:e.face,atk:e.atkT>0?1-e.atkT:0,hit:e.hitT,shield:e.shield,charge:e.charge,alt:GY-e.y});
+  }
+  g.globalCompositeOperation='lighter';
+  for(const p of F.parts){g.globalAlpha=Math.min(1,p.l*2.5);g.fillStyle=p.col;g.beginPath();g.arc(p.x,p.y,p.r,0,7);g.fill()}
+  g.globalAlpha=1;
+  for(const s of F.shots){const gr=g.createRadialGradient(s.x,s.y,1,s.x,s.y,s.r*2.4);gr.addColorStop(0,'#fff');gr.addColorStop(.35,s.col);gr.addColorStop(1,s.col+'00');g.fillStyle=gr;g.beginPath();g.arc(s.x,s.y,s.r*2.4,0,7);g.fill()}
+  g.globalCompositeOperation='source-over';
+  g.textAlign='center';
+  for(const n of F.nums){g.globalAlpha=Math.min(1,n.l*2);g.font=(typeof n.v==='number'?'24px':'18px')+' "Russo One",sans-serif';g.lineWidth=4;g.strokeStyle='#000';g.strokeText(n.v,n.x,n.y);g.fillStyle=n.col;g.fillText(n.v,n.x,n.y)}
+  g.globalAlpha=1;g.restore();
+  if(F.intro>0||F.over){g.font='54px "Russo One",sans-serif';g.lineWidth=8;g.strokeStyle='#000';const m=L(F.over?(F.win?'VICTOIRE':'DÉFAITE'):(F.intro>.5?'PRÊT ?':'COMBAT !'));g.strokeText(m,W/2,HH/2-40);g.fillStyle=F.over&&!F.win?'#ff5d73':'#ffd166';g.fillText(m,W/2,HH/2-40)}
+  const B=(id,v)=>{const el=document.getElementById(id);if(el)el.style.width=Math.max(0,Math.min(100,v*100))+'%'};
+  B('php',F.p.hp/F.p.mhp);B('pen',F.p.en/F.p.men);B('psh',F.p.lock>0?0:F.p.sg/2.5);B('ehp',F.e.hp/F.e.mhp);B('een',F.e.en/F.e.men);
+  const sb=$('#bsp');if(sb){const rdy=F.p.en>=F.p.men-.5&&F.p.spCd<=0;sb.disabled=!rdy;sb.classList.toggle('rdy',rdy)}
+}
+function addXp(id,x){const h=S.chars[id];let up=0;h.xp+=x;while(h.lvl<20&&h.xp>=40*h.lvl){h.xp-=40*h.lvl;h.lvl++;up++}return up}
+function endFight(){
+  const m=mult();let pts,xp,txt='';
+  if(F.win){if(F.mode==='boss'){const e=ev();pts=gain(e?.reward||150);S.boss=e?.end||1;xp=80}else{pts=gain((15+6*F.stage)*m);xp=25+5*F.stage;if(F.stage>=S.arena)S.arena=F.stage+1;S.wins++}}
+  else{pts=gain(3);xp=8}
+  const up=addXp(S.sel,xp);save();
+  F.result=`<div class="panel" style="text-align:center;align-items:center"><h2 style="color:${F.win?'var(--gold)':'var(--bad)'}">${F.win?'Victoire !':'Défaite…'}</h2>
+   <p>+${pts} points · +${xp} XP pour ${HB[S.sel].n}${up?` · <b style="color:var(--gold)">Niveau ${S.chars[S.sel].lvl} !</b>`:''}</p>
+   ${F.win?'':'<p class="mute small">Astuce : améliore ton héros dans « Héros », ou recharge ton énergie à distance.</p>'}
+   <div class="row" style="justify-content:center"><button class="btn" data-a="fight" data-m="${F.mode==='boss'&&F.win?'arena':F.mode}">${F.win?'Combat suivant':'Revanche'}</button><button data-a="go" data-v="fprep">Retour</button></div></div>`;
+  const r=$('#fres');if(r)r.innerHTML=F.result;
+}
+
+/* ================== VUES ================== */
+const ICON={home:'<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',rid:'<path d="M9 9a3 3 0 1 1 4 2.8c-.7.4-1 1-1 1.7V14"/><circle cx="12" cy="18" r=".6"/><circle cx="12" cy="12" r="10"/>',fprep:'<path d="M4 4l10 10M14 4L4 14M14 14l6 6M17 11l-6 6"/>',heroes:'<path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/>',forge:'<path d="M4 9h12a4 4 0 0 0 4-4M6 9v3a4 4 0 0 0 4 4h0a4 4 0 0 0 4-4V9M8 21h8M10 16v5M14 16v5"/>',admin:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>'};
+function nav(){
+  const tabs=[['home','Accueil'],['rid','Énigmes'],['fprep','Combat'],['heroes','Héros'],['forge','Forge']];if(isAdmin)tabs.push(['admin','Admin']);
+  const cur=view==='fight'||view==='duel'?'fprep':view==='riddle'?'rid':view;
+  $('#nav').innerHTML=tabs.map(([v,l])=>`<button class="${cur===v?'on':''}" data-a="go" data-v="${v}"><svg viewBox="0 0 24 24">${ICON[v]}</svg>${l}</button>`).join('');
+}
+function hud(){
+  $('#hpts').textContent='◆ '+(boss()?'∞':S.pts.toLocaleString('fr-FR'));$('#hlvl').textContent='Niv. '+plvl();$('#hstk').textContent='Série '+S.streak;const hn=$('#hnick'),lg=ready&&!gated();hn.hidden=!S.nick||!lg;hn.textContent=S.nick;for(const i of['hpts','hlvl','hstk'])$('#'+i).hidden=!lg;
+  const e=ev(),b=$('#evbar');b.hidden=!e;if(e)b.innerHTML=`<span>Événement : ${esc(e.name)} · points ×${e.mult}</span><span>fin dans ${fmt(e.end-Date.now())}</span>`;
+}
+function stars(n){return '<span class="stars">'+'★'.repeat(n)+'<span style="opacity:.25">'+'★'.repeat(3-n)+'</span></span>'}
+function card(c,extra='',cls=''){const o=S.chars[c.id];return `<div class="card ${o?'':'lock'} ${cls}" style="--rc:${RAR[c.r].c}" data-a="hero" data-id="${c.id}">${pt(c.id,o?.st||1)}<div class="nm">${c.n}</div><div class="rar">${RAR[c.r].n}</div>${extra}</div>`}
+const V={
+ home(){
+  const c=HB[S.sel],o=S.chars[S.sel],all=allR(),done=all.filter(r=>S.solved[r.id]).length,e=ev(),d=dailyR();
+  const top=PLAYERS.slice().sort((a,b)=>(b.total||0)-(a.total||0)).slice(0,5);
+  return `<div class="split">
+   <div class="panel" style="align-items:center;text-align:center">${pt(c.id,o.st)}<h2>${c.n} ${stars(o.st)}</h2><p class="mute">${c.ti} · niveau ${o.lvl}</p></div>
+   <div class="panel"><h2>À toi de jouer</h2>
+    <button class="btn" data-a="daily">Énigme du jour ${S.daily===today()?'(déjà jouée)':'· points ×3'}</button>
+    <button class="btn2" data-a="go" data-v="fprep">Arène · étage ${S.arena}</button>
+    <button data-a="go" data-v="forge">Forge de fusion ${S.craft?(S.craft.end<=Date.now()?'· prête !':'· en cours'):''}</button>
+    <p class="mute small">Résous des énigmes pour gagner des points, ouvre des coffres pour obtenir des héros, améliore-les, puis fais-les combattre et fusionner.</p></div>
+  </div>
+  ${duelPanel()}
+  ${e?`<div class="panel" style="border-color:var(--ember)"><h2>Événement : ${esc(e.name)}</h2><p>Points ×${e.mult} sur les énigmes et les combats. ${HB[e.out]?`Recette spéciale à la forge : <b>${HB[e.out].n}</b>.`:''}</p>
+    <div class="row"><button class="btn" data-a="fight" data-m="boss" ${S.boss===e.end?'disabled':''}>${S.boss===e.end?'Boss vaincu':'Défier le boss · '+(e.reward||150)+' points'}</button><span class="mute">Fin dans ${fmt(e.end-Date.now())}</span></div></div>`:''}
+  <div class="panel"><h2>Progression</h2><div class="grid">
+    <div><b>${done} / ${all.length}</b><div class="mute small">énigmes résolues</div></div>
+    <div><b>Étage ${S.arena}</b><div class="mute small">dans l'arène</div></div>
+    <div><b>${Object.keys(S.chars).length} / ${H.length}</b><div class="mute small">héros débloqués</div></div>
+    <div><b>${S.total.toLocaleString('fr-FR')}</b><div class="mute small">points gagnés au total</div></div></div></div>
+  ${top.length?`<div class="panel"><h2>Classement</h2><div class="tw"><table>${top.map((p,i)=>`<tr><td>${i+1}</td><td>${esc(p.nick||'Joueur')}</td><td>${(p.total||0).toLocaleString('fr-FR')} pts</td><td>étage ${p.arena||1}</td></tr>`).join('')}</table></div></div>`:''}`;
+ },
+ rid(){
+  const d=sub.d??0,dy=S.daily!==today()?dailyR():null,list=ordered(d),cnt=k=>ordered(k).filter(r=>fin(r.id)).length;let open=true;
+  return `<div class="panel"><h2>Énigmes pièges</h2><p class="mute small">Les énigmes se font dans l'ordre et tu n'as qu'un seul essai. Si tu te trompes, la réponse s'affiche, tu gagnes 0 point et tu passes à la suivante. Tu peux refaire une énigme ratée pour le plaisir, sans points. Une série de bonnes réponses augmente tes gains (+10 % par réponse, jusqu'à ×2).</p>
+   <div class="diff">${DIFF.map((n,k)=>`<button class="${k===d?'on':''}" data-a="diff" data-d="${k}" ${diffOpen(k)?'':'disabled'}>${n} · ${DPTS[k]} pts${diffOpen(k)?'':' (verrouillé)'}</button>`).join('')}</div>
+   ${d===3||diffOpen(d+1)?'':`<p class="mute small">Termine encore ${3-cnt(d)} énigme(s) « ${DIFF[d]} » pour ouvrir « ${DIFF[d+1]} ».</p>`}
+   <div class="rid">${list.map((r,i)=>{const lk=!open;if(!fin(r.id))open=false;return `<button class="${S.solved[r.id]?'done':S.failed[r.id]?'fail':''} ${dy&&r.id===dy.id?'day':''}" data-a="riddle" data-id="${r.id}" ${lk?'disabled':''} title="${S.solved[r.id]?'Réussie':S.failed[r.id]?'Ratée':lk?'Termine d\'abord la précédente':'À faire'}">${S.solved[r.id]?'✓':S.failed[r.id]?'✗':i+1}</button>`}).join('')}</div></div>`;
+ },
+ riddle(){
+  const r=allR().find(x=>x.id===sub.id);if(!r){view='rid';return V.rid()}
+  const isDay=S.daily!==today()&&dailyR()?.id===r.id,play=!sub.res&&(!fin(r.id)||!!(sub.retry&&S.failed[r.id])),dis=play?'':'disabled',g=c=>!play&&c?'good':'';
+  let q=esc(r.q);if(r.word)q=q.replace(esc(r.word),`<button class="w ${g(1)}" data-a="ans" data-ok="1" ${dis}>${esc(r.word)}</button>`);
+  let body='';
+  if(r.type==='c')body=`<div class="opts">${r.o.map((o,i)=>`<button class="${g(i===+r.a)}" data-a="ans" data-ok="${i===+r.a?1:0}" ${dis}>${esc(o)}</button>`).join('')}</div>`;
+  if(r.type==='n')body=play?`<div class="row"><input id="num" type="number" inputmode="numeric" placeholder="Ta réponse" style="width:160px"><button class="btn" data-a="num">Valider</button></div>`:'';
+  if(r.type==='s')body=`<div class="scene ${r.bg} ${r.act&&play?'act':''}">${r.it.map((i,ix)=>`<button class="it ${i.t?'t':''} ${g(i.ok&&!r.word)}" style="left:${i.x}%;top:${i.y}%;--s:${i.s};${i.col?'background:'+i.col+';':''}${i.deco?'pointer-events:none':''}" ${i.deco?'tabindex="-1"':''} ${dis} ${r.act?`data-i="${ix}"`:`data-a="ans" data-ok="${i.ok&&!r.word?1:0}"`} aria-label="objet">${i.e||esc(i.t)}</button>`).join('')}</div>`
+   +(r.act&&play?`<p class="small mute">Déplace, touche ou secoue les objets de l'image avec ton doigt.</p>`:'')+(r.a!=null&&play?`<div class="row"><input id="num" type="number" inputmode="numeric" placeholder="Ta réponse" style="width:160px"><button class="btn" data-a="num">Valider</button></div>`:'')+(r.act&&play?`<div><button data-a="giveup">Je ne trouve pas : voir la réponse</button></div>`:'');
+  const sol=`La bonne réponse : <b>${esc(ansText(r))}</b>.`,ex=`<br><span style="font-weight:400">${esc(r.ex||'')}</span>`;
+  const res=play?'':(sub.res==='ok'?`<div class="res ok">${sub.retry?'Bravo ! Trouvée, mais sans points cette fois.':`Bravo ! +${sub.pts} points`}${ex}</div>`
+    :sub.res==='ko'?`<div class="res ko">Raté… ${sol} Tu gagnes 0 point pour celle-ci.${ex}</div>`
+    :`<div class="res ${S.solved[r.id]?'ok':'ko'}">Énigme déjà terminée (${S.solved[r.id]?'réussie':'ratée'}). ${sol}${ex}</div>`)
+    +`<div class="row"><button class="btn" data-a="next">Énigme suivante</button>${S.failed[r.id]&&sub.res!=='ok'?'<button data-a="retry">Réessayer · 0 point</button>':''}<button data-a="go" data-v="rid">Liste</button></div>`;
+  const hint=!r.h?'':S.hint[r.id]?`<div class="res" style="background:#3a3212;border:1px solid var(--gold)">Indice : <span style="font-weight:400">${esc(r.h)}</span></div>`:play?`<div><button data-a="hint">Indice · gain divisé par 2</button></div>`:'';
+  return `<div class="panel"><div class="row"><button data-a="go" data-v="rid">← Liste</button><span class="chip">${DIFF[r.d]} · ${DPTS[r.d]} pts</span>${isDay&&play?'<span class="chip pts">Énigme du jour ×3</span>':''}</div>
+   <p class="q">${q}</p>${body}${hint}${res}</div>`;
+ },
+ fprep(){
+  const c=HB[S.sel],o=S.chars[S.sel];
+  return `<div class="split"><div class="panel" style="align-items:center;text-align:center">${pt(c.id,o.st)}<h2>${c.n} ${stars(o.st)}</h2>
+    <p class="mute">Niv. ${o.lvl} · Vie ${stat(c,o.lvl,o.st,'hp')} · Attaque ${stat(c,o.lvl,o.st,'atk')}</p><button data-a="go" data-v="heroes">Changer de héros</button></div>
+   <div class="panel"><h2>Arène · étage ${S.arena}</h2><p class="mute">Chaque victoire rapporte des points et de l'expérience, et ouvre l'étage suivant, plus dur.</p>
+    ${boss()?`<label style="max-width:220px">Étage à jouer (réservé à toi)<select id="stg">${Array.from({length:40},(_,i)=>`<option value="${i+1}" ${(admStage||S.arena)===i+1?'selected':''}>Étage ${i+1}</option>`).join('')}</select></label>`:''}
+    <button class="btn" data-a="fight" data-m="arena">Combattre</button>
+    <h3>Commandes</h3><p class="small mute">Téléphone : joystick à gauche, boutons à droite. Pousse le joystick vers le haut pour voler.</p>
+    <p class="small mute">Clavier : flèches ou ZQSD pour bouger et voler, J frapper, K tirer (12 d'énergie), L bouclier (dégâts −50 %, 2,5 s max), U recharger l'énergie, I attaque spéciale.</p>
+    <p class="small mute">L'attaque spéciale se lance seulement quand ta barre d'énergie est pleine, et elle la vide d'un coup. Bouclier et recharge t'immobilisent. Un bouclier vidé met 3 s à revenir.</p></div></div>${duelPanel()}`;
+ },
+ fight(){
+  const p=F.p,e=F.e;
+  return `<div id="fwrap" class="${fsOn?'fs':''}"><div class="fhud"><div><b>${p.c.n} · niv. ${p.lvl}</b><div class="bar"><i id="php"></i></div><div class="bar en"><i id="pen"></i></div><div class="bar sh"><i id="psh"></i></div></div>
+   <button data-a="fs" id="bfs" style="min-height:0;padding:6px 8px;font-size:12px">${fsOn?'Réduire':'Plein écran'}</button>
+   <div class="r"><b>${e.c.n} · niv. ${e.lvl}</b><div class="bar"><i id="ehp" style="background:var(--bad)"></i></div><div class="bar en"><i id="een"></i></div></div></div>
+  <canvas id="arena" width="1280" height="720"></canvas>
+  <div id="fres"></div>
+  <div class="pad"><div id="joy"><div id="knob"></div></div>
+   <div class="acts"><button class="a3" data-k="shield">Bouclier<kbd>L</kbd></button><button class="a4" data-k="charge">Recharge<kbd>U</kbd></button><button class="a5" data-k="sp" id="bsp">Spécial<kbd>I</kbd></button>
+   <button class="a1" data-k="atk">Frapper<kbd>J</kbd></button><button class="a2" data-k="shoot">Tirer<kbd>K</kbd></button><button data-a="quit" style="font-size:11px">Quitter</button></div></div></div>`;
+ },
+ duel(){
+  if(!DU){view='fprep';return V.fprep()}
+  const on=esc(DU.on);
+  if(DU.s==='wait')return `<div class="panel" style="text-align:center;align-items:center"><h2>Défi envoyé à ${on}</h2><p class="mute">Mise : ${DU.bet} points chacun. En attente de sa réponse…</p><button data-a="dcancel">Annuler le défi</button></div>`;
+  const r=duelSim(),me=r.me,o=1-me,P=r.P,last=r.log[r.n-1],moved=DU.mv.length>r.n,done=DU.s==='done';
+  const ok=m=>m==='F'||m==='R'||(m==='T'&&r.en[me]>=15)||(m==='S'&&r.en[me]>=P[me].men)||(m==='B'&&r.prev[me]!=='B');
+  const side=(k,nm,fl)=>`<div><b>${nm}</b><div class="${fl}">${pt(P[k].c.id,P[k].st)}</div><div class="small">${P[k].c.n} · niv. ${P[k].l}</div><div class="bar"><i style="width:${r.hp[k]/P[k].mhp*100}%;${k===me?'':'background:var(--bad)'}"></i></div><div class="small">${r.hp[k]} / ${P[k].mhp} PV</div><div class="bar en"><i style="width:${r.en[k]/P[k].men*100}%"></i></div><div class="small mute">${r.en[k]} énergie</div></div>`;
+  const RES={win:['Victoire !','Tu gagnes la mise : +'+DU.bet+' points.'],forf:['Victoire par abandon','Ton adversaire a quitté le duel : +'+DU.bet+' points.'],lose:['Défaite…','Tu perds ta mise de '+DU.bet+' points.'],draw:['Égalité','Chacun récupère sa mise.']}[DU.res]||[];
+  return `<div class="panel"><div class="row"><h2 class="grow">Duel · manche ${Math.min(40,r.n+(done?0:1))}</h2><span class="chip pts">Mise ${DU.bet} pts</span></div>
+   <div class="duo">${side(me,esc(S.nick||'Toi'),'')}${side(o,on,'flip')}</div>
+   ${last?`<p class="small" style="text-align:center">Toi : <b>${MV[last.m[me]][0]}</b> (${last.dm[o]} dégâts infligés) · ${on} : <b>${MV[last.m[o]][0]}</b> (${last.dm[me]} dégâts reçus)</p>`:'<p class="small mute" style="text-align:center">Vous choisissez chacun une action en secret. Elles se jouent en même temps.</p>'}
+   ${done?`<div class="res ${DU.res==='lose'?'ko':'ok'}" style="text-align:center"><span style="font:20px var(--display)">${RES[0]}</span><br>${RES[1]}</div><button class="btn" data-a="dclose">Fermer</button>`
+   :`<div class="mvs">${Object.keys(MV).map(m=>`<button data-a="dmv" data-m="${m}" ${moved||!ok(m)?'disabled':''}>${MV[m][0]}<small>${MV[m][1]}</small></button>`).join('')}</div>
+    <p style="text-align:center;font-weight:700" id="dtm">${moved?'Action choisie. En attente de '+on+'…':'Choisis ton action'}</p>
+    <div class="row" style="justify-content:center">${DU.claim?'<button class="btn" data-a="dclaim">Adversaire absent : réclamer la victoire</button>':''}<button data-a="dquit">${sub.dq?'Confirmer l\'abandon (mise perdue)':'Abandonner'}</button></div>`}</div>`;
+ },
+ heroes(){
+  const id=sub.h||S.sel,c=HB[id],o=S.chars[id],R=RAR[c.r],cost=o?25*o.lvl:0;
+  const det=`<div class="panel" style="border-color:${R.c}"><div class="row" style="align-items:flex-start"><div style="width:150px;flex:none" class="${o?'':'card lock'}">${pt(id,o?.st||1)}</div>
+   <div class="grow" style="display:flex;flex-direction:column;gap:6px"><h2>${c.n} ${o?stars(o.st):''}</h2><div class="rar" style="--rc:${R.c}">${R.n} · ${c.ti}${c.fly?' · volant':''}</div>
+   <p class="small">Vie <b>${stat(c,o?.lvl||1,o?.st||1,'hp')}</b> · Attaque <b>${stat(c,o?.lvl||1,o?.st||1,'atk')}</b> · Vitesse <b>${c.spd}</b> · Énergie <b>${c.en}</b></p>
+   <p class="small">Spéciale : <b>${c.spn}</b> <span class="mute">(quand l'énergie est pleine)</span></p>
+   ${o?`<div class="small mute">Niveau ${o.lvl}${o.lvl<20?` · XP ${o.xp} / ${40*o.lvl}`:' (max)'} · ${o.n} exemplaire(s)</div><div class="bar xp"><i style="width:${o.lvl<20?o.xp/(40*o.lvl)*100:100}%"></i></div>`:'<p class="mute small">Pas encore débloqué.</p>'}
+   <div class="row">${o?`<button class="btn" data-a="pick" data-id="${id}" ${S.sel===id?'disabled':''}>${S.sel===id?'Héros actif':'Choisir ce héros'}</button><button data-a="up" data-id="${id}" ${o.lvl>=20||S.pts<cost?'disabled':''}>Niveau +1 · ${cost} pts</button>`:''}
+    <span class="mute small">S'obtient dans les coffres ou à la forge.</span></div></div></div></div>`;
+  const boxes=`<div class="panel"><h2>Coffres</h2><p class="mute small">Un coffre donne un héros au hasard. Plus la rareté est haute, plus la chance est faible. Un héros déjà possédé devient un double pour la forge.</p><div class="split">${BOX.map((b,i)=>`<div class="panel" style="border-color:${b.col};text-align:center;align-items:center"><svg viewBox="0 0 64 52" width="96" aria-hidden="true"><rect x="4" y="20" width="56" height="28" rx="4" fill="${b.col}"/><path d="M4 22a28 18 0 0 1 56 0z" fill="${b.col}" opacity=".75"/><rect x="4" y="20" width="56" height="5" fill="#0e1024" opacity=".55"/><rect x="26" y="16" width="12" height="16" rx="3" fill="#ffd166"/><circle cx="32" cy="24" r="2.5" fill="#0e1024"/></svg><h3>${b.n}</h3>
+   <p class="small">${b.o.map((v,r)=>v?`<span style="color:${RAR[r].c};white-space:nowrap">${RAR[r].n} ${String(v).replace('.',',')} %</span>`:'').filter(Boolean).join(' · ')}</p>
+   <button class="btn" data-a="box" data-i="${i}" ${S.pts<b.p?'disabled':''}>Ouvrir · ${b.p} pts</button></div>`).join('')}</div></div>`;
+  return det+boxes+tradePanel()+`<div class="panel"><h2>Collection</h2><div class="grid">${H.map(x=>card(x,S.chars[x.id]?`<div class="small">${stars(S.chars[x.id].st)} niv. ${S.chars[x.id].lvl}</div>`:`<div class="small mute">Coffre</div>`,(x.id===id?'sel':''))).join('')}</div></div>`;
+ },
+ forge(){
+  const cr=S.craft,now=Date.now(),rec=recipes();
+  const evo=H.filter(c=>S.chars[c.id]&&S.chars[c.id].st<3).map(c=>({a:c.id,b:c.id,out:c.id,evo:1}));
+  const can=r=>{if(cr)return 'Machine occupée';const A=S.chars[r.a],B=S.chars[r.b];if(r.evo)return A.n>=2?'':'Il faut un double';if(!A||A.n<2)return 'Double de '+HB[r.a].n+' requis';if(!B||B.n<2)return 'Double de '+HB[r.b].n+' requis';return ''};
+  const row=r=>{const why=can(r),o=HB[r.out],st=r.evo?S.chars[r.a].st+1:(S.chars[r.out]?.st||1);
+   return `<div class="panel" style="${r.ev?'border-color:var(--ember)':''}"><div class="recipe"><div>${pt(r.a,S.chars[r.a]?.st)}<div class="small">${HB[r.a].n}</div></div>+<div>${pt(r.b,S.chars[r.b]?.st)}<div class="small">${HB[r.b].n}</div></div>→<div>${pt(r.out,st)}<div class="small" style="color:${RAR[o.r].c}">${o.n} ${r.evo?stars(st):''}</div></div></div>
+    <div class="row"><button class="btn" data-a="craft" data-r='${JSON.stringify(r)}' ${why?'disabled':''}>Fusionner · ${fmt(RAR[o.r].t*1000)}</button><span class="mute small">${why||(r.ev?'Recette d\'événement':r.evo?'Évolution : plus fort, nouvelle aura':'Un double de chaque est consommé')}</span></div></div>`};
+  return `<div class="panel mach ${cr&&cr.end>now?'run':''}" style="align-items:center;text-align:center"><h2>Machine de fusion</h2>
+    ${cr?`<div style="width:150px">${pt(cr.out,cr.st)}</div><p><b>${HB[cr.out].n}</b> ${cr.end>now?'en fabrication…':'est prêt !'}</p><div class="bar xp" style="width:100%;max-width:320px"><i id="cbar" style="width:${Math.min(100,(1-(cr.end-now)/cr.dur)*100)}%"></i></div>
+     <button class="btn" data-a="claim" id="cbtn" ${cr.end>now?'disabled':''}>${cr.end>now?fmt(cr.end-now):'Récupérer'}</button>`
+    :'<p class="mute">Choisis une recette ci-dessous. La machine consomme les doubles de tes héros, jamais ton dernier exemplaire.</p>'}</div>
+   <div class="row"><h2 class="grow">Recettes du moment</h2>${CFG.recipes?.length?'':`<span class="chip" id="rot">changent dans ${fmt(nextRot())}</span>`}</div>
+   <div class="split">${rec.map(row).join('')||'<p class="mute">Aucune recette pour le moment.</p>'}</div>
+   <h2>Évolutions</h2><div class="split">${evo.map(row).join('')||'<p class="mute">Tous tes héros sont au maximum.</p>'}</div>`;
+ },
+ admin(){
+  if(!isAdmin)return '<div class="panel"><h2>Réservé au propriétaire</h2></div>';
+  const e=ev(),opt=v=>H.map(c=>`<option value="${c.id}" ${c.id===v?'selected':''}>${c.n}</option>`).join('');
+  return `<div data-nt style="display:flex;flex-direction:column;gap:12px"><div class="panel" style="border-color:var(--gold)"><h2>Panneau admin</h2><p class="mute small">Visible uniquement par toi. ${db?'Tes réglages s\'appliquent en direct chez tous les joueurs.':'Serveur injoignable : les réglages ne seront pas enregistrés.'}</p></div>
+  ${plPanel()}
+  <div class="split">
+  <div class="panel" style="border-color:var(--arc)"><h3>Codes d'accès (${CODES.length})</h3><p class="small mute">Chaque joueur entre son code pour jouer. Le nom que tu écris ici devient son pseudo. Si tu supprimes un code, ce joueur ne peut plus entrer. Ton code admin à toi (shai24) n'est pas dans la liste : il te donne ce panneau sur n'importe quel téléphone.</p>
+   <div class="row"><label class="grow">Nom du joueur<input id="cn" maxlength="16" autocomplete="off"></label><label class="grow">Code (vide = au hasard)<input id="cc" maxlength="12" autocomplete="off" autocapitalize="none"></label></div>
+   <button class="btn" data-a="cadd">Créer le code</button>
+   ${CODES.map(c=>`<div class="row"><span class="grow">${esc(c.name)}</span><span class="code">${esc(c.code)}</span><button class="btn2" data-a="pview" data-id="${esc(c.id)}">Voir${plRecs(c.id).some(x=>x.on)?' · en ligne':''}</button><button data-a="cdel" data-id="${esc(c.id)}">${sub.cd===c.id?'Confirmer':'Supprimer'}</button></div>`).join('')||'<p class="small mute">Aucun code pour l\'instant.</p>'}</div>
+  <div class="panel"><h3>Événement spécial ${e?'· en cours':''}</h3>
+   <label>Nom<input id="en" maxlength="40" value="${esc(e?.name||'Éclipse des dragons')}"></label>
+   <div class="row"><label class="grow">Points<select id="em">${[2,3,5].map(m=>`<option value="${m}" ${e?.mult===m?'selected':''}>×${m}</option>`).join('')}</select></label>
+   <label class="grow">Durée (minutes)<input id="ed" type="number" min="1" value="60"></label><label class="grow">Prime du boss<input id="er" type="number" min="0" value="${e?.reward||150}"></label></div>
+   <p class="small mute">Recette spéciale (le résultat sert aussi de boss) :</p>
+   <div class="row"><select id="ea">${opt(e?.a||'drakonir')}</select>+<select id="eb">${opt(e?.b||'aethon')}</select>→<select id="eo">${opt(e?.out||'neantis')}</select></div>
+   <div class="row"><button class="btn" data-a="evstart">${e?'Relancer':'Lancer l\'événement'}</button><button data-a="evstop" ${e?'':'disabled'}>Arrêter</button></div></div>
+  <div class="panel"><h3>Recettes de la forge</h3>
+   <label>Rotation automatique toutes les (minutes)<input id="rot2" type="number" min="1" value="${CFG.rot||60}"></label><button data-a="rotsave">Enregistrer la durée</button>
+   <p class="small mute">Recettes imposées (remplacent la rotation tant que la liste n'est pas vide) :</p>
+   ${(CFG.recipes||[]).map((r,i)=>`<div class="row small"><span class="grow">${HB[r.a]?.n} + ${HB[r.b]?.n} → <b>${HB[r.out]?.n}</b></span><button data-a="rdel" data-i="${i}">Retirer</button></div>`).join('')||'<p class="small mute">Aucune : rotation automatique.</p>'}
+   <div class="row"><select id="ra">${opt('braskar')}</select>+<select id="rb">${opt('sylvar')}</select>→<select id="ro">${opt('givrelame')}</select></div><button data-a="radd">Ajouter cette recette</button></div>
+  <div class="panel"><h3>Ajouter une énigme</h3>
+   <label>Question<textarea id="qq" rows="2" maxlength="240"></textarea></label>
+   ${[0,1,2,3].map(i=>`<label>Réponse ${i+1}<input id="qo${i}" maxlength="80"></label>`).join('')}
+   <div class="row"><label class="grow">Bonne réponse<select id="qa"><option value="0">Réponse 1</option><option value="1">Réponse 2</option><option value="2">Réponse 3</option><option value="3">Réponse 4</option></select></label>
+   <label class="grow">Difficulté<select id="qd">${DIFF.map((d,i)=>`<option value="${i}">${d}</option>`).join('')}</select></label></div>
+   <label>Explication<input id="qe" maxlength="200"></label><label>Indice (facultatif)<input id="qh" maxlength="200"></label><button class="btn" data-a="qadd">Publier l'énigme</button>
+   ${(CFG.riddles||[]).map((r,i)=>`<div class="row small"><span class="grow">${esc(r.q)}</span><button data-a="qdel" data-i="${i}">Supprimer</button></div>`).join('')}</div>
+  <div class="panel"><h3>Tests</h3><div class="row"><button data-a="t1">+1 000 points</button><button data-a="t2">Tout débloquer</button><button data-a="t3">Héros actif niveau max</button><button data-a="t4">${sub.rst?'Confirmer la remise à zéro':'Remettre ma partie à zéro'}</button></div>
+   <h3>Joueurs (${PLAYERS.length})</h3><div class="tw"><table><tr><th>Pseudo</th><th>Points</th><th>Total</th><th>Étage</th><th>Héros</th><th>Énigmes</th></tr>
+   ${PLAYERS.map(p=>`<tr><td>${esc(p.nick||'Joueur')}</td><td>${p.pts>=INF?'∞':p.pts||0}</td><td>${p.total||0}</td><td>${p.arena||1}</td><td>${p.heroes||0}</td><td>${p.solved||0}</td></tr>`).join('')||'<tr><td colspan="6" class="mute">Aucun joueur enregistré pour l\'instant.</td></tr>'}</table></div>
+   <h3>Offrir un héros</h3>${giftList().length?`<div class="row"><label class="grow">Joueur<select id="gp">${giftList().map(p=>`<option value="${esc(p.id)}">${esc(p.nick||'Joueur')}${p.id===uid?' (toi)':''}${p.on?' · en ligne':''}</option>`).join('')}</select></label><label class="grow">Héros<select id="gh">${opt('drakonir')}</select></label></div><button class="btn" data-a="gift">Offrir ce héros</button><p class="small mute">Le joueur le reçoit dès qu'il ouvre le jeu.</p>`:'<p class="small mute">Aucun joueur pour l\'instant. Un joueur connecté au jeu apparaît ici.</p>'}</div></div></div>`;
+ }
+};
+function render(){
+  if(!ready||gated()){F=null;$('#nav').innerHTML='';hud();
+    $('#view').innerHTML=!ready?'<div class="panel" style="text-align:center"><p class="mute">Chargement…</p></div>'
+     :`<div class="panel" style="border-color:var(--gold);max-width:420px;width:100%;margin:24px auto;text-align:center;align-items:center"><div style="width:120px;line-height:0">${LOGO}</div><h2>Entre ton code</h2><p class="mute">Pour jouer, il te faut un code personnel. Demande-le à l'admin du jeu.</p>
+      <input id="code" maxlength="12" placeholder="Ton code" autocomplete="off" autocapitalize="none" spellcheck="false" style="text-align:center;font-size:20px;letter-spacing:3px" dir="ltr"><button class="btn" data-a="code">Entrer</button><p id="codeerr" class="small" style="color:var(--bad);min-height:1.4em"></p></div>`;return}
+  if(view!=='fight')F=null;
+  $('#view').innerHTML=(V[view]||V.home)();nav();hud();
+  if(view==='fight'){bindPad();if(F.result)$('#fres').innerHTML=F.result}
+  if(view==='riddle')bindScene();
+}
+// Rend les objets d'une énigme en image déplaçables et vérifie si le joueur a trouvé
+function bindScene(){
+  const r=allR().find(x=>x.id===sub.id),sc=$('.scene.act');if(!r||!r.act||!sc||sub.res||(fin(r.id)&&!sub.retry))return;
+  const taps={};let seq=1;const nseq=r.it.filter(i=>i.o).length;
+  sc.querySelectorAll('.it[data-i]').forEach(el=>{const ix=+el.dataset.i,it=r.it[ix];if(it.deco)return;
+    let pid=null,sx,sy,ox,oy,moved,lx,dir,flips,holdT=null;
+    const wob=()=>{try{el.animate([{transform:'translate(-50%,-50%) scale(1.25)'},{transform:'translate(-50%,-50%) scale(1)'}],{duration:160})}catch(e){}};
+    el.onpointerdown=e=>{pid=e.pointerId;try{el.setPointerCapture(pid)}catch(_){}sx=lx=e.clientX;sy=e.clientY;ox=parseFloat(el.style.left);oy=parseFloat(el.style.top);moved=false;dir=0;flips=0;
+      if(it.hold){wob();holdT=setTimeout(()=>{holdT=null;pid=null;answer(true)},it.hold*1000)}e.preventDefault()};
+    el.onpointermove=e=>{if(e.pointerId!==pid)return;const dx=e.clientX-sx,dy=e.clientY-sy;if(!moved&&Math.hypot(dx,dy)>8){moved=true;clearTimeout(holdT)}
+      if(!it.drag||!moved)return;const R=sc.getBoundingClientRect();el.style.left=(ox+dx/R.width*100)+'%';el.style.top=(oy+dy/R.height*100)+'%';
+      if(it.shake){const d=e.clientX-lx;if(Math.abs(d)>5){const nd=Math.sign(d);lx=e.clientX;if(dir&&nd!==dir&&++flips>=it.shake){pid=null;answer(true);return}dir=nd}}};
+    el.onpointerup=e=>{if(e.pointerId!==pid)return;pid=null;clearTimeout(holdT);
+      if(!moved){
+        if(it.ok)return answer(true);
+        if(it.taps){wob();taps[ix]=(taps[ix]||0)+1;if(taps[ix]>=it.taps)answer(true);return}
+        if(it.o){if(it.o===seq){el.classList.add('sel');wob();if(++seq>nseq)answer(true)}else if(it.o>seq)answer(false);return}
+        if(it.drag||it.n||it.hold||r.a!=null)return;
+        return answer(false)}
+      const x=parseFloat(el.style.left),y=parseFloat(el.style.top);
+      if(it.out&&(x<0||x>100||y<0||y>100))return answer(true);
+      if(it.on!=null){const te=sc.querySelector('[data-i="'+it.on+'"]');if(te&&Math.hypot(x-parseFloat(te.style.left),(y-parseFloat(te.style.top))*.625)<(it.rad||12))answer(true)}};
+    el.onpointercancel=()=>{pid=null;clearTimeout(holdT)};
+  });
+}
+
+/* ================== ACTIONS ================== */
+function reward(id,st,title){const c=HB[id],R=RAR[c.r];const m=$('#modal');m.hidden=false;
+  m.innerHTML=`<div class="panel" style="--rc:${R.c}"><div class="rar" style="--rc:${R.c}">${R.n}</div><div style="width:190px">${pt(id,st)}</div><h2>${c.n} ${stars(st)}</h2><p>${title}</p><button class="btn" data-a="close">Continuer</button></div>`}
+function answer(ok){
+  const r=allR().find(x=>x.id===sub.id);if(r&&sub.retry&&!sub.res&&S.failed[r.id]){sub.res=ok?'ok':'ko';sub.pts=0;render();return}
+  if(!r||sub.res||fin(r.id)||locked(r))return;
+  const isDay=S.daily!==today()&&dailyR()?.id===r.id;if(isDay)S.daily=today();
+  if(!ok){S.streak=0;S.failed[r.id]=1;sub.res='ko';save();render();return}
+  const p=gain(DPTS[r.d]*(1+Math.min(S.streak,10)*.1)*mult()*(isDay?3:1)*(S.hint[r.id]?.5:1));
+  S.solved[r.id]=1;S.streak++;sub.res='ok';sub.pts=p;save();render();
+}
+async function saveCfg(msg){
+  if(!db){toast('Base indisponible ici : réglage non enregistré');render();return}
+  try{await db.doc('game/config').set(JSON.parse(JSON.stringify(CFG)));toast(msg)}catch(e){toast('Enregistrement refusé : '+(e.code||'erreur'))}
+  render();
+}
+const val=id=>document.getElementById(id)?.value??'';
+const A={
+ go(d){view=d.v;sub={};render();scrollTo(0,0)},
+ diff(d){sub.d=+d.d;render()},
+ riddle(d){const r=allR().find(x=>x.id===d.id);if(!r||locked(r))return toast('Termine d\'abord l\'énigme précédente');view='riddle';sub={id:d.id,d:r.d};render()},
+ daily(){const r=dailyR();if(!r)return toast('Toutes les énigmes disponibles sont terminées');view='riddle';sub={id:r.id,d:r.d};render()},
+ lang(){LANG=LANG==='he'?'fr':'he';S.lang=LANG;applyLang();save();render();drawInv()},
+ fs(){fsOn=!fsOn;const w=$('#fwrap'),b=$('#bfs');if(w)w.classList.toggle('fs',fsOn);if(b)b.textContent=fsOn?'Réduire':'Plein écran';
+  try{if(fsOn)document.documentElement.requestFullscreen?.().catch(()=>{});else if(document.fullscreenElement)document.exitFullscreen().catch(()=>{})}catch(e){}},
+ async code(){const err=m=>{const e=$('#codeerr');if(e)e.textContent=m},v=val('code').trim().toLowerCase(),bad='Ce code n\'existe pas. Vérifie-le ou demande-en un à l\'admin.';
+  if(!/^[a-z0-9]{4,12}$/.test(v))return err('Écris ton code (lettres et chiffres).');
+  if(!db||!PR)return err('Connexion au serveur impossible. Vérifie ta connexion internet et recharge la page.');
+  err('Vérification…');
+  try{const k=await admKey(v);if(k){await PR.set('admins/'+uid,k);S.code=v;S.joined=1;S.nick='Shai';save();location.reload();return}}catch(e){}
+  let id;try{id=await codeId(v)}catch(e){return err('Impossible de vérifier le code pour le moment. Réessaie.')}
+  try{const s=await db.doc('codes/'+id).get();if(!s.exists)return err(bad);await PR.set('members/'+uid,id);
+   S.code=v;S.joined=1;S.nick=cleanN(s.data().name)||'Joueur';lastSync=0;save();view='home';render();toast('Bienvenue, '+S.nick+' !');watchCode();pushPres()}
+  catch(e){err('Impossible de vérifier le code pour le moment. Réessaie.')}},
+ async cadd(){if(!db)return toast('Base indisponible ici');const name=cleanN(val('cn'));let code=val('cc').trim().toLowerCase();
+  if(name.length<2)return toast('Écris le nom du joueur (2 caractères minimum)');
+  if(CODES.some(c=>String(c.name).toLowerCase()===name.toLowerCase()))return toast('Ce nom a déjà un code');
+  if(code&&!/^[a-z0-9]{4,12}$/.test(code))return toast('Le code doit faire 4 à 12 lettres ou chiffres');
+    if(!code){const al='abcdefghjkmnpqrstuvwxyz23456789',r=crypto.getRandomValues(new Uint8Array(12));do{code=[...r].slice(0,6).map(x=>al[x%al.length]).join('');crypto.getRandomValues(r)}while(CODES.some(c=>c.code===code))}
+  if(CODES.some(c=>c.code===code))return toast('Ce code existe déjà');
+  try{const id=await codeId(code);await db.doc('codes/'+id).set({name,at:Date.now()});await db.doc('adm/codes').set({list:CODES.concat({code,name,id})});toast('Code créé pour '+name+' : '+code)}catch(e){toast('Création refusée : '+(e.code||'erreur'))}},
+ async cdel(d){if(!db)return;const c=CODES.find(x=>x.id===d.id);if(!c)return;if(sub.cd!==c.id){sub.cd=c.id;render();return}
+  try{await db.doc('codes/'+c.id).delete();await db.doc('adm/codes').set({list:CODES.filter(x=>x.id!==c.id)});sub.cd=null;toast('Code supprimé : '+c.name+' ne peut plus entrer')}catch(e){toast('Suppression refusée : '+(e.code||'erreur'))}},
+ ans(d){answer(d.ok==='1')},
+ giveup(){if(!sub.gu){sub.gu=1;toast('Appuie encore une fois pour voir la réponse (0 point)');return}answer(false)},
+ retry(){const id=sub.id,d=sub.d;if(!S.failed[id])return;sub={id,d,retry:1};render();scrollTo(0,0)},
+ hint(){const r=allR().find(x=>x.id===sub.id);if(!r||!r.h||sub.res||(fin(r.id)&&!sub.retry))return;S.hint[r.id]=1;save();render()},
+ num(){const v=val('num').trim();if(v==='')return toast('Écris un nombre');const r=allR().find(x=>x.id===sub.id);answer(parseInt(v,10)===r.a)},
+ next(){const r=allR().find(x=>x.id===sub.id),n=ordered(r.d).find(x=>!fin(x.id));if(n){sub={id:n.id,d:r.d};render()}else{view='rid';sub={d:r.d};render();toast('Niveau « '+DIFF[r.d]+' » terminé !')}},
+ hero(d){if(view!=='heroes')view='heroes';sub={h:d.id};render();scrollTo(0,0)},
+ pick(d){S.sel=d.id;save();render()},
+ up(d){const o=S.chars[d.id],c=25*o.lvl;if(S.pts<c||o.lvl>=20)return;S.pts-=c;o.lvl++;o.xp=0;save();render();toast(HB[d.id].n+' passe niveau '+o.lvl)},
+ box(d){const b=BOX[+d.i];if(!b||S.pts<b.p)return;S.pts-=b.p;let x=Math.random()*100,r=0;while(r<4&&x>=b.o[r]){x-=b.o[r];r++}
+  const pool=H.filter(c=>c.r===r),c=pool[Math.floor(Math.random()*pool.length)],had=give(c.id);save();render();reward(c.id,S.chars[c.id].st,had?'Double obtenu : utilise-le à la forge':'Nouveau héros débloqué !')},
+ async gift(){if(!db)return toast('Base indisponible ici');const p=val('gp'),h=val('gh');if(!p||!HB[h])return;
+  try{await sendCmd(p,{h});toast(HB[h].n+' offert à '+((giftList().find(x=>x.id===p)||{}).nick||'Joueur'))}catch(e){toast('Don refusé : '+(e.code||'erreur'))}},
+ pview(d){sub.pv=d.id;render();scrollTo(0,0)},
+ pclose(){sub.pv=null;render()},
+ async pcmd(d){if(!db)return toast('Base indisponible ici');const u=d.u;let it;
+  if(d.op==='pts'){const v=Math.floor(+val('ap_'+u)||0);if(v<=0)return toast('Écris un nombre de points');it={op:'pts',v:v*(+d.s)}}
+  else if(d.op==='arena'){const v=Math.floor(+val('aa_'+u)||0);if(v<1)return toast('Écris un numéro d\'étage');it={op:'arena',v}}
+  else if(d.op==='rid')it={op:'rid'};else if(d.op==='hlvl')it={op:'hlvl',h:d.h,v:-1};else if(d.op==='rmchar')it={op:'rmchar',h:d.h};else return;
+  try{await sendCmd(u,it);toast('Changement envoyé au joueur')}catch(e){toast('Envoi refusé : '+(e.code||'erreur'))}},
+ topen(d){trUI=d.p;if(view!=='heroes'){view='heroes';sub={}}render();document.getElementById('trp')?.scrollIntoView({block:'center'})},
+ tclose(){trUI=null;render()},
+ tsend(){if(TR||!ME||!room)return;const p=PEERS.find(x=>x.peer===trUI),g=val('tg'),w=val('tw');if(!p)return toast('Ce joueur est parti');if(!S.chars[g]||!HB[w])return;
+  if(S.chars[g].n<2&&Object.keys(S.chars).length<2)return toast('Tu ne peux pas donner ton seul héros');
+  TR={to:p.peer,on:pname(p),sd:Math.floor(Math.random()*1e9),g,w};trUI=null;setT({to:TR.to,sd:TR.sd,g,w});render()},
+ tcancel(){if(!TR)return;TR=null;setT(null);render()},
+ tacc(){const p=TINV,t=p?.presence?.tr;if(!p||!t||TR)return;
+  if(!S.chars[t.w]||!parseC(p.presence.c)[t.g]){refused['t'+p.peer+t.sd]=1;TINV=null;drawInv();return toast('Échange impossible : ce héros n\'est plus disponible')}
+  if(!takeHero(t.w))return toast('Tu ne peux pas donner ton seul héros');
+  S.trd[t.sd]=1;give(t.g);save();TINV=null;drawInv();setT({to:p.peer,sd:t.sd,ok:1});setTimeout(()=>{if(!TR)setT(null)},6000);if(view!=='fight'&&view!=='duel')render();reward(t.g,S.chars[t.g].st,'Échange réussi !')},
+ tref(){const p=TINV,t=p?.presence?.tr;if(!p||!t)return;refused['t'+p.peer+t.sd]=1;TINV=null;drawInv();setT({to:p.peer,sd:t.sd,x:1});setTimeout(()=>{if(!TR)setT(null)},4000)},
+ craft(d){const r=JSON.parse(d.r);if(S.craft)return;const a=S.chars[r.a],b=S.chars[r.b];
+  if(r.evo){if(a.n<2||a.st>=3)return;a.n--;S.craft={out:r.out,evo:1,st:a.st+1}}else{if(!a||!b||a.n<2||b.n<2)return;a.n--;b.n--;S.craft={out:r.out,st:S.chars[r.out]?.st||1}}
+  S.craft.dur=RAR[HB[r.out].r].t*1000;S.craft.end=Date.now()+S.craft.dur;save();render();scrollTo(0,0)},
+ claim(){const c=S.craft;if(!c||c.end>Date.now())return;S.craft=null;let o=S.chars[c.out];
+  if(c.evo){o.st=c.st;save();render();reward(c.out,o.st,'Évolution réussie : +25 % de puissance')}
+  else{if(o)o.n++;else o=S.chars[c.out]={n:1,lvl:1,xp:0,st:1};save();render();reward(c.out,o.st,o.n>1?'Un exemplaire de plus !':'Nouveau héros forgé !')}},
+ fight(d){if(d.m==='boss'&&!ev())return;if(DU)return toast('Termine d\'abord ton duel');startFight(d.m)},
+ dinv(d){if(DU||!ME||!room)return;const p=PEERS.find(x=>x.peer===d.p);if(!p)return toast('Ce joueur est parti');const bet=Math.max(0,Math.floor(+val('bet')||0));
+  if(S.pts<bet)return toast('Tu n\'as pas assez de points pour cette mise');if((+p.presence.pts||0)<bet)return toast('Ce joueur n\'a pas assez de points pour cette mise');
+  DU={to:p.peer,on:pname(p),bet,sd:Math.floor(Math.random()*1e9),mv:'',om:'',h:myH(),s:'wait',me:ME.peer,n:0};S.pts-=bet;S.esc={bet,st:'wait'};save();pubD();view='duel';sub={};render()},
+ dacc(){const p=INV,d=p?.presence?.d;if(!p||!d||DU||!ME)return;const bet=Math.max(0,Math.min(1e6,Math.floor(+d.bet||0)));if(S.pts<bet)return toast('Tu n\'as pas assez de points pour cette mise');
+  DU={to:p.peer,on:pname(p),bet,sd:+d.sd||0,mv:'',om:'',h:myH(),oh:d.h,s:'play',me:ME.peer,n:0,rt:Date.now()};S.pts-=bet;S.esc={bet,st:'play'};INV=null;save();pubD();view='duel';sub={};render();drawInv()},
+ dref(){const p=INV,d=p?.presence?.d;if(!p||!d)return;refused[p.peer+d.sd]=1;INV=null;drawInv();setD({to:p.peer,sd:d.sd,x:1});setTimeout(()=>{if(!DU)setD(null)},4000)},
+ dcancel(){if(DU&&DU.s==='wait')endInvite('Défi annulé')},
+ dmv(d){if(!DU||DU.s!=='play'||!MV[d.m]||DU.mv.length>DU.n)return;DU.mv+=d.m;pubD();resolveDuel();if(view==='duel')render()},
+ dquit(){if(!DU||DU.s!=='play')return;if(!sub.dq){sub.dq=1;render();return}pubD(1);finishDuel('lose')},
+ dclaim(){if(!DU||DU.s!=='play')return;pubD(2);finishDuel('forf')},
+ dclose(){if(!DU)return;refused[DU.to+DU.sd]=1;DU=null;setD(null);view='fprep';sub={};render()},
+ quit(){view='fprep';render()},
+ close(){$('#modal').hidden=true;$('#modal').innerHTML=''},
+ evstart(){const dur=Math.max(1,+val('ed')||60);CFG.event={name:val('en').trim()||'Événement',mult:+val('em')||2,end:Date.now()+dur*60000,a:val('ea'),b:val('eb'),out:val('eo'),reward:Math.max(0,+val('er')||0)};saveCfg('Événement lancé pour '+dur+' min')},
+ evstop(){CFG.event=null;saveCfg('Événement arrêté')},
+ rotsave(){CFG.rot=Math.max(1,+val('rot2')||60);saveCfg('Rotation réglée sur '+CFG.rot+' min')},
+ radd(){CFG.recipes=(CFG.recipes||[]).concat({a:val('ra'),b:val('rb'),out:val('ro')});saveCfg('Recette ajoutée')},
+ rdel(d){CFG.recipes.splice(+d.i,1);saveCfg('Recette retirée')},
+ qadd(){const q=val('qq').trim(),o=[0,1,2,3].map(i=>val('qo'+i).trim());if(!q||o.some(x=>!x))return toast('Remplis la question et les 4 réponses');
+  CFG.riddles=(CFG.riddles||[]).concat({id:'c'+Date.now().toString(36),q,o,a:+val('qa'),d:+val('qd'),ex:val('qe').trim(),h:val('qh').trim()});saveCfg('Énigme publiée')},
+ qdel(d){CFG.riddles.splice(+d.i,1);saveCfg('Énigme supprimée')},
+ t1(){gain(1000);save();render();toast('+1 000 points')},
+ t2(){H.forEach(c=>{const o=S.chars[c.id];if(o)o.n=Math.max(o.n,3);else S.chars[c.id]={n:3,lvl:1,xp:0,st:1}});save();render();toast('Tous les héros débloqués, avec des doubles')},
+ t3(){S.chars[S.sel].lvl=20;S.chars[S.sel].xp=0;save();render();toast(HB[S.sel].n+' niveau 20')},
+ t4(){if(!sub.rst){sub.rst=1;render();return}const gf=S.gifted,nk=S.nick;S=JSON.parse(JSON.stringify(DEF));S.gifted=gf;S.nick=nk;if(isAdmin)H.forEach(c=>S.chars[c.id]=S.chars[c.id]||{n:1,lvl:1,xp:0,st:1});sub={};save();render();toast('Partie remise à zéro')}
+};
+document.addEventListener('click',e=>{const el=e.target.closest('[data-a]');if(el&&(!ready||gated())&&!['code','lang'].includes(el.dataset.a))return;if(el&&!el.disabled&&A[el.dataset.a])A[el.dataset.a](el.dataset)});
+document.addEventListener('change',e=>{if(e.target.id==='bet')betSel=+e.target.value;if(e.target.id==='stg')admStage=+e.target.value;});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='num')A.num();if(e.key==='Enter'&&e.target.id==='code')A.code()});
+const KEYS={j:'atk',k:'shoot',l:'shield',u:'charge',i:'sp'},kd={};
+function keyMove(){inp.x=(kd.arrowright||kd.d?1:0)-(kd.arrowleft||kd.q||kd.a?1:0);inp.y=(kd.arrowdown||kd.s?1:0)-(kd.arrowup||kd.z||kd.w?1:0)}
+addEventListener('keydown',e=>{if(view!=='fight')return;const k=e.key.toLowerCase();if(KEYS[k])inp[KEYS[k]]=1;else if(k.startsWith('arrow')||'zqsdaw'.includes(k)){kd[k]=1;keyMove()}else return;e.preventDefault()});
+addEventListener('keyup',e=>{const k=e.key.toLowerCase();if(KEYS[k])inp[KEYS[k]]=0;else{kd[k]=0;if(view==='fight')keyMove()}});
+function bindPad(){
+  Object.keys(inp).forEach(k=>inp[k]=0);
+  const joy=$('#joy'),knob=$('#knob');let id=null;
+  const mv=e=>{const r=joy.getBoundingClientRect();let x=e.clientX-r.left-r.width/2,y=e.clientY-r.top-r.height/2;const d=Math.hypot(x,y),m=42;if(d>m){x*=m/d;y*=m/d}knob.style.transform=`translate(${x}px,${y}px)`;inp.x=Math.abs(x)<8?0:x/m;inp.y=Math.abs(y)<8?0:y/m};
+  joy.onpointerdown=e=>{id=e.pointerId;try{joy.setPointerCapture(id)}catch(_){}mv(e);e.preventDefault()};
+  joy.onpointermove=e=>{if(e.pointerId===id)mv(e)};
+  joy.onpointerup=joy.onpointercancel=e=>{if(e.pointerId!==id)return;id=null;knob.style.transform='';inp.x=inp.y=0};
+  document.querySelectorAll('.acts [data-k]').forEach(b=>{const k=b.dataset.k,on=e=>{inp[k]=1;b.classList.add('dn');e.preventDefault()},off=()=>{inp[k]=0;b.classList.remove('dn')};
+    b.onpointerdown=on;b.onpointerup=b.onpointercancel=b.onpointerleave=off;b.oncontextmenu=e=>e.preventDefault()});
+}
+
+/* ================== DUELS EN LIGNE (tour par tour, via la présence des joueurs) ================== */
+let PR=null,room=null,PEERS=[],ME=null,DU=null,INV=null,refused={},presSig='',betSel=0,peerSig='';
+const MV={F:['Frapper','Gratuit'],T:['Tirer','Dégâts ×1,4 · 15 énergie'],B:['Bouclier','Dégâts reçus −50 % · pas 2 fois de suite'],R:['Recharger','+40 énergie · +20 % de dégâts reçus'],S:['Spécial','Dégâts ×3,2 · énergie pleine']};
+function myH(){const o=S.chars[S.sel];return [S.sel,o.lvl,o.st]}
+function pname(p){return String(p?.presence?.nick||'Joueur').replace(/[^\p{L}\p{N} _.\-']/gu,'').slice(0,16)||'Joueur'}
+function pushPres(){if(!room||!ready||gated())return;const p={nick:(S.nick||'Joueur').replace(/[^\p{L}\p{N} _.\-']/gu,'').slice(0,16)||'Joueur',tot:S.total,pts:S.pts,h:myH(),cid:myCid||null,a:S.arena,c:Object.entries(S.chars).map(([k,v])=>k+':'+v.n+':'+v.lvl+':'+v.st).join(',').slice(0,900),sv:Object.keys(S.solved).join(',').slice(0,900),fl:Object.keys(S.failed).join(',').slice(0,900)};const s=JSON.stringify(p);if(s===presSig)return;presSig=s;room.presence(p).catch(()=>{})}
+function setD(d){if(room)room.presence({d}).catch(()=>{})}
+function pubD(x){const d={to:DU.to,bet:DU.bet,sd:DU.sd,mv:DU.mv,h:DU.h};if(x)d.x=x;setD(d)}
+function fz(h){const c=HB[h&&h[0]]||HB.braskar,l=Math.max(1,Math.min(20,Math.floor(+(h&&h[1])||1))),st=Math.max(1,Math.min(3,Math.floor(+(h&&h[2])||1)));return {c,l,st,mhp:stat(c,l,st,'hp'),atk:stat(c,l,st,'atk'),men:c.en}}
+function sim(h1,h2,m1,m2,sd){
+  const P=[fz(h1),fz(h2)],hp=[P[0].mhp,P[1].mhp],en=[Math.round(P[0].men/2),Math.round(P[1].men/2)],prev=['',''],log=[],n=Math.min(m1.length,m2.length,40),r=rng(sd|0);let over=false,win=null;
+  for(let i=0;i<n&&!over;i++){
+    const m=[m1[i],m2[i]].map((x,k)=>(x==='T'&&en[k]>=15)||(x==='S'&&en[k]>=P[k].men)||(x==='B'&&prev[k]!=='B')||x==='R'?x:'F'),dm=[0,0],raw=[0,0];
+    for(let k=0;k<2;k++){const o=1-k,b={F:1,T:1.4,S:3.2}[m[k]]||0;if(m[k]==='T')en[k]-=15;if(m[k]==='S')en[k]=0;dm[o]=Math.round(b*P[k].atk*2*(.9+.2*r())*(m[o]==='B'?.5:m[o]==='R'?1.2:1))}
+    for(let k=0;k<2;k++){if(m[k]==='R')en[k]+=40;en[k]=Math.min(P[k].men,en[k]+5);raw[k]=hp[k]-dm[k];hp[k]=Math.max(0,raw[k]);prev[k]=m[k]}
+    log.push({m,dm});
+    if(hp[0]<=0||hp[1]<=0||i===39){over=true;const a=raw[0]/P[0].mhp,b=raw[1]/P[1].mhp;win=a===b?-1:a>b?0:1}
+  }
+  return {P,hp,en,prev,log,over,win,n:log.length};
+}
+function duelSim(){const f=DU.me<DU.to,r=sim(f?DU.h:DU.oh,f?DU.oh:DU.h,f?DU.mv:DU.om,f?DU.om:DU.mv,DU.sd);r.me=f?0:1;return r}
+function finishDuel(res){if(!DU||DU.s==='done')return;DU.s='done';DU.res=res;const b=DU.bet,w=res==='win'||res==='forf';if(w){S.pts+=2*b;S.total+=b;S.wins++}else if(res==='draw')S.pts+=b;S.esc=null;addXp(S.sel,w?30:10);save();view='duel';sub={};render()}
+function endInvite(msg){if(!DU)return;S.pts+=DU.bet;S.esc=null;refused[DU.to+DU.sd]=1;DU=null;setD(null);save();toast(msg);view='fprep';render()}
+function resolveDuel(){
+  if(!DU||DU.s!=='play')return;const r=duelSim();
+  if(r.over)return finishDuel(r.win===-1?'draw':r.win===r.me?'win':'lose');
+  if(DU.gone&&Date.now()-DU.gone>6000)return finishDuel('forf');
+  if(r.n!==DU.n){DU.n=r.n;DU.rt=Date.now();DU.claim=0}
+  const sig=r.n+':'+DU.mv.length+':'+DU.om.length;if(sig!==DU.sig){DU.sig=sig;if(view==='duel')render()}
+}
+function roomTick(){
+  PEERS=room.peers().filter(p=>p.kind==='viewer');ME=PEERS.find(p=>p.sameTab)||null;if(!ME)return;
+  if(DU){const op=PEERS.find(p=>p.peer===DU.to),od=op?.presence?.d,linked=!!od&&od.to===DU.me&&od.sd===DU.sd;
+    if(DU.s==='wait'){if(!op)endInvite('Ce joueur est parti');else if(linked){if(od.x)endInvite('Défi refusé');else{DU.s='play';DU.oh=od.h;DU.rt=Date.now();S.esc={bet:DU.bet,st:'play'};save();view='duel';render()}}}
+    else if(DU.s==='play'){
+      if(linked){DU.gone=0;DU.om=String(od.mv||'').slice(0,40).replace(/[^FTBRS]/g,'F');if(od.x===1)finishDuel('forf');else if(od.x===2)finishDuel('lose')}
+      else if(!DU.gone)DU.gone=Date.now();
+      resolveDuel()}
+  }
+  tradeTick();seenSync();
+  INV=null;if(!DU)for(const p of PEERS){const d=p.presence?.d;if(!p.sameTab&&d&&d.to===ME.peer&&!d.x&&d.mv===''&&!refused[p.peer+d.sd]){INV=p;break}}
+  drawInv();
+  const sg=PEERS.map(p=>p.peer+pname(p)+(p.presence?.d?1:0)+(p.presence?.h||'')+(p.presence?.c||'')+(p.presence?.pts||0)+(p.presence?.a||0)).join('|');if(sg!==peerSig){peerSig=sg;if(view==='fprep'||((view==='admin'||view==='heroes'||view==='home')&&!typing()))render()}
+}
+function drawInv(){const b=$('#invbar');if(!ready||gated()){INV=null;TINV=null}b.hidden=!INV&&!TINV;let h='';
+  if(INV)h+=`<span>${esc(pname(INV))} te défie en duel · mise ${Math.max(0,Math.floor(+INV.presence.d.bet||0))} points</span><span class="row"><button class="btn" data-a="dacc">Accepter</button><button data-a="dref">Refuser</button></span>`;
+  if(TINV){const t=TINV.presence.tr;h+=`<span>${esc(pname(TINV))} te propose ${HB[t.g].n} contre ton ${HB[t.w].n}</span><span class="row"><button class="btn" data-a="tacc">Accepter</button><button data-a="tref">Refuser</button></span>`}
+  if(h!==b.dataset.h){b.dataset.h=h;b.innerHTML=h}}
+/* ---- échanges de héros entre joueurs en ligne ---- */
+let TR=null,TINV=null,trUI=null,myCid='',SEEN={},seenW={};
+function setT(t){if(room)room.presence({tr:t}).catch(()=>{})}
+function parseC(str){const o={};String(str||'').split(',').slice(0,20).forEach(x=>{const [id,n,l,st]=x.split(':');if(HB[id]&&+n>0)o[id]={n:Math.min(99,Math.floor(+n)),lvl:Math.max(1,Math.min(20,Math.floor(+l)||1)),st:Math.max(1,Math.min(3,Math.floor(+st)||1))}});return o}
+function takeHero(id){const o=S.chars[id];if(!o)return false;if(o.n>1){o.n--;return true}if(Object.keys(S.chars).length<2)return false;delete S.chars[id];if(S.sel===id)S.sel=Object.keys(S.chars)[0];if(S.craft&&S.craft.out===id&&S.craft.evo)S.craft=null;return true}
+function tradeTick(){
+  if(TR){const op=PEERS.find(p=>p.peer===TR.to),t=op?.presence?.tr;
+    if(!op){TR=null;setT(null);toast('Ce joueur est parti');if(view==='heroes')render()}
+    else if(t&&t.to===ME.peer&&t.sd===TR.sd){
+      if(t.x){TR=null;setT(null);toast('Échange refusé');if(view==='heroes')render()}
+      else if(t.ok&&!S.trd[TR.sd]){S.trd[TR.sd]=1;const g=TR.g,w=TR.w;TR=null;setTimeout(()=>{if(!TR)setT(null)},3000);
+        if(takeHero(g)){give(w);save();if(view!=='fight'&&view!=='duel')render();reward(w,S.chars[w].st,'Échange réussi !')}else{save();toast('Échange impossible : ce héros n\'est plus disponible')}}}}
+  TINV=null;if(!TR&&ME)for(const p of PEERS){const t=p.presence?.tr;if(!p.sameTab&&t&&t.to===ME.peer&&!t.x&&!t.ok&&HB[t.g]&&HB[t.w]&&!S.trd[t.sd]&&!refused['t'+p.peer+t.sd]){TINV=p;break}}
+}
+function tradePanel(){
+  const others=PEERS.filter(p=>!p.sameTab&&p.presence?.nick&&p.presence?.c);let body;
+  if(!room)body='<p class="mute">Les échanges ne sont pas disponibles dans cette vue.</p>';
+  else if(TR)body=`<p>Proposition envoyée à ${esc(TR.on)} : ${HB[TR.g].n} contre ${HB[TR.w].n}. En attente de sa réponse…</p><div><button data-a="tcancel">Annuler la proposition</button></div>`;
+  else if(trUI&&others.find(p=>p.peer===trUI)){const p=others.find(x=>x.peer===trUI),th=parseC(p.presence.c);
+    body=`<p><b>${esc(pname(p))}</b></p><div class="row"><label class="grow">Tu donnes<select id="tg">${Object.entries(S.chars).map(([id,o])=>`<option value="${id}">${HB[id].n} ×${o.n}</option>`).join('')}</select></label>
+     <label class="grow">Tu reçois<select id="tw">${Object.entries(th).map(([id,o])=>`<option value="${id}">${HB[id].n} ×${o.n}</option>`).join('')}</select></label></div>
+     <div class="row"><button class="btn" data-a="tsend">Proposer l'échange</button><button data-a="tclose">Annuler</button></div>`}
+  else body=others.length?others.map(p=>`<div class="row"><span class="grow"><b>${esc(pname(p))}</b> <span class="mute small">· ${Object.keys(parseC(p.presence.c)).length} / ${H.length}</span></span><button class="btn2" data-a="topen" data-p="${esc(p.peer)}">Échanger</button></div>`).join(''):'<p class="mute">Personne d\'autre n\'est en ligne pour le moment.</p>';
+  return `<div class="panel" id="trp" style="border-color:var(--arc)"><h2>Échanges entre joueurs</h2><p class="mute small">Échange un de tes héros contre celui d'un joueur connecté. Le héros reçu arrive au niveau 1. Si tu donnes ton dernier exemplaire, tu perds ce héros et ses niveaux.</p>${body}</div>`;
+}
+/* ---- comptes des joueurs vus par l'admin, et modifications envoyées aux joueurs ---- */
+function seenSync(){
+  if(!isAdmin||!db)return;
+  for(const p of PEERS){const q=p.presence||{};if(!p.by||!q.cid||p.sameTab)continue;
+    const rec={nick:pname(p),cid:String(q.cid).slice(0,40),pts:Math.floor(+q.pts||0),tot:Math.floor(+q.tot||0),a:Math.floor(+q.a||1),c:String(q.c||'').slice(0,900),sv:String(q.sv||'').slice(0,900),fl:String(q.fl||'').slice(0,900)},sg=JSON.stringify(rec),w=seenW[p.by]||{};
+    if(sg!==w.sg&&Date.now()-(w.t||0)>20000&&!w.busy){const st=seenW[p.by]={sg,t:Date.now(),busy:1};db.doc('adm/seen/p/'+p.by).set({...rec,at:Date.now()}).catch(()=>{st.sg=''}).finally(()=>{st.busy=0})}}
+}
+function plRecs(cid){const m=new Map();for(const k in SEEN)if(SEEN[k].cid===cid)m.set(k,{uid:k,...SEEN[k]});
+  for(const p of PEERS){const q=p.presence||{};if(p.by&&q.cid===cid)m.set(p.by,{uid:p.by,nick:pname(p),cid,pts:Math.floor(+q.pts||0),tot:Math.floor(+q.tot||0),a:Math.floor(+q.a||1),c:q.c,sv:q.sv,fl:q.fl,on:1})}return [...m.values()]}
+function plPanel(){
+  const c=CODES.find(x=>x.id===sub.pv);if(!c)return '';const recs=plRecs(c.id),cnt=x=>String(x||'').split(',').filter(Boolean).length;
+  return `<div class="panel" style="border-color:var(--gold)"><div class="row"><h2 class="grow">Compte de ${esc(c.name)}</h2><button data-a="pclose">Fermer</button></div><p class="small mute">Code : <span class="code">${esc(c.code)}</span></p>
+  ${recs.length?recs.map(P=>{const ch=parseC(P.c),u=esc(P.uid);return `<div class="panel"><p><b>${esc(P.nick)}</b> · ${P.on?'<span style="color:var(--ok)">en ligne maintenant</span>':'hors ligne, vu le '+new Date(P.at||0).toLocaleString('fr-FR')}</p>
+   <p>Points : <b>${P.pts}</b> · gagnés au total : <b>${P.tot}</b> · étage d'arène : <b>${P.a}</b></p><p>Énigmes réussies : <b>${cnt(P.sv)}</b> · ratées : <b>${cnt(P.fl)}</b></p>
+   <div class="row"><label class="grow">Points<input id="ap_${u}" type="number" min="1" value="50"></label><button data-a="pcmd" data-u="${u}" data-op="pts" data-s="-1">Retirer</button><button data-a="pcmd" data-u="${u}" data-op="pts" data-s="1">Ajouter</button></div>
+   <div class="row"><label class="grow">Étage d'arène<input id="aa_${u}" type="number" min="1" value="${P.a}"></label><button data-a="pcmd" data-u="${u}" data-op="arena">Changer l'étage</button></div>
+   <div><button data-a="pcmd" data-u="${u}" data-op="rid">Remettre ses énigmes à zéro</button></div>
+   <div class="tw"><table><tr><th>Héros</th><th>Ex.</th><th>Niv.</th><th>★</th><th></th></tr>${Object.entries(ch).map(([id,o])=>`<tr><td>${HB[id].n}</td><td>${o.n}</td><td>${o.lvl}</td><td>${o.st}</td><td><button data-a="pcmd" data-u="${u}" data-op="hlvl" data-h="${id}" ${o.lvl<=1?'disabled':''}>−1 niveau</button> <button data-a="pcmd" data-u="${u}" data-op="rmchar" data-h="${id}">Retirer</button></td></tr>`).join('')}</table></div></div>`}).join('')
+   :'<p class="mute">Pas encore d\'infos : ce joueur ne s\'est pas connecté pendant que tu avais le jeu ouvert.</p>'}
+  <p class="small mute">Un changement s'applique tout de suite si le joueur est en ligne, sinon à sa prochaine connexion. Les infos d'un joueur hors ligne datent de la dernière fois où vous étiez connectés en même temps.</p></div>`;
+}
+async function sendCmd(pid,item){const ref=db.doc('gifts/'+pid),s=await ref.get(),items=(s.exists?s.data().items||[]:[]).slice(-40).concat({...item,k:Date.now().toString(36)+Math.random().toString(36).slice(2,6)});await ref.set({items})}
+function applyCmds(items){
+  S.gifted=S.gifted||{};let lastH=null,n=0,mod=0;
+  for(const it of items||[]){if(!it||!it.k||S.gifted[it.k])continue;
+    if(!it.op){if(!HB[it.h])continue;S.gifted[it.k]=1;give(it.h);lastH=it.h;n++;continue}
+    S.gifted[it.k]=1;mod=1;const v=Math.floor(+it.v||0),o=it.h&&S.chars[it.h];
+    if(it.op==='pts'){S.pts=Math.max(0,S.pts+v);if(v>0)S.total+=v}
+    else if(it.op==='arena')S.arena=Math.max(1,Math.min(999,v||1));
+    else if(it.op==='rid'){S.solved={};S.failed={};S.hint={};S.streak=0;S.daily=''}
+    else if(it.op==='hlvl'&&o){o.lvl=Math.max(1,Math.min(20,o.lvl+v));o.xp=0}
+    else if(it.op==='rmchar'&&o){if(Object.keys(S.chars).length>1){delete S.chars[it.h];if(S.sel===it.h)S.sel=Object.keys(S.chars)[0];if(S.craft&&S.craft.out===it.h&&S.craft.evo)S.craft=null}else{o.n=1;o.lvl=1;o.st=1;o.xp=0}}
+  }
+  if(n||mod){save();if(view!=='fight'&&view!=='duel')render()}
+  if(n)reward(lastH,S.chars[lastH].st,n>1?n+' cadeaux de l\'admin reçus !':'Cadeau de l\'admin !');else if(mod)toast('L\'admin a modifié ton compte');
+}
+function duelClock(){
+  if(!DU||DU.s!=='play')return;resolveDuel();if(!DU||DU.s!=='play')return;
+  const left=30-Math.floor((Date.now()-DU.rt)/1000),moved=DU.mv.length>DU.n,el=$('#dtm');
+  if(!moved){if(left<=0)A.dmv({m:'F'});else if(el)el.textContent='Choisis ton action · '+left+' s'}
+  else if(left<-20&&DU.om.length<=DU.n&&!DU.claim){DU.claim=1;if(view==='duel')render()}
+}
+function duelPanel(){
+  const others=PEERS.filter(p=>!p.sameTab&&p.presence?.nick),bets=[0,10,25,50,100,250,500].filter(b=>b<=S.pts);if(!bets.includes(betSel))betSel=0;
+  return `<div class="panel" style="border-color:var(--arc)"><h2>Joueurs en ligne</h2>
+   ${!room?'<p class="mute">Connexion au serveur impossible pour le moment. Recharge la page.</p>'
+   :`<p class="mute small">Défie un joueur connecté ou propose-lui un échange de héros. En duel, chacun mise des points et le gagnant prend tout. Le combat se joue au tour par tour : vous choisissez chacun une action en secret, 30 secondes par manche.</p>
+   <label style="max-width:220px">Ta mise<select id="bet">${bets.map(b=>`<option value="${b}" ${b===betSel?'selected':''}>${b?b+' points':'Sans mise'}</option>`).join('')}</select></label>
+   ${others.length?others.map(p=>{const h=fz(p.presence?.h),busy=!!p.presence?.d;return `<div class="row"><span class="grow"><b>${esc(pname(p))}</b> <span class="mute small">· ${h.c.n} niv. ${h.l} · ${+p.presence?.pts>=INF?'∞':Math.max(0,Math.floor(+p.presence?.pts||0))} pts</span></span><button class="btn2" data-a="dinv" data-p="${esc(p.peer)}" ${busy||DU?'disabled':''}>${busy?'En duel':'Défier'}</button><button data-a="topen" data-p="${esc(p.peer)}" ${p.presence?.c?'':'disabled'}>Échanger</button></div>`}).join('')
+   :'<p class="mute">Personne d\'autre n\'est en ligne pour le moment. Envoie le lien du jeu à tes potes : ils apparaîtront ici dès qu\'ils ouvrent le jeu.</p>'}`}</div>`;
+}
+function giftList(){const m=new Map(PLAYERS.map(p=>[p.id,{id:p.id,nick:p.nick}]));for(const p of PEERS)if(p.by){const e=m.get(p.by)||{id:p.by};e.nick=pname(p);e.on=1;m.set(p.by,e)}return [...m.values()]}
+
+/* ================== BOUCLE, HORLOGE, DONNÉES PARTAGÉES ================== */
+let last=0;
+function loop(ts){const t=ts/1000,dt=Math.min(.033,t-last||.016);last=t;try{if(F&&view==='fight')fightTick(dt,t);drawPortraits(t)}catch(e){console.error(e)}requestAnimationFrame(loop)}
+let wasEv=false;
+setInterval(()=>{hud();duelClock();seenSync();const e=!!ev();if(e!==wasEv){wasEv=e;if(view==='home'||view==='forge')render()}
+  if(view==='forge'){const c=S.craft,b=$('#cbtn');if(c&&b){const left=c.end-Date.now();if(left<=0){if(b.disabled)render()}else{b.textContent=fmt(left);$('#cbar').style.width=(1-left/c.dur)*100+'%'}}const r=$('#rot');if(r){const n=nextRot();r.textContent='changent dans '+fmt(n);if(n>(CFG.rot||60)*60000-1500&&!S.craft)render()}}
+},1000);
+async function syncPlayer(){
+  if(!db||!uid||syncDead||syncing||!ready||gated())return;
+  const d={nick:S.nick||'Joueur',pts:S.pts,total:S.total,arena:S.arena,heroes:Object.keys(S.chars).length,solved:Object.keys(S.solved).length},sig=JSON.stringify(d);
+  if(sig===lastSig||Date.now()-lastSync<45000)return;
+  syncing=true;lastSync=Date.now();try{await db.doc('players/'+uid).set({...d,at:Date.now()});lastSig=sig}catch(e){if(e&&e.code!=='unavailable')syncDead=true}syncing=false;
+}
+async function codeId(code){const en=new TextEncoder(),k=await crypto.subtle.importKey('raw',en.encode(code),'PBKDF2',false,['deriveBits']),b=await crypto.subtle.deriveBits({name:'PBKDF2',salt:en.encode('legendes-pieges-v1'),iterations:60000,hash:'SHA-256'},k,128);return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+async function watchCode(){if(!db||!S.code)return;try{const id=await codeId(S.code);myCid=id;pushPres();if(codeUnsub)codeUnsub();
+  codeUnsub=db.doc('codes/'+id).onSnapshot(s=>{if(s.metadata&&s.metadata.fromCache)return;
+    if(!s.exists){S.code='';S.joined=0;save();try{room&&room.presence({nick:null,h:null,d:null,tr:null,c:null})}catch(e){};view='home';sub={};render();drawInv();toast('Ton code a été désactivé.')}
+    else{const n=cleanN(s.data().name);if(n&&n!==S.nick){S.nick=n;save()}}},()=>{})}catch(e){}}
+async function boot(){
+  $('#hlogo').innerHTML=LOGO;applyLang();render();requestAnimationFrame(loop);
+  try{PR=await fbPrims();uid=PR.uid;db=mkDb(PR);room=mkRoom(PR);
+    if(S.code){try{const k=await admKey(S.code);isAdmin=!!k&&(await PR.get('admins/'+uid))===k}catch(e){}}
+    if(S.code&&!isAdmin){const m=await PR.get('members/'+uid).catch(()=>null);S.joined=m?1:0;if(!m){S.code=''}}
+  }catch(e){console.error('serveur',e);PR=null;db=null;room=null}
+  if(room){try{room.onPeers(roomTick,()=>{})}catch(e){}}
+  ready=true;if(isAdmin){S.nick=S.nick||'Shai';S.joined=1}if(boss()){unlockAll();S.pts=INF}render();pushPres();
+  if(db&&isAdmin){let seeded=false;db.doc('adm/codes').onSnapshot(s=>{CODES=s.exists?(s.data().list||[]).slice():[];if(!seeded){seeded=true;if(!s.exists)seedCodes(S.code)}if(view==='admin'&&!typing())render()},()=>{})}
+  if(db&&S.code&&!isAdmin)watchCode();
+  if(room){try{room.onPeers(roomTick,()=>{})}catch(e){}pushPres();if(view==='fprep')render()}
+  if(db){
+    db.doc('game/config').onSnapshot(s=>{CFG=Object.assign({rot:60,recipes:[],riddles:[],event:null},s.exists?JSON.parse(JSON.stringify(s.data())):{});wasEv=!!ev();hud();if(view==='home'||view==='forge'||view==='rid')render()},()=>{});
+    db.collection('players').onSnapshot(s=>{PLAYERS=s.docs.map(d=>({id:d.id,...d.data()}));if(view==='home'&&document.activeElement?.id!=='nick')render()},()=>{});
+    syncPlayer();
+    if(uid)db.doc('gifts/'+uid).onSnapshot(s=>{if(s.exists)applyCmds(s.data().items)},()=>{});
+    if(isAdmin)db.collection('adm/seen/p').onSnapshot(s=>{SEEN={};s.docs.forEach(d=>SEEN[d.id]=d.data());if(view==='admin'&&!typing())render()},()=>{});
+  }
+  if(isAdmin){H.forEach(c=>{if(!S.chars[c.id])S.chars[c.id]={n:1,lvl:1,xp:0,st:1}});save();if(view!=='fight'&&view!=='duel')render()}
+}
+boot();
+</script>
+
+</body></html>
