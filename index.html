@@ -39,6 +39,8 @@ header{display:flex;align-items:center;justify-content:space-between;gap:10px;fl
 [dir=rtl] .pad,[dir=rtl] .fhud,[dir=rtl] .duo,[dir=rtl] .recipe,[dir=rtl] .scene,[dir=rtl] .logo{direction:ltr}
 [dir=rtl] .opts button{text-align:right}
 #hout{min-height:0;padding:4px 12px;cursor:pointer;color:var(--bad);display:inline-flex;align-items:center;gap:6px}#hout svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#hcfg{min-height:0;cursor:pointer;font-size:15px;line-height:1}
+.cfgm button{width:100%}
 #hrel{min-height:0;cursor:pointer;font-size:16px;line-height:1}
 #hlang{min-height:0;padding:4px 12px;cursor:pointer;color:var(--arc)}
 .fhud{grid-template-columns:1fr auto 1fr!important;align-items:start}
@@ -64,6 +66,9 @@ p{margin:0}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .grow{flex:1;min-width:0}
 .grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.grid.coll{grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.coll .card .nm{font-size:13px}
+@media (max-width:420px){.grid:not(.coll){grid-template-columns:repeat(2,minmax(0,1fr))}.stats{gap:6px}.stats .chip{padding:4px 9px}}
 .split{display:grid;gap:12px;grid-template-columns:1fr}
 @media(min-width:720px){.split{grid-template-columns:1fr 1fr}}
 button{font:700 15px var(--body);color:var(--ink);cursor:pointer;border:1px solid var(--line);background:var(--deep);border-radius:10px;padding:10px 14px;min-height:42px}
@@ -160,7 +165,7 @@ td,th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left}
 <div id="app">
   <header>
     <div class="row" style="gap:8px;flex-wrap:nowrap"><div id="hlogo" style="width:38px;flex:none;line-height:0"></div><div><div class="logo">LÉGENDES <b>&amp;</b> PIÈGES</div><button id="hnick" class="small mute" data-a="go" data-v="profile" style="min-height:0;padding:0;border:0;background:none;text-align:start;color:var(--arc)" hidden></button></div></div>
-    <div class="stats"><span class="chip pts" id="hpts">◆ 0</span><span class="chip" id="hlvl">Niv. 1</span><span class="chip" id="hstk">Série 0</span><button class="chip" id="hrel" data-a="reload" aria-label="Relancer le jeu" title="Relancer le jeu">↻</button><button class="chip" id="hsnd" data-a="mute" aria-label="Son">🔊</button><button class="chip" id="hout" data-a="logout" data-nt hidden><svg viewBox="0 0 24 24"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l-4-4 4-4M6 12h10"/></svg><span id="houtl">Changer de compte</span></button><button class="chip" id="hlang" data-a="lang" data-nt>עברית</button></div>
+    <div class="stats"><span class="chip pts" id="hpts">◆ 0</span><span class="chip" id="hlvl">Niv. 1</span><span class="chip" id="hstk">Série 0</span><button class="chip" id="hcfg" data-a="cfg" aria-label="Réglages" title="Réglages" hidden>⚙️</button><button class="chip" id="hrel" data-a="reload" aria-label="Relancer le jeu" title="Relancer le jeu">↻</button><button class="chip" id="hsnd" data-a="mute" aria-label="Son">🔊</button><button class="chip" id="hout" data-a="logout" data-nt hidden><svg viewBox="0 0 24 24"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l-4-4 4-4M6 12h10"/></svg><span id="houtl">Changer de compte</span></button><button class="chip" id="hlang" data-a="lang" data-nt>עברית</button></div>
   </header>
   <div id="evbar" hidden></div>
   <div id="updbar" hidden></div><div id="invbar" hidden></div>
@@ -466,7 +471,7 @@ const HE={'ÉGALITÉ':'תיקו','EN ATTENTE…':'ממתין…','Duel en cours'
  'Victoire par abandon':'ניצחון טכני','Égalité':'תיקו','Chacun récupère sa mise.':'כל אחד מקבל את ההימור שלו בחזרה.','Fermer':'סגור',
  'Gratuit':'חינם','Dégâts ×1,4':'נזק ×1.4','Dégâts reçus −50 %':'חצי מהנזק שסופגים','pas 2 fois de suite':'לא פעמיים ברצף','+20 % de dégâts reçus':'סופגים 20% יותר נזק','Dégâts ×3,2':'נזק ×3.2','énergie pleine':'אנרגיה מלאה',
  'Choisis ton action':'בחר פעולה','Adversaire absent : réclamer la victoire':'היריב לא מגיב: דרוש ניצחון','Confirmer l\'abandon (mise perdue)':'אשר כניעה (ההימור אבוד)','Abandonner':'כניעה',
- 'Ce joueur est parti':'השחקן הזה עזב','Crée ton énigme piège':'צור חידת מלכודת משלך','Ton énigme a rapporté':'החידה שלך הרוויחה','Mes énigmes':'החידות שלי','Envoyer à l\'admin':'שלח למנהל','⏳ En attente de l\'admin':'⏳ ממתין למנהל','✅ Acceptée':'✅ אושרה','❌ Refusée':'❌ נדחתה','Énigme envoyée à l\'admin !':'החידה נשלחה למנהל!','Écris une vraie question':'כתוב שאלה אמיתית','Remplis les 4 réponses':'מלא את 4 התשובות','Les 4 réponses doivent être différentes':'4 התשובות חייבות להיות שונות','Explication (montrée après la réponse)':'הסבר (מוצג אחרי התשובה)','Armurerie':'נשקייה','Pistolet laser':'אקדח לייזר','Fusil à pompe':'רובה ציד','Canon de givre':'תותח קרח','Mitraillette':'מקלע','Bazooka':'בזוקה','Équiper':'צייד','Équipée ✓':'מצויד ✓','Combattre sans arme':'להילחם בלי נשק','Tir rapide et précis.':'ירי מהיר ומדויק.','5 plombs en éventail : terrible de près.':'5 כדורים במניפה: נורא מקרוב.','Ralentit l\'adversaire touché pendant 2 secondes.':'מאט את היריב לשתי שניות.','Une rafale de balles sans s\'arrêter.':'צרור כדורים בלי הפסקה.','Une roquette énorme qui explose.':'רקטה ענקית שמתפוצצת.','Pas assez de points':'אין מספיק נקודות','Aventure':'הרפתקה','Fusion des 5 éléments':'מיזוג 5 היסודות','Question piège':'שאלת מלכודת','← Carte':'← מפה','Retour à la carte':'חזרה למפה','Niveau suivant':'השלב הבא','Réessayer':'נסה שוב','Aller à la forge':'לך לנפחייה','Ultime':'אולטימטיבי','Victoire !':'ניצחון!','Défaite…':'הפסד…','Terre':'אדמה','Feu':'אש','Eau':'מים','Air':'אוויר','Foudre':'ברק','Vallée des Monolithes':'עמק המונוליתים','Volcan des Braises':'הר הגעש של הגחלים','Abysses de Cristal':'תהומות הבדולח','Cimes des Vents':'פסגות הרוחות','Citadelle de l\'Orage':'מצודת הסערה','Gaïarok':'גאיארוק','Ignivor':'איגניבור','Maréa':'מראה','Zéphyra':'זפירה','Voltarix':'וולטריקס','Primordius':'פרימורדיוס','Colosse de la Terre':'ענק האדמה','Dragon du Feu':'דרקון האש','Reine de l\'Eau':'מלכת המים','Esprit de l\'Air':'רוח האוויר','Dragon de la Foudre':'דרקון הברק','Avatar des cinq éléments':'התגלמות חמשת היסודות','Séisme':'רעידת אדמה','Pluie de lave':'גשם לבה','Raz-de-marée':'צונאמי','Tornade':'טורנדו','Éclair foudroyant':'ברק מהמם','Cataclysme élémentaire':'אסון היסודות','✓ Région terminée':'✓ האזור הושלם','Fusion ultime':'מיזוג אולטימטיבי','Traverse les 5 régions des éléments. Chaque région a ses combats, ses questions pièges et un boss qui garde un héros exclusif. Finis toutes les énigmes d\'une difficulté pour ouvrir la région suivante. Avec les 5 héros des éléments, forge le héros ultime !':'עבור את 5 אזורי היסודות. בכל אזור יש קרבות, שאלות מלכודת ובוס ששומר על גיבור בלעדי. סיים את כל החידות של רמת קושי כדי לפתוח את האזור הבא. עם 5 גיבורי היסודות, צור בנפחייה את הגיבור האולטימטיבי!','Réunis les 5 héros des éléments pour forger le héros ultime.':'אסוף את 5 גיבורי היסודות כדי ליצור את הגיבור האולטימטיבי.','Raté ! Ce n\'est pas ça… Réfléchis bien et réessaie.':'טעות! זה לא זה… חשוב טוב ונסה שוב.','Primordius est déjà à toi !':'פרימורדיוס כבר שלך!','Nouvelle version du jeu disponible':'גרסה חדשה של המשחק זמינה','Mettre à jour':'עדכן','Cadeau du jour':'מתנת היום','Joueurs':'שחקנים','pas encore venu':'עוד לא נכנס','Connecte-toi chaque jour : si tu rates un jour, tu recommences au jour 1. Le 7e jour, un coffre runique gratuit !':'התחבר כל יום: אם תפספס יום, תתחיל מחדש מיום 1. ביום השביעי – תיבת רונות בחינם!','Récupérer le coffre runique':'קבל את תיבת הרונות','Personne d\'autre pour le moment. Envoie le lien du jeu à tes potes : ils apparaîtront ici.':'אין עוד אף אחד כרגע. שלח את הקישור לחברים: הם יופיעו כאן.','Appuie encore pour relancer : tu perds le duel et ta mise':'לחץ שוב כדי להפעיל מחדש: תפסיד את הדו־קרב ואת ההימור','Relancer le jeu':'הפעל מחדש את המשחק','Pas de réponse à ton défi':'אין תשובה להזמנה שלך','Pas de réponse à ta proposition d\'échange':'אין תשובה להצעת ההחלפה שלך','Tu as quitté le duel trop longtemps : mise perdue':'יצאת מהדו־קרב יותר מדי זמן: ההימור אבד','Le serveur refuse pour l\'instant la liste des joueurs en ligne. Recharge la page dans quelques secondes.':'השרת לא מאפשר כרגע לראות את השחקנים המחוברים. טען מחדש את הדף בעוד כמה שניות.','Tu n\'as pas assez de points pour cette mise':'אין לך מספיק נקודות להימור הזה','Ce joueur n\'a pas assez de points pour cette mise':'לשחקן הזה אין מספיק נקודות להימור הזה','Défi annulé':'ההזמנה בוטלה','Défi refusé':'ההזמנה נדחתה',
+ 'Ce joueur est parti':'השחקן הזה עזב','Réglages':'הגדרות','Son activé':'צליל פעיל','Son coupé':'צליל כבוי','Fermer':'סגור','Mon profil →':'הפרופיל שלי →','Voir tous les joueurs →':'לכל השחקנים →','Personne d\'autre n\'est en ligne pour le moment.':'אין עוד אף אחד מחובר כרגע.','Commandes':'שליטה','aucune arme équipée':'אין נשק מצויד','Crée ton énigme piège':'צור חידת מלכודת משלך','Ton énigme a rapporté':'החידה שלך הרוויחה','Mes énigmes':'החידות שלי','Envoyer à l\'admin':'שלח למנהל','⏳ En attente de l\'admin':'⏳ ממתין למנהל','✅ Acceptée':'✅ אושרה','❌ Refusée':'❌ נדחתה','Énigme envoyée à l\'admin !':'החידה נשלחה למנהל!','Écris une vraie question':'כתוב שאלה אמיתית','Remplis les 4 réponses':'מלא את 4 התשובות','Les 4 réponses doivent être différentes':'4 התשובות חייבות להיות שונות','Explication (montrée après la réponse)':'הסבר (מוצג אחרי התשובה)','Armurerie':'נשקייה','Pistolet laser':'אקדח לייזר','Fusil à pompe':'רובה ציד','Canon de givre':'תותח קרח','Mitraillette':'מקלע','Bazooka':'בזוקה','Équiper':'צייד','Équipée ✓':'מצויד ✓','Combattre sans arme':'להילחם בלי נשק','Tir rapide et précis.':'ירי מהיר ומדויק.','5 plombs en éventail : terrible de près.':'5 כדורים במניפה: נורא מקרוב.','Ralentit l\'adversaire touché pendant 2 secondes.':'מאט את היריב לשתי שניות.','Une rafale de balles sans s\'arrêter.':'צרור כדורים בלי הפסקה.','Une roquette énorme qui explose.':'רקטה ענקית שמתפוצצת.','Pas assez de points':'אין מספיק נקודות','Aventure':'הרפתקה','Fusion des 5 éléments':'מיזוג 5 היסודות','Question piège':'שאלת מלכודת','← Carte':'← מפה','Retour à la carte':'חזרה למפה','Niveau suivant':'השלב הבא','Réessayer':'נסה שוב','Aller à la forge':'לך לנפחייה','Ultime':'אולטימטיבי','Victoire !':'ניצחון!','Défaite…':'הפסד…','Terre':'אדמה','Feu':'אש','Eau':'מים','Air':'אוויר','Foudre':'ברק','Vallée des Monolithes':'עמק המונוליתים','Volcan des Braises':'הר הגעש של הגחלים','Abysses de Cristal':'תהומות הבדולח','Cimes des Vents':'פסגות הרוחות','Citadelle de l\'Orage':'מצודת הסערה','Gaïarok':'גאיארוק','Ignivor':'איגניבור','Maréa':'מראה','Zéphyra':'זפירה','Voltarix':'וולטריקס','Primordius':'פרימורדיוס','Colosse de la Terre':'ענק האדמה','Dragon du Feu':'דרקון האש','Reine de l\'Eau':'מלכת המים','Esprit de l\'Air':'רוח האוויר','Dragon de la Foudre':'דרקון הברק','Avatar des cinq éléments':'התגלמות חמשת היסודות','Séisme':'רעידת אדמה','Pluie de lave':'גשם לבה','Raz-de-marée':'צונאמי','Tornade':'טורנדו','Éclair foudroyant':'ברק מהמם','Cataclysme élémentaire':'אסון היסודות','✓ Région terminée':'✓ האזור הושלם','Fusion ultime':'מיזוג אולטימטיבי','Traverse les 5 régions des éléments. Chaque région a ses combats, ses questions pièges et un boss qui garde un héros exclusif. Finis toutes les énigmes d\'une difficulté pour ouvrir la région suivante. Avec les 5 héros des éléments, forge le héros ultime !':'עבור את 5 אזורי היסודות. בכל אזור יש קרבות, שאלות מלכודת ובוס ששומר על גיבור בלעדי. סיים את כל החידות של רמת קושי כדי לפתוח את האזור הבא. עם 5 גיבורי היסודות, צור בנפחייה את הגיבור האולטימטיבי!','Réunis les 5 héros des éléments pour forger le héros ultime.':'אסוף את 5 גיבורי היסודות כדי ליצור את הגיבור האולטימטיבי.','Raté ! Ce n\'est pas ça… Réfléchis bien et réessaie.':'טעות! זה לא זה… חשוב טוב ונסה שוב.','Primordius est déjà à toi !':'פרימורדיוס כבר שלך!','Nouvelle version du jeu disponible':'גרסה חדשה של המשחק זמינה','Mettre à jour':'עדכן','Cadeau du jour':'מתנת היום','Joueurs':'שחקנים','pas encore venu':'עוד לא נכנס','Connecte-toi chaque jour : si tu rates un jour, tu recommences au jour 1. Le 7e jour, un coffre runique gratuit !':'התחבר כל יום: אם תפספס יום, תתחיל מחדש מיום 1. ביום השביעי – תיבת רונות בחינם!','Récupérer le coffre runique':'קבל את תיבת הרונות','Personne d\'autre pour le moment. Envoie le lien du jeu à tes potes : ils apparaîtront ici.':'אין עוד אף אחד כרגע. שלח את הקישור לחברים: הם יופיעו כאן.','Appuie encore pour relancer : tu perds le duel et ta mise':'לחץ שוב כדי להפעיל מחדש: תפסיד את הדו־קרב ואת ההימור','Relancer le jeu':'הפעל מחדש את המשחק','Pas de réponse à ton défi':'אין תשובה להזמנה שלך','Pas de réponse à ta proposition d\'échange':'אין תשובה להצעת ההחלפה שלך','Tu as quitté le duel trop longtemps : mise perdue':'יצאת מהדו־קרב יותר מדי זמן: ההימור אבד','Le serveur refuse pour l\'instant la liste des joueurs en ligne. Recharge la page dans quelques secondes.':'השרת לא מאפשר כרגע לראות את השחקנים המחוברים. טען מחדש את הדף בעוד כמה שניות.','Tu n\'as pas assez de points pour cette mise':'אין לך מספיק נקודות להימור הזה','Ce joueur n\'a pas assez de points pour cette mise':'לשחקן הזה אין מספיק נקודות להימור הזה','Défi annulé':'ההזמנה בוטלה','Défi refusé':'ההזמנה נדחתה',
  // héros, coffres
  'volant':'מעופף','Vie':'חיים','Attaque':'התקפה','Vitesse':'מהירות','Énergie':'אנרגיה','Spéciale :':'מתקפה מיוחדת:','(quand l\'énergie est pleine)':'(כשהאנרגיה מלאה)','Pas encore débloqué.':'עדיין לא נפתח.',
  'Héros actif':'הגיבור הפעיל','Choisir ce héros':'בחר בגיבור הזה','Niveau +1':'רמה +1','S\'obtient dans les coffres ou à la forge.':'משיגים אותו בתיבות או בנפחייה.',
@@ -517,7 +522,7 @@ const HHE={"r1": "חשוב על מה שמחמם את כל החוף.", "r2": "ג�
 RIDDLES.forEach(r=>{if(r.h&&HHE[r.id])HE[r.h]=HHE[r.id];if(r.he){HE[r.q]=r.he.q;HE[r.sol]=r.he.sol;HE[r.h]=r.he.h}});
 RIDDLES.forEach(r=>{const h=RHE[r.id];if(!h)return;if(h.q)HE[r.q]=h.q;if(h.ex)HE[r.ex]=h.ex;(h.o||[]).forEach((x,i)=>HE[r.o[i]]=x)});
 const N=x=>HE[x]||x;
-const HP=[
+const HP=[[/^Progression (\d+) \/ (\d+)$/,m=>'התקדמות '+m[1]+' / '+m[2]],[/^🔒 Finis toutes les énigmes « (.+) » pour ouvrir$/,m=>'🔒 סיים את כל החידות « '+N(m[1])+' » כדי לפתוח'],[/^(\d+) en ligne$/,m=>m[1]+' מחוברים'],[/^Collection · (\d+) \/ (\d+)$/,m=>'אוסף · '+m[1]+' / '+m[2]],[/^Région (.+) terminée !$/,m=>'אזור '+N(m[1])+' הושלם!'],[/^Héros exclusif de la région (.+) !$/,m=>'גיבור בלעדי של אזור '+N(m[1])+'!'],[/^Aventure · terminée$/,m=>'הרפתקה · הושלמה'],[/^(.+) achetée et équipée !$/,m=>N(m[1])+' נקנה וצויד!'],
  [/^Duel contre (.+)$/,m=>'דו־קרב נגד '+m[1]],
  [/^[Nn]iv\. (\d+)$/,m=>'רמה '+m[1]],[/^[Nn]iveau (\d+)$/,m=>'רמה '+m[1]],[/^Niveau (\d+) \(max\)$/,m=>'רמה '+m[1]+' (מקסימום)'],[/^Niveau (\d+) !$/,m=>'רמה '+m[1]+'!'],
  [/^Série (\d+)$/,m=>'רצף '+m[1]],[/^[ÉEé]tage (\d+)$/,m=>'קומה '+m[1]],[/^Événement : (.*)$/,m=>'אירוע: '+m[1]],[/^[Pp]oints ×(\d+)$/,m=>'נקודות ×'+m[1]],[/^[Ff]in dans (.+)$/,m=>'נגמר בעוד '+m[1]],
@@ -910,12 +915,12 @@ const REG=[
      {q:'Pendant un orage, qu\'est-ce qui arrive en premier ?',o:['Le tonnerre','L\'éclair','Les deux en même temps','Ça dépend'],a:1,ex:'La lumière va bien plus vite que le son : on voit l\'éclair avant d\'entendre le tonnerre.'}]}
 ];
 const ADVP={f:r=>25+12*r,q:r=>15+6*r,b:r=>120+60*r};
-function armory(){const own=S.wp||{};
-  return `<div class="panel" style="border-color:#ff5d73"><h2>Armurerie</h2><p class="mute small">Achète une arme avec tes points et équipe-la : en combat, un nouveau bouton « Arme » apparaît (touche O). Chaque arme a un nombre de munitions par combat. Elle marche aussi en duel contre tes potes !</p>
-   <div class="split">${WEAP.map(w=>{const has=own[w.id],eq=S.weq===w.id;return `<div class="panel" style="border-color:${eq?w.col:'var(--line)'}"><div class="row"><span style="font-size:30px">${w.ic}</span><div class="grow"><b style="color:${w.col}">${w.n}</b><div class="small mute">${w.d}</div></div></div>
-    <div class="small">Dégâts ×${String(w.dmg*(w.pel||1)).replace('.',',')} · ${w.ammo} munitions${w.pel?' · '+w.pel+' plombs':''}</div>
-    ${eq?'<button disabled>Équipée ✓</button>':has?`<button class="btn2" data-a="weq" data-id="${w.id}">Équiper</button>`:`<button class="btn" data-a="wbuy" data-id="${w.id}" ${S.pts<w.p?'disabled':''}>Acheter · ${w.p} pts</button>`}</div>`}).join('')}</div>
-   ${S.weq?'<div><button data-a="weq" data-id="">Combattre sans arme</button></div>':''}</div>`}
+function armory(){const own=S.wp||{},cur=WB[S.weq];
+  return `<details class="panel" style="border-color:#ff5d73" ${sub.ar?'open':''}><summary style="cursor:pointer" data-a="aropen"><b>Armurerie</b> <span class="mute small">· ${cur?cur.ic+' '+cur.n+' équipée':'aucune arme équipée'}</span></summary>
+   <p class="mute small">Achète une arme et équipe-la : en combat, un bouton « Arme » apparaît (touche O). Les munitions sont comptées par combat. Elle marche aussi en duel !</p>
+   ${WEAP.map(w=>{const has=own[w.id],eq=S.weq===w.id;return `<div class="row" style="border-top:1px solid var(--line);padding-top:8px"><span style="font-size:26px">${w.ic}</span><div class="grow" style="min-width:150px"><b style="color:${w.col}">${w.n}</b><div class="small mute">${w.d} Dégâts ×${String(Math.round(w.dmg*(w.pel||1)*100)/100).replace('.',',')} · ${w.ammo} munitions</div></div>
+    ${eq?'<button disabled>Équipée ✓</button>':has?`<button class="btn2" data-a="weq" data-id="${w.id}">Équiper</button>`:`<button class="btn" data-a="wbuy" data-id="${w.id}" ${S.pts<w.p?'disabled':''}>${w.p} pts</button>`}</div>`}).join('')}
+   ${S.weq?'<div><button data-a="weq" data-id="">Combattre sans arme</button></div>':''}</details>`}
 /* ---- Énigmes créées par les joueurs : proposées dans subs/<uid>, validées par l'admin, puis jouées par tous.
    L'auteur gagne 15 points par joueur piégé et 3 par joueur qui trouve (compté dans rstat/<énigme>). ---- */
 let MYSUBS=[],ALLSUBS=[],rsUnsub={};const TRAP=15,FOUND=3;
@@ -1010,7 +1015,7 @@ function nav(){
   $('#nav').innerHTML=tabs.map(([v,l])=>`<button class="${cur===v?'on':''}" data-a="go" data-v="${v}"><svg viewBox="0 0 24 24">${ICON[v]}</svg>${l}</button>`).join('');
 }
 function hud(){
-  $('#hpts').textContent='◆ '+(boss()?'∞':S.pts.toLocaleString('fr-FR'));$('#hlvl').textContent='Niv. '+plvl();$('#hstk').textContent='Série '+S.streak;const hn=$('#hnick'),lg=ready&&!gated();hn.hidden=!S.nick||!lg;hn.textContent=S.nick;const hs=$('#hsnd');if(hs){hs.textContent=S.snd&&(S.snd.fx||S.snd.mu)?'🔊':'🔇';hs.hidden=!lg}for(const i of['hpts','hlvl','hstk'])$('#'+i).hidden=!lg;const ho=$('#hout');if(ho){ho.hidden=!lg||!S.code;$('#houtl').textContent=L('Changer de compte')}
+  $('#hpts').textContent='◆ '+(boss()?'∞':S.pts.toLocaleString('fr-FR'));$('#hlvl').textContent='Niv. '+plvl();$('#hstk').textContent='Série '+S.streak;const hn=$('#hnick'),lg=ready&&!gated();hn.hidden=!S.nick||!lg;hn.textContent=S.nick;const hs=$('#hsnd');if(hs){hs.textContent=S.snd&&(S.snd.fx||S.snd.mu)?'🔊':'🔇';hs.hidden=!lg}for(const i of['hpts','hlvl','hstk','hcfg'])$('#'+i).hidden=!lg;const ho=$('#hout');if(ho){ho.hidden=true;$('#houtl').textContent=L('Changer de compte')}if(hs)hs.hidden=true;const hl=$('#hlang');if(hl)hl.hidden=lg;
   const e=ev(),b=$('#evbar');b.hidden=!e;if(e)b.innerHTML=`<span>Événement : ${esc(e.name)} · points ×${e.mult}</span><span>fin dans ${fmt(e.end-Date.now())}</span>`;
 }
 function stars(n){return '<span class="stars">'+'★'.repeat(n)+'<span style="opacity:.25">'+'★'.repeat(3-n)+'</span></span>'}
@@ -1020,24 +1025,19 @@ const V={
   const c=HB[S.sel],o=S.chars[S.sel],all=allR(),done=all.filter(r=>S.solved[r.id]).length,e=ev(),d=dailyR();
   const top=PLAYERS.filter(p=>!p.adm).sort((a,b)=>(b.total||0)-(a.total||0)).slice(0,5);
   return `${loginDay().got?'':loginPanel()}<div class="split">
-   <div class="panel" style="align-items:center;text-align:center">${pt(c.id,o.st)}<h2>${c.n} ${stars(o.st)}</h2><p class="mute">${c.ti} · niveau ${o.lvl}</p></div>
+   <div class="panel" style="align-items:center;text-align:center;cursor:pointer" data-a="go" data-v="profile"><div style="width:120px">${pt(c.id,o.st)}</div><h2>${c.n} ${stars(o.st)}</h2><p class="mute small">${c.ti} · niveau ${o.lvl}</p><span class="small" style="color:var(--arc)">Mon profil →</span></div>
    <div class="panel"><h2>À toi de jouer</h2>
     <button class="btn" data-a="daily">Énigme du jour ${S.daily===today()?'(déjà jouée)':'· points ×3'}</button>
-    <button class="btn2" data-a="go" data-v="fprep">Arène · étage ${S.arena}</button>
-    <button data-a="go" data-v="profile">Mon profil</button>
+    <button class="btn2" data-a="go" data-v="adv">Aventure ${REG.every((R,r)=>advDone(r)>=R.lv.length)?'· terminée':''}</button>
+    <button data-a="go" data-v="fprep">Arène · étage ${S.arena}</button>
     <button data-a="go" data-v="forge">Forge de fusion ${S.craft?(S.craft.end<=Date.now()?'· prête !':'· en cours'):''}</button>
     <p class="mute small">Résous des énigmes pour gagner des points, ouvre des coffres pour obtenir des héros, améliore-les, puis fais-les combattre et fusionner.</p></div>
   </div>
   ${loginDay().got?loginPanel():''}
+  ${homePlayers()}
   ${missionsPanel()}
-  ${duelPanel()}
   ${e?`<div class="panel" style="border-color:var(--ember)"><h2>Événement : ${esc(e.name)}</h2><p>Points ×${e.mult} sur les énigmes et les combats. ${HB[e.out]?`Recette spéciale à la forge : <b>${HB[e.out].n}</b>.`:''}</p>
     <div class="row"><button class="btn" data-a="fight" data-m="boss" ${S.boss===e.end?'disabled':''}>${S.boss===e.end?'Boss vaincu':'Défier le boss · '+(e.reward||150)+' points'}</button><span class="mute">Fin dans ${fmt(e.end-Date.now())}</span></div></div>`:''}
-  <div class="panel"><h2>Progression</h2><div class="grid">
-    <div><b>${done} / ${all.length}</b><div class="mute small">énigmes résolues</div></div>
-    <div><b>Étage ${S.arena}</b><div class="mute small">dans l'arène</div></div>
-    <div><b>${Object.keys(S.chars).length} / ${H.length}</b><div class="mute small">héros débloqués</div></div>
-    <div><b>${S.total.toLocaleString('fr-FR')}</b><div class="mute small">points gagnés au total</div></div></div></div>
   ${weekPanel()}
   ${top.length?`<details class="panel"><summary style="cursor:pointer"><b>Classement général</b></summary><div class="tw"><table>${top.map((p,i)=>`<tr><td>${i+1}</td><td>${esc(p.nick||'Joueur')}</td><td>${(p.total||0).toLocaleString('fr-FR')} pts</td><td>étage ${p.arena||1}</td></tr>`).join('')}</table></div></details>`:''}`;
  },
@@ -1074,9 +1074,9 @@ const V={
    <div class="panel"><h2>Arène · étage ${S.arena}</h2><p class="mute">Chaque victoire rapporte des points et de l'expérience, et ouvre l'étage suivant, plus dur.</p>
     ${boss()?`<label style="max-width:220px">Étage à jouer (réservé à toi)<select id="stg">${Array.from({length:40},(_,i)=>`<option value="${i+1}" ${(admStage||S.arena)===i+1?'selected':''}>Étage ${i+1}</option>`).join('')}</select></label>`:''}
     <button class="btn" data-a="fight" data-m="arena">Combattre</button>
-    <h3>Commandes</h3><p class="small mute">Téléphone : joystick à gauche, boutons à droite. Pousse le joystick vers le haut pour voler.</p>
+    <details><summary style="cursor:pointer"><b>Commandes</b></summary><p class="small mute">Téléphone : joystick à gauche, boutons à droite. Pousse le joystick vers le haut pour voler.</p>
     <p class="small mute">Clavier : flèches ou ZQSD pour bouger et voler, J frapper, K tirer (12 d'énergie), L bouclier (dégâts −50 %, 2,5 s max), U recharger l'énergie, I attaque spéciale.</p>
-    <p class="small mute">L'attaque spéciale se lance seulement quand ta barre d'énergie est pleine, et elle la vide d'un coup. Bouclier et recharge t'immobilisent. Un bouclier vidé met 3 s à revenir.</p></div></div>${armory()}${duelPanel()}`;
+    <p class="small mute">L'attaque spéciale se lance seulement quand ta barre d'énergie est pleine, et elle la vide d'un coup. Bouclier et recharge t'immobilisent. Un bouclier vidé met 3 s à revenir.</p></details></div></div>${duelPanel()}${armory()}`;
  },
  fight(){
   const p=F.p,e=F.e;
@@ -1120,10 +1120,10 @@ const V={
    ${o?`<div class="small mute">Niveau ${o.lvl}${o.lvl<20?` · XP ${o.xp} / ${40*o.lvl}`:' (max)'} · ${o.n} exemplaire(s)</div><div class="bar xp"><i style="width:${o.lvl<20?o.xp/(40*o.lvl)*100:100}%"></i></div>`:'<p class="mute small">Pas encore débloqué.</p>'}
    <div class="row">${o?`<button class="btn" data-a="pick" data-id="${id}" ${S.sel===id?'disabled':''}>${S.sel===id?'Héros actif':'Choisir ce héros'}</button><button data-a="up" data-id="${id}" ${o.lvl>=20||S.pts<cost?'disabled':''}>Niveau +1 · ${cost} pts</button>`:''}
     <span class="mute small">${id==='primordius'?'S\'obtient en fusionnant les 5 héros des éléments à la forge.':c.ex?'Exclusif : boss de la région '+REG[c.el].n+' dans l\'Aventure.':'S\'obtient dans les coffres ou à la forge.'}</span></div></div></div></div>`;
-  const boxes=`<div class="panel"><h2>Coffres</h2><p class="mute small">Un coffre donne un héros au hasard. Plus la rareté est haute, plus la chance est faible. Un héros déjà possédé devient un double pour la forge.</p><div class="split">${BOX.map((b,i)=>`<div class="panel" style="border-color:${b.col};text-align:center;align-items:center"><svg viewBox="0 0 64 52" width="96" aria-hidden="true"><rect x="4" y="20" width="56" height="28" rx="4" fill="${b.col}"/><path d="M4 22a28 18 0 0 1 56 0z" fill="${b.col}" opacity=".75"/><rect x="4" y="20" width="56" height="5" fill="#0e1024" opacity=".55"/><rect x="26" y="16" width="12" height="16" rx="3" fill="#ffd166"/><circle cx="32" cy="24" r="2.5" fill="#0e1024"/></svg><h3>${b.n}</h3>
+  const boxes=`<div class="panel"><h2>Coffres</h2><p class="mute small">Un coffre donne un héros au hasard. Plus la rareté est haute, plus la chance est faible. Un héros déjà possédé devient un double pour la forge.</p><div class="split">${BOX.map((b,i)=>`<div class="panel" style="border-color:${b.col};text-align:center;align-items:center"><svg viewBox="0 0 64 52" width="64" aria-hidden="true"><rect x="4" y="20" width="56" height="28" rx="4" fill="${b.col}"/><path d="M4 22a28 18 0 0 1 56 0z" fill="${b.col}" opacity=".75"/><rect x="4" y="20" width="56" height="5" fill="#0e1024" opacity=".55"/><rect x="26" y="16" width="12" height="16" rx="3" fill="#ffd166"/><circle cx="32" cy="24" r="2.5" fill="#0e1024"/></svg><h3>${b.n}</h3>
    <p class="small">${b.o.map((v,r)=>v?`<span style="color:${RAR[r].c};white-space:nowrap">${RAR[r].n} ${String(v).replace('.',',')} %</span>`:'').filter(Boolean).join(' · ')}</p>
    <button class="btn" data-a="box" data-i="${i}" ${S.pts<b.p?'disabled':''}>Ouvrir · ${b.p} pts</button></div>`).join('')}</div></div>`;
-  return det+boxes+tradePanel()+`<div class="panel"><h2>Collection</h2><div class="grid">${H.map(x=>card(x,S.chars[x.id]?`<div class="small">${stars(S.chars[x.id].st)} niv. ${S.chars[x.id].lvl}</div>`:`<div class="small mute">${x.id==='primordius'?'Fusion ultime':x.ex?'Aventure':'Coffre'}</div>`,(x.id===id?'sel':''))).join('')}</div></div>`;
+  return det+`<div class="panel"><h2>Collection · ${Object.keys(S.chars).length} / ${H.length}</h2><div class="grid coll">${H.map(x=>card(x,S.chars[x.id]?`<div class="small">${stars(S.chars[x.id].st)} niv. ${S.chars[x.id].lvl}</div>`:`<div class="small mute">${x.id==='primordius'?'Fusion ultime':x.ex?'Aventure':'Coffre'}</div>`,(x.id===id?'sel':''))).join('')}</div></div>`+boxes+tradePanel();
  },
  forge(){
   const cr=S.craft,now=Date.now(),rec=recipes();
@@ -1316,8 +1316,9 @@ const A={
  craft(d){const r=JSON.parse(d.r);if(S.craft)return;const a=S.chars[r.a],b=S.chars[r.b];
   if(r.evo){if(a.n<2||a.st>=3)return;a.n--;S.craft={out:r.out,evo:1,st:a.st+1}}else{if(!a||!b||a.n<2||b.n<2)return;a.n--;b.n--;S.craft={out:r.out,st:S.chars[r.out]?.st||1}}
   S.craft.dur=RAR[HB[r.out].r].t*1000;S.craft.end=Date.now()+S.craft.dur;save();render();scrollTo(0,0)},
- wbuy(d){const w=WB[d.id];if(!w||(S.wp||{})[w.id])return;if(S.pts<w.p)return toast('Pas assez de points');S.pts-=w.p;S.wp={...(S.wp||{}),[w.id]:1};S.weq=w.id;save();render();sfx('chest');toast(w.n+' achetée et équipée !')},
- weq(d){if(d.id&&!(S.wp||{})[d.id])return;S.weq=d.id||'';save();render()},
+ aropen(){sub.ar=!sub.ar},
+ wbuy(d){const w=WB[d.id];if(!w||(S.wp||{})[w.id])return;if(S.pts<w.p)return toast('Pas assez de points');S.pts-=w.p;S.wp={...(S.wp||{}),[w.id]:1};S.weq=w.id;sub.ar=1;save();render();sfx('chest');toast(w.n+' achetée et équipée !')},
+ weq(d){if(d.id&&!(S.wp||{})[d.id])return;S.weq=d.id||'';sub.ar=1;save();render()},
  sopen(){sub.so=!sub.so},
  async ssend(){if(!db||!uid)return toast('Serveur injoignable');const q=val('sq').trim(),o=[0,1,2,3].map(i=>val('so'+i).trim()),a=+val('sa'),d=+val('sd'),ex=val('se').trim();
   if(q.length<8)return toast('Écris une vraie question');if(o.some(x=>!x))return toast('Remplis les 4 réponses');if(new Set(o.map(x=>x.toLowerCase())).size<4)return toast('Les 4 réponses doivent être différentes');
@@ -1351,6 +1352,11 @@ const A={
  // Relancer le jeu comme si on le fermait et le rouvrait (la progression est gardée)
  reload(){if(F&&F.duel&&!F.over&&DU&&DU.s==='play'){if(!sub.rl){sub.rl=1;toast(L('Appuie encore pour relancer : tu perds le duel et ta mise'));setTimeout(()=>{sub.rl=0},3000);return}}
   try{save();stashProfile()}catch(e){}location.reload()},
+ cfg(){const m=$('#modal');m.hidden=false;const on=S.snd&&(S.snd.fx||S.snd.mu);
+  m.innerHTML=`<div class="panel cfgm"><h2>${L('Réglages')}</h2><button data-a="cfgmute">${on?'🔊 '+L('Son activé'):'🔇 '+L('Son coupé')}</button><button data-a="cfglang">🌐 ${LANG==='he'?'Français':'עברית'}</button>
+   <button data-a="reload">↻ ${L('Relancer le jeu')}</button>${S.code?`<button data-a="logout" style="color:var(--bad)">${L('Changer de compte')}</button>`:''}<button class="btn" data-a="close">${L('Fermer')}</button></div>`},
+ cfgmute(){A.mute();A.cfg()},
+ cfglang(){A.lang();A.cfg()},
  close(){$('#modal').hidden=true;$('#modal').innerHTML=''},
  logout(){if(view==='fight'&&F&&!F.result||view==='duel')return toast(L('Termine d\'abord ton combat'));const m=$('#modal');m.hidden=false;
   m.innerHTML=`<div class="panel"><h2>${L('Changer de compte ?')}</h2><p class="mute">${L('Ta progression reste sauvegardée sur cet appareil. Tu la retrouveras en remettant ton code.')}</p><div class="row" style="justify-content:center"><button data-a="close">${L('Annuler')}</button><button class="btn" data-a="logout2">${L('Oui, changer')}</button></div></div>`},
@@ -1504,6 +1510,7 @@ function tradePanel(){
     body=`<p><b>${esc(pname(p))}</b></p><div class="row"><label class="grow">Tu donnes<select id="tg">${Object.entries(S.chars).filter(([id])=>!HB[id].ex).map(([id,o])=>`<option value="${id}">${HB[id].n} ×${o.n}</option>`).join('')}</select></label>
      <label class="grow">Tu reçois<select id="tw">${Object.entries(th).filter(([id])=>!HB[id].ex).map(([id,o])=>`<option value="${id}">${HB[id].n} ×${o.n}</option>`).join('')}</select></label></div>
      <div class="row"><button class="btn" data-a="tsend">Proposer l'échange</button><button data-a="tclose">Annuler</button></div>`}
+  else if(!others.length)return `<div class="panel" style="border-color:var(--arc)"><h2>Échanges entre joueurs</h2><p class="mute small">Personne d'autre n'est en ligne. Quand un joueur se connecte, tu peux lui proposer un échange ici ou depuis la liste des joueurs.</p></div>`;
   else body=others.length?others.map(p=>`<div class="row"><span class="grow"><b>${esc(pname(p))}</b> <span class="mute small">· ${Object.keys(parseC(p.presence.c)).length} / ${H.length}</span></span><button class="btn2" data-a="topen" data-p="${esc(p.peer)}">Échanger</button></div>`).join(''):'<p class="mute">Personne d\'autre n\'est en ligne pour le moment.</p>';
   return `<div class="panel" id="trp" style="border-color:var(--arc)"><h2>Échanges entre joueurs</h2><p class="mute small">Échange un de tes héros contre celui d'un joueur connecté. Le héros reçu arrive au niveau 1. Si tu donnes ton dernier exemplaire, tu perds ce héros et ses niveaux.</p>${body}</div>`;
 }
@@ -1583,6 +1590,11 @@ function duelClock(){
 let hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.hidden){hidAt=performance.now();return}
   if(F&&F.duel&&DU&&DU.s==='play'&&!F.over&&hidAt&&performance.now()-hidAt>8000){F.quit=1;duelTx(true);pubD(1);setTimeout(()=>{try{room&&room.live(null).catch(()=>{})}catch(e){}},3000);finishDuel('lose');toast('Tu as quitté le duel trop longtemps : mise perdue')}
   else if(F&&F.duel)F.rxT=performance.now()});
+// Accueil : seulement les joueurs en ligne, la liste complète est dans « Combat »
+function homePlayers(){const on=allPlayers().filter(r=>r.p);
+  return `<div class="panel" style="border-color:var(--arc)"><div class="row"><h2 class="grow">Joueurs</h2><span class="chip"><span style="color:var(--ok)">●</span> ${on.length} en ligne</span></div>
+   ${on.slice(0,4).map(r=>`<div class="row"><span class="grow"><span style="color:var(--ok)">●</span> <b>${esc(r.name)}</b></span><button class="btn2" data-a="dinv" data-p="${esc(r.p.peer)}" ${r.p.presence?.d||DU?'disabled':''}>${r.p.presence?.d?'En duel':'Défier'}</button></div>`).join('')||'<p class="mute small">Personne d\'autre n\'est en ligne pour le moment.</p>'}
+   <button data-a="go" data-v="fprep">Voir tous les joueurs →</button></div>`}
 function duelPanel(){
   const rows=allPlayers(),nOn=rows.filter(r=>r.p).length,bets=[0,10,25,50,100,250,500].filter(b=>b<=S.pts);if(!bets.includes(betSel))betSel=0;
   const row=r=>{if(!r.p)return `<div class="row"><span class="grow"><span style="color:var(--line)">●</span> <b>${esc(r.name)}</b> <span class="mute small">· ${ago(r.at)}</span></span></div>`;
