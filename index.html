@@ -439,7 +439,7 @@ const HE={'ÉGALITÉ':'תיקו','EN ATTENTE…':'ממתין…','Duel en cours'
  'Victoire par abandon':'ניצחון טכני','Égalité':'תיקו','Chacun récupère sa mise.':'כל אחד מקבל את ההימור שלו בחזרה.','Fermer':'סגור',
  'Gratuit':'חינם','Dégâts ×1,4':'נזק ×1.4','Dégâts reçus −50 %':'חצי מהנזק שסופגים','pas 2 fois de suite':'לא פעמיים ברצף','+20 % de dégâts reçus':'סופגים 20% יותר נזק','Dégâts ×3,2':'נזק ×3.2','énergie pleine':'אנרגיה מלאה',
  'Choisis ton action':'בחר פעולה','Adversaire absent : réclamer la victoire':'היריב לא מגיב: דרוש ניצחון','Confirmer l\'abandon (mise perdue)':'אשר כניעה (ההימור אבוד)','Abandonner':'כניעה',
- 'Ce joueur est parti':'השחקן הזה עזב','Appuie encore pour relancer : tu perds le duel et ta mise':'לחץ שוב כדי להפעיל מחדש: תפסיד את הדו־קרב ואת ההימור','Relancer le jeu':'הפעל מחדש את המשחק','Pas de réponse à ton défi':'אין תשובה להזמנה שלך','Pas de réponse à ta proposition d\'échange':'אין תשובה להצעת ההחלפה שלך','Tu as quitté le duel trop longtemps : mise perdue':'יצאת מהדו־קרב יותר מדי זמן: ההימור אבד','Le serveur refuse pour l\'instant la liste des joueurs en ligne. Recharge la page dans quelques secondes.':'השרת לא מאפשר כרגע לראות את השחקנים המחוברים. טען מחדש את הדף בעוד כמה שניות.','Tu n\'as pas assez de points pour cette mise':'אין לך מספיק נקודות להימור הזה','Ce joueur n\'a pas assez de points pour cette mise':'לשחקן הזה אין מספיק נקודות להימור הזה','Défi annulé':'ההזמנה בוטלה','Défi refusé':'ההזמנה נדחתה',
+ 'Ce joueur est parti':'השחקן הזה עזב','Cadeau du jour':'מתנת היום','Joueurs':'שחקנים','pas encore venu':'עוד לא נכנס','Connecte-toi chaque jour : si tu rates un jour, tu recommences au jour 1. Le 7e jour, un coffre runique gratuit !':'התחבר כל יום: אם תפספס יום, תתחיל מחדש מיום 1. ביום השביעי – תיבת רונות בחינם!','Récupérer le coffre runique':'קבל את תיבת הרונות','Personne d\'autre pour le moment. Envoie le lien du jeu à tes potes : ils apparaîtront ici.':'אין עוד אף אחד כרגע. שלח את הקישור לחברים: הם יופיעו כאן.','Appuie encore pour relancer : tu perds le duel et ta mise':'לחץ שוב כדי להפעיל מחדש: תפסיד את הדו־קרב ואת ההימור','Relancer le jeu':'הפעל מחדש את המשחק','Pas de réponse à ton défi':'אין תשובה להזמנה שלך','Pas de réponse à ta proposition d\'échange':'אין תשובה להצעת ההחלפה שלך','Tu as quitté le duel trop longtemps : mise perdue':'יצאת מהדו־קרב יותר מדי זמן: ההימור אבד','Le serveur refuse pour l\'instant la liste des joueurs en ligne. Recharge la page dans quelques secondes.':'השרת לא מאפשר כרגע לראות את השחקנים המחוברים. טען מחדש את הדף בעוד כמה שניות.','Tu n\'as pas assez de points pour cette mise':'אין לך מספיק נקודות להימור הזה','Ce joueur n\'a pas assez de points pour cette mise':'לשחקן הזה אין מספיק נקודות להימור הזה','Défi annulé':'ההזמנה בוטלה','Défi refusé':'ההזמנה נדחתה',
  // héros, coffres
  'volant':'מעופף','Vie':'חיים','Attaque':'התקפה','Vitesse':'מהירות','Énergie':'אנרגיה','Spéciale :':'מתקפה מיוחדת:','(quand l\'énergie est pleine)':'(כשהאנרגיה מלאה)','Pas encore débloqué.':'עדיין לא נפתח.',
  'Héros actif':'הגיבור הפעיל','Choisir ce héros':'בחר בגיבור הזה','Niveau +1':'רמה +1','S\'obtient dans les coffres ou à la forge.':'משיגים אותו בתיבות או בנפחייה.',
@@ -838,6 +838,16 @@ function missionsPanel(){const L3=dayMissions(),allC=L3.every((m,i)=>S.mis.c[i])
    <button class="${ok&&!c?'btn':''}" data-a="mclaim" data-i="${i}" ${ok&&!c?'':'disabled'}>${c?'Récupérée':'Récupérer'}</button></div>`}).join('')}
   <div class="row"><span class="grow small">Bonus : finis les 3 missions pour gagner un coffre de bronze gratuit.</span><button class="${allC&&!S.mis.b?'btn2':''}" data-a="mbonus" ${allC&&!S.mis.b?'':'disabled'}>${S.mis.b?'Coffre ouvert':'Ouvrir le coffre'}</button></div></div>`}
 function tomorrow(){const d=new Date();d.setHours(24,0,0,0);return d.getTime()}
+/* ---- Cadeau de connexion : un cadeau par jour, de plus en plus gros sur 7 jours d'affilée (jour 7 : coffre runique) ---- */
+const LOGIN=[20,30,40,60,80,100,0];
+function yday(){const d=new Date();d.setDate(d.getDate()-1);return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()}
+function loginDay(){const g=S.lg||{};if(g.d===today())return {got:1,n:g.n||1};return {got:0,n:g.d===yday()?((g.n||0)%7)+1:1}}
+function loginPanel(){const {got,n}=loginDay();
+  return `<div class="panel" style="border-color:var(--gold)"><div class="row"><h2 class="grow">Cadeau du jour</h2><span class="chip">${got?'prochain dans '+fmt(tomorrow()-Date.now()):'jour '+n+' / 7'}</span></div>
+  <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">${LOGIN.map((v,i)=>{const d=i+1,done=d<n||(got&&d===n),cur=d===n&&!got;
+   return `<div style="text-align:center;padding:8px 2px;border-radius:12px;border:1px solid ${cur?'var(--gold)':'var(--line)'};background:var(--deep);opacity:${done?.45:1}"><div class="small mute">J${d}</div><b class="small" style="color:var(--gold)">${v?'+'+v:'🎁'}</b><div class="small">${done?'✓':''}</div></div>`}).join('')}</div>
+  <p class="small mute">Connecte-toi chaque jour : si tu rates un jour, tu recommences au jour 1. Le 7e jour, un coffre runique gratuit !</p>
+  ${got?'':`<button class="btn" data-a="lgclaim">Récupérer ${LOGIN[n-1]?'+'+LOGIN[n-1]+' points':'le coffre runique'}</button>`}</div>`}
 
 /* ================== CLASSEMENT DE LA SEMAINE (dimanche → samedi) ================== */
 function weekStart(off){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-d.getDay()+7*(off||0));return d}
@@ -869,7 +879,7 @@ const V={
  home(){
   const c=HB[S.sel],o=S.chars[S.sel],all=allR(),done=all.filter(r=>S.solved[r.id]).length,e=ev(),d=dailyR();
   const top=PLAYERS.filter(p=>!p.adm).sort((a,b)=>(b.total||0)-(a.total||0)).slice(0,5);
-  return `<div class="split">
+  return `${loginDay().got?'':loginPanel()}<div class="split">
    <div class="panel" style="align-items:center;text-align:center">${pt(c.id,o.st)}<h2>${c.n} ${stars(o.st)}</h2><p class="mute">${c.ti} · niveau ${o.lvl}</p></div>
    <div class="panel"><h2>À toi de jouer</h2>
     <button class="btn" data-a="daily">Énigme du jour ${S.daily===today()?'(déjà jouée)':'· points ×3'}</button>
@@ -878,6 +888,7 @@ const V={
     <button data-a="go" data-v="forge">Forge de fusion ${S.craft?(S.craft.end<=Date.now()?'· prête !':'· en cours'):''}</button>
     <p class="mute small">Résous des énigmes pour gagner des points, ouvre des coffres pour obtenir des héros, améliore-les, puis fais-les combattre et fusionner.</p></div>
   </div>
+  ${loginDay().got?loginPanel():''}
   ${missionsPanel()}
   ${duelPanel()}
   ${e?`<div class="panel" style="border-color:var(--ember)"><h2>Événement : ${esc(e.name)}</h2><p>Points ×${e.mult} sur les énigmes et les combats. ${HB[e.out]?`Recette spéciale à la forge : <b>${HB[e.out].n}</b>.`:''}</p>
@@ -1117,6 +1128,8 @@ const A={
  giveup(){if(!sub.gu){sub.gu=1;toast('Appuie encore une fois pour voir la réponse (0 point)');return}answer(false)},
  retry(){const id=sub.id,d=sub.d;if(!S.failed[id])return;sub={id,d,retry:1};render();scrollTo(0,0)},
  mclaim(d){const L3=dayMissions(),i=+d.i,m=L3[i];if(!m||S.mis.c[i]||(S.mis.p[m.k]||0)<m.n)return;S.mis.c[i]=1;gain(m.r);save();render();sfx('ok');toast('+'+m.r+' points')},
+ lgclaim(){const {got,n}=loginDay();if(got)return;S.lg={d:today(),n};const v=LOGIN[n-1];
+  if(v){S.pts+=v;S.total+=v;save();render();sfx('ok');toast('Cadeau du jour '+n+' : +'+v+' points')}else{save();A.box({i:1,free:1})}},
  mbonus(){const L3=dayMissions();if(S.mis.b||!L3.every((m,i)=>S.mis.c[i]))return;S.mis.b=1;A.box({i:0,free:1})},
  snd(d){S.snd[d.k]=S.snd[d.k]?0:1;if(d.k==='mu'){if(S.snd.mu)musStart();else musStop()}save();render()},
  mute(){const on=S.snd.fx||S.snd.mu;S.snd.fx=on?0:1;S.snd.mu=on?0:1;if(S.snd.mu)musStart();else musStop();save();hud()},
@@ -1364,6 +1377,29 @@ function applyCmds(items){
   if(n||mod){save();if(view!=='fight'&&view!=='duel')render()}
   if(n)reward(lastH,S.chars[lastH].st,n>1?n+' cadeaux de l\'admin reçus !':'Cadeau de l\'admin !');else if(mod)toast('L\'admin a modifié ton compte');
 }
+/* ---- Tous les joueurs qui ont un code (liste « roster » tenue à jour par l'admin), en ligne ou non ---- */
+let ROSTER={},rosterOk=false;
+function ago(t){if(!t)return L('pas encore venu');const m=Math.floor((Date.now()-t)/60000),he=LANG==='he';
+  if(m<2)return he?'לפני רגע':'vu à l\'instant';if(m<60)return he?'לפני '+m+' דק׳':'vu il y a '+m+' min';const h=Math.floor(m/60);if(h<24)return he?'לפני '+h+' שע׳':'vu il y a '+h+' h';
+  const d=Math.floor(h/24);return he?'לפני '+d+' ימים':'vu il y a '+d+' jour'+(d>1?'s':'')}
+function allPlayers(){
+  const on=PEERS.filter(p=>!p.sameTab&&p.presence?.nick),used=new Set(),rows=[],seen={},seenN={};
+  for(const p of PLAYERS){const t=p.at||0;if(p.cid&&t>(seen[p.cid]||0))seen[p.cid]=t;const k=String(p.nick||'').toLowerCase();if(k&&t>(seenN[k]||0))seenN[k]=t}
+  const names=Object.keys(ROSTER).length?Object.entries(ROSTER).map(([cid,r])=>({cid,name:cleanN(r.name)||'Joueur'}))
+    :PLAYERS.filter(p=>!p.adm&&p.nick).map(p=>({cid:p.cid||'',name:cleanN(p.nick)||'Joueur',uid:p.id}));
+  const dup=new Set();
+  for(const r of names){if(myCid&&r.cid===myCid||r.uid===uid)continue;const k=r.cid||r.name.toLowerCase();if(dup.has(k))continue;dup.add(k);
+    const p=on.find(x=>!used.has(x.peer)&&(r.cid&&x.presence.cid===r.cid||r.uid&&x.peer===r.uid));if(p)used.add(p.peer);
+    rows.push({name:r.name,p,at:Math.max(seen[r.cid]||0,seenN[r.name.toLowerCase()]||0)})}
+  // l'admin (pas de code dans la liste) apparaît aussi
+  for(const a of PLAYERS)if(a.adm&&a.id!==uid&&!on.some(x=>x.peer===a.id)){rows.push({name:cleanN(a.nick)||'Shai',at:a.at||0});break}
+  for(const p of on)if(!used.has(p.peer))rows.push({name:pname(p),p,at:Date.now()});
+  return rows.sort((a,b)=>(!!b.p-!!a.p)||(b.at-a.at)||a.name.localeCompare(b.name));
+}
+// L'admin recopie la liste des codes (prénoms seulement, jamais les codes) pour que tout le monde voie tous les joueurs
+function rosterSync(){if(!isAdmin||!db||!rosterOk)return;const ids=new Set(CODES.map(c=>c.id));
+  for(const c of CODES){const n=cleanN(c.name);if(n&&(!ROSTER[c.id]||ROSTER[c.id].name!==n))db.doc('roster/'+c.id).set({name:n}).catch(()=>{})}
+  for(const id in ROSTER)if(!ids.has(id))db.doc('roster/'+id).delete().catch(()=>{})}
 function duelClock(){
   const t=Date.now();
   if(DU&&DU.s==='wait'&&t-(DU.t0||t)>60000)endInvite('Pas de réponse à ton défi');
@@ -1376,14 +1412,16 @@ let hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.hidden
   if(F&&F.duel&&DU&&DU.s==='play'&&!F.over&&hidAt&&performance.now()-hidAt>8000){F.quit=1;duelTx(true);pubD(1);setTimeout(()=>{try{room&&room.live(null).catch(()=>{})}catch(e){}},3000);finishDuel('lose');toast('Tu as quitté le duel trop longtemps : mise perdue')}
   else if(F&&F.duel)F.rxT=performance.now()});
 function duelPanel(){
-  const others=PEERS.filter(p=>!p.sameTab&&p.presence?.nick),bets=[0,10,25,50,100,250,500].filter(b=>b<=S.pts);if(!bets.includes(betSel))betSel=0;
-  return `<div class="panel" style="border-color:var(--arc)"><h2>Joueurs en ligne</h2>
+  const rows=allPlayers(),nOn=rows.filter(r=>r.p).length,bets=[0,10,25,50,100,250,500].filter(b=>b<=S.pts);if(!bets.includes(betSel))betSel=0;
+  const row=r=>{if(!r.p)return `<div class="row"><span class="grow"><span style="color:var(--line)">●</span> <b>${esc(r.name)}</b> <span class="mute small">· ${ago(r.at)}</span></span></div>`;
+    const p=r.p,h=fz(p.presence?.h),busy=!!p.presence?.d;
+    return `<div class="row"><span class="grow"><span style="color:var(--ok)">●</span> <b>${esc(r.name)}</b> <span class="mute small">· ${h.c.n} niv. ${h.l} · ${+p.presence?.pts>=INF?'∞':Math.max(0,Math.floor(+p.presence?.pts||0))} pts</span></span><button class="btn2" data-a="dinv" data-p="${esc(p.peer)}" ${busy||DU?'disabled':''}>${busy?'En duel':'Défier'}</button><button data-a="topen" data-p="${esc(p.peer)}" ${p.presence?.c?'':'disabled'}>Échanger</button></div>`};
+  return `<div class="panel" style="border-color:var(--arc)"><div class="row"><h2 class="grow">Joueurs</h2>${room&&!room.err()?`<span class="chip"><span style="color:var(--ok)">●</span> ${nOn} en ligne</span>`:''}</div>
    ${!room?'<p class="mute">Connexion au serveur impossible pour le moment. Recharge la page.</p>'
    :room.err()?'<p class="mute">Le serveur refuse pour l\'instant la liste des joueurs en ligne. Recharge la page dans quelques secondes.</p>'
    :`<p class="mute small">Défie un joueur connecté ou propose-lui un échange de héros. En duel, chacun mise des points et le gagnant prend tout. Le duel se joue en direct, joystick contre joystick, 90 secondes maximum : quand le temps est écoulé, celui qui a le plus de vie gagne.</p>
-   <label style="max-width:220px">Ta mise<select id="bet">${bets.map(b=>`<option value="${b}" ${b===betSel?'selected':''}>${b?b+' points':'Sans mise'}</option>`).join('')}</select></label>
-   ${others.length?others.map(p=>{const h=fz(p.presence?.h),busy=!!p.presence?.d;return `<div class="row"><span class="grow"><b>${esc(pname(p))}</b> <span class="mute small">· ${h.c.n} niv. ${h.l} · ${+p.presence?.pts>=INF?'∞':Math.max(0,Math.floor(+p.presence?.pts||0))} pts</span></span><button class="btn2" data-a="dinv" data-p="${esc(p.peer)}" ${busy||DU?'disabled':''}>${busy?'En duel':'Défier'}</button><button data-a="topen" data-p="${esc(p.peer)}" ${p.presence?.c?'':'disabled'}>Échanger</button></div>`}).join('')
-   :'<p class="mute">Personne d\'autre n\'est en ligne pour le moment. Envoie le lien du jeu à tes potes : ils apparaîtront ici dès qu\'ils ouvrent le jeu.</p>'}`}</div>`;
+   <label style="max-width:220px">Ta mise<select id="bet">${bets.map(b=>`<option value="${b}" ${b===betSel?'selected':''}>${b?b+' points':'Sans mise'}</option>`).join('')}</select></label>`}
+   ${rows.length?`<div style="max-height:420px;overflow:auto;display:flex;flex-direction:column;gap:8px">${rows.map(row).join('')}</div>`:'<p class="mute">Personne d\'autre pour le moment. Envoie le lien du jeu à tes potes : ils apparaîtront ici.</p>'}</div>`;
 }
 function giftList(){const m=new Map(PLAYERS.map(p=>[p.id,{id:p.id,nick:p.nick}]));for(const p of PEERS)if(p.by){const e=m.get(p.by)||{id:p.by};e.nick=pname(p);e.on=1;m.set(p.by,e)}return [...m.values()]}
 
@@ -1391,13 +1429,13 @@ function giftList(){const m=new Map(PLAYERS.map(p=>[p.id,{id:p.id,nick:p.nick}])
 let last=0;
 function loop(ts){const t=ts/1000,dt=Math.min(.033,t-last||.016);last=t;try{if(F&&view==='fight')fightTick(dt,t);drawPortraits(t)}catch(e){console.error(e)}requestAnimationFrame(loop)}
 let wasEv=false;
-let lastMin=0;setInterval(()=>{hud();duelClock();seenSync();const mn=Math.floor(Date.now()/60000);if(mn!==lastMin){lastMin=mn;if(view==='home'&&ready&&!gated()&&!typing())render()}const e=!!ev();if(e!==wasEv){wasEv=e;if(view==='home'||view==='forge')render()}
+let lastMin=0;setInterval(()=>{hud();duelClock();seenSync();if(!document.hidden)syncPlayer();const mn=Math.floor(Date.now()/60000);if(mn!==lastMin){lastMin=mn;if(view==='home'&&ready&&!gated()&&!typing())render()}const e=!!ev();if(e!==wasEv){wasEv=e;if(view==='home'||view==='forge')render()}
   if(view==='forge'){const c=S.craft,b=$('#cbtn');if(c&&b){const left=c.end-Date.now();if(left<=0){if(b.disabled)render()}else{b.textContent=fmt(left);$('#cbar').style.width=(1-left/c.dur)*100+'%'}}const r=$('#rot');if(r){const n=nextRot();r.textContent='changent dans '+fmt(n);if(n>(CFG.rot||60)*60000-1500&&!S.craft)render()}}
 },1000);
 async function syncPlayer(){
   if(!db||!uid||syncDead||syncing||!ready||gated())return;
-  wkAdd(0);const d={nick:S.nick||'Joueur',pts:S.pts,total:S.total,arena:S.arena,heroes:Object.keys(S.chars).length,solved:Object.keys(S.solved).length,wk:S.wk.id,wp:S.wk.p,lwk:S.lwk?.id||'',lwp:S.lwk?.p||0,adm:isAdmin?1:0},sig=JSON.stringify(d);
-  if(sig===lastSig||Date.now()-lastSync<20000)return;
+  wkAdd(0);const d={nick:S.nick||'Joueur',pts:S.pts,total:S.total,arena:S.arena,heroes:Object.keys(S.chars).length,solved:Object.keys(S.solved).length,wk:S.wk.id,wp:S.wk.p,lwk:S.lwk?.id||'',lwp:S.lwk?.p||0,adm:isAdmin?1:0,cid:myCid||''},sig=JSON.stringify(d);
+  if(sig===lastSig&&Date.now()-lastSync<300000||Date.now()-lastSync<20000)return;
   syncing=true;lastSync=Date.now();try{await db.doc('players/'+uid).set({...d,at:Date.now()});lastSig=sig}catch(e){if(e&&e.code!=='unavailable')syncDead=true}syncing=false;
 }
 async function codeId(code){const en=new TextEncoder(),k=await crypto.subtle.importKey('raw',en.encode(code),'PBKDF2',false,['deriveBits']),b=await crypto.subtle.deriveBits({name:'PBKDF2',salt:en.encode('legendes-pieges-v1'),iterations:60000,hash:'SHA-256'},k,128);return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
@@ -1413,12 +1451,13 @@ async function boot(){
       if(m===undefined)S.joined=S.joined?1:0;else{S.joined=m?1:0;if(!m)S.code=''}}
   }catch(e){console.error('serveur',e);PR=null;db=null;room=null}
   ready=true;if(isAdmin){S.nick=S.nick||'Shai';S.joined=1}if(boss()){unlockAll();S.pts=INF}render();pushPres();
-  if(db&&isAdmin){let seeded=false;db.doc('adm/codes').onSnapshot(s=>{CODES=s.exists?(s.data().list||[]).slice():[];if(!seeded){seeded=true;if(!s.exists)seedCodes(S.code)}if(view==='admin'&&!typing())render()},()=>{})}
+  if(db&&isAdmin){let seeded=false;db.doc('adm/codes').onSnapshot(s=>{CODES=s.exists?(s.data().list||[]).slice():[];rosterSync();if(!seeded){seeded=true;if(!s.exists)seedCodes(S.code)}if(view==='admin'&&!typing())render()},()=>{})}
   if(db&&S.code&&!isAdmin)watchCode();
   if(room){try{room.onPeers(roomTick,()=>{})}catch(e){}pushPres();if(view==='fprep')render()}
   if(db){
     db.doc('game/config').onSnapshot(s=>{CFG=Object.assign({rot:60,recipes:[],riddles:[],event:null},s.exists?JSON.parse(JSON.stringify(s.data())):{});wasEv=!!ev();hud();if(view==='home'||view==='forge'||view==='rid')render()},()=>{});
-    db.collection('players').onSnapshot(s=>{PLAYERS=s.docs.map(d=>({id:d.id,...d.data()}));if(view==='home'&&document.activeElement?.id!=='nick')render()},()=>{});
+    db.collection('players').onSnapshot(s=>{PLAYERS=s.docs.map(d=>({id:d.id,...d.data()}));if((view==='home'||view==='fprep')&&!typing())render()},()=>{});
+    db.collection('roster').onSnapshot(s=>{ROSTER={};s.docs.forEach(d=>ROSTER[d.id]=d.data());rosterOk=true;rosterSync();if((view==='home'||view==='fprep')&&!typing())render()},()=>{});
     syncPlayer();
     if(uid)db.doc('gifts/'+uid).onSnapshot(s=>{if(s.exists)applyCmds(s.data().items)},()=>{});
     if(isAdmin)db.collection('adm/seen/p').onSnapshot(s=>{SEEN={};s.docs.forEach(d=>SEEN[d.id]=d.data());if(view==='admin'&&!typing())render()},()=>{});
