@@ -438,7 +438,7 @@ const HE={'ÉGALITÉ':'תיקו','EN ATTENTE…':'ממתין…','Duel en cours'
  'Victoire par abandon':'ניצחון טכני','Égalité':'תיקו','Chacun récupère sa mise.':'כל אחד מקבל את ההימור שלו בחזרה.','Fermer':'סגור',
  'Gratuit':'חינם','Dégâts ×1,4':'נזק ×1.4','Dégâts reçus −50 %':'חצי מהנזק שסופגים','pas 2 fois de suite':'לא פעמיים ברצף','+20 % de dégâts reçus':'סופגים 20% יותר נזק','Dégâts ×3,2':'נזק ×3.2','énergie pleine':'אנרגיה מלאה',
  'Choisis ton action':'בחר פעולה','Adversaire absent : réclamer la victoire':'היריב לא מגיב: דרוש ניצחון','Confirmer l\'abandon (mise perdue)':'אשר כניעה (ההימור אבוד)','Abandonner':'כניעה',
- 'Ce joueur est parti':'השחקן הזה עזב','Tu n\'as pas assez de points pour cette mise':'אין לך מספיק נקודות להימור הזה','Ce joueur n\'a pas assez de points pour cette mise':'לשחקן הזה אין מספיק נקודות להימור הזה','Défi annulé':'ההזמנה בוטלה','Défi refusé':'ההזמנה נדחתה',
+ 'Ce joueur est parti':'השחקן הזה עזב','Pas de réponse à ton défi':'אין תשובה להזמנה שלך','Pas de réponse à ta proposition d\'échange':'אין תשובה להצעת ההחלפה שלך','Tu as quitté le duel trop longtemps : mise perdue':'יצאת מהדו־קרב יותר מדי זמן: ההימור אבד','Le serveur refuse pour l\'instant la liste des joueurs en ligne. Recharge la page dans quelques secondes.':'השרת לא מאפשר כרגע לראות את השחקנים המחוברים. טען מחדש את הדף בעוד כמה שניות.','Tu n\'as pas assez de points pour cette mise':'אין לך מספיק נקודות להימור הזה','Ce joueur n\'a pas assez de points pour cette mise':'לשחקן הזה אין מספיק נקודות להימור הזה','Défi annulé':'ההזמנה בוטלה','Défi refusé':'ההזמנה נדחתה',
  // héros, coffres
  'volant':'מעופף','Vie':'חיים','Attaque':'התקפה','Vitesse':'מהירות','Énergie':'אנרגיה','Spéciale :':'מתקפה מיוחדת:','(quand l\'énergie est pleine)':'(כשהאנרגיה מלאה)','Pas encore débloqué.':'עדיין לא נפתח.',
  'Héros actif':'הגיבור הפעיל','Choisir ce héros':'בחר בגיבור הזה','Niveau +1':'רמה +1','S\'obtient dans les coffres ou à la forge.':'משיגים אותו בתיבות או בנפחייה.',
@@ -540,8 +540,13 @@ async function fbPrims(){
   if(!window.firebase)throw new Error('no sdk');
   const app=firebase.apps.find(a=>a.name===CUR_APP)||(CUR_APP==='[DEFAULT]'?firebase.initializeApp(FB_CONFIG):firebase.initializeApp(FB_CONFIG,CUR_APP)),au=app.auth(),rt=app.database();
   const u=await new Promise((res,rej)=>{const t=setTimeout(()=>rej(new Error('auth timeout')),12000);const off=au.onAuthStateChanged(x=>{if(x){clearTimeout(t);off();res(x)}});if(!au.currentUser)au.signInAnonymously().catch(e=>{clearTimeout(t);rej(e)})});
+  let skew=0;rt.ref('.info/serverTimeOffset').on('value',s=>{skew=+s.val()||0});
   return {uid:u.uid,get:async p=>(await rt.ref(p).get()).val(),set:(p,v)=>rt.ref(p).set(v),remove:p=>rt.ref(p).remove(),
-    on:(p,cb)=>{const r=rt.ref(p),f=s=>cb(s.val());r.on('value',f,()=>{});return()=>r.off('value',f)},
+    // Si le serveur refuse l'écoute (droits pas encore prêts, coupure), on réessaie au lieu d'abandonner pour toujours
+    on:(p,cb,err)=>{const r=rt.ref(p);let dead=false,tm=0,n=0;const ok=s=>{n=0;cb(s.val())},ko=e=>{try{err&&err(e)}catch(_){}if(!dead)tm=setTimeout(go,Math.min(30000,3000*++n))},go=()=>{if(!dead)r.on('value',ok,ko)};
+      go();return()=>{dead=true;clearTimeout(tm);r.off('value',ok)}},
+    connected:cb=>rt.ref('.info/connected').on('value',s=>cb(!!s.val())),
+    now:()=>Date.now()+skew,stamp:firebase.database.ServerValue.TIMESTAMP,
     dropOnDisconnect:p=>rt.ref(p).onDisconnect().remove()};
 }
 const clean=v=>v==null?null:JSON.parse(JSON.stringify(v));
@@ -552,14 +557,25 @@ function mkDb(P){
   return {doc:path=>({get:async()=>snap(await P.get(path)),set:d=>P.set(path,clean(d)),delete:()=>P.remove(path),onSnapshot:(cb,err)=>P.on(path,v=>cb(snap(v)))}),
     collection:path=>({onSnapshot:(cb,err)=>P.on(path,v=>cb({docs:Object.entries(v||{}).map(([id,d])=>({id,data:()=>fixLists(clean(d))}))}))})};
 }
+// Présence : chaque joueur écrit online/<uid>. Le serveur l'efface quand le joueur se déconnecte ;
+// on la réécrit donc à chaque reconnexion, et un battement régulier (ts) permet de cacher les joueurs partis sans prévenir.
+const STALE=70000;
 function mkRoom(P){
-  let mine={},list=[],hs=[],live=false;const path='online/'+P.uid;
-  const build=v=>{list=Object.entries(v||{}).map(([id,pr])=>({peer:id,by:id,isMe:id===P.uid,sameTab:id===P.uid,kind:'viewer',guest:false,presence:Object.freeze(pr||{}),updatedAt:Date.now()}));hs.forEach(f=>{try{f({peers:list})}catch(e){console.error(e)}})};
-  P.on('online',build);
+  let mine={},raw={},list=[],hs=[],on=false,err=null,up=true,sig='',beat=0;const path='online/'+P.uid,now=()=>P.now?P.now():Date.now(),ts=()=>P.stamp||Date.now();
+  const fresh=pr=>!pr||typeof pr.ts!=='number'||now()-pr.ts<STALE;
+  const build=force=>{const E=Object.entries(raw).filter(([id,pr])=>id===P.uid||fresh(pr)),k=E.map(x=>x[0]).join();if(!force&&k===sig)return;sig=k;
+    list=E.map(([id,pr])=>({peer:id,by:id,isMe:id===P.uid,sameTab:id===P.uid,kind:'viewer',guest:false,presence:Object.freeze(pr||{}),updatedAt:Date.now()}));
+    hs.forEach(f=>{try{f({peers:list})}catch(e){console.error(e)}})};
+  P.on('online',v=>{err=null;raw=v&&typeof v==='object'?v:{};build(true)},e=>{console.error('online',e);err=e;raw={};build(true)});
+  const arm=()=>{try{P.dropOnDisconnect(path)}catch(e){}};
+  const write=()=>{mine.ts=ts();return P.set(path,clean(mine))};
+  if(P.connected)P.connected(c=>{up=c;if(c&&on){arm();write().catch(()=>{})}});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&on)write().catch(()=>{})});
+  setInterval(()=>{if(on&&!document.hidden&&++beat%4===0)P.set(path+'/ts',ts()).catch(()=>{});build(false)},5000);
   return {presence:async patch=>{for(const k in patch){if(patch[k]===null)delete mine[k];else mine[k]=patch[k]}
-      if(!live){live=true;try{P.dropOnDisconnect(path)}catch(e){}}await P.set(path,clean(mine))},
-    live:async f=>{if(f==null){delete mine.f;await P.remove(path+'/f')}else{mine.f=f;if(!live){live=true;try{P.dropOnDisconnect(path)}catch(e){}}await P.set(path+'/f',clean(f))}},
-    peers:()=>list,onPeers:(f)=>{hs.push(f);setTimeout(()=>f({peers:list}),0);return()=>{hs=hs.filter(x=>x!==f)}}};
+      if(!on){on=true;arm()}await write()},
+    live:async f=>{if(f==null){delete mine.f;await P.remove(path+'/f')}else{mine.f=f;if(!on){on=true;arm()}await P.set(path+'/f',clean(f))}},
+    peers:()=>list,err:()=>err,up:()=>up,onPeers:(f)=>{hs.push(f);setTimeout(()=>f({peers:list}),0);return()=>{hs=hs.filter(x=>x!==f)}}};
 }
 const ADM_SALT='lp-admin-v1',ADM_CHECK='1389cc8fbc1827eddb0ad755ec2985e3780c70875d1efabc73c41fe375caa3b2';
 async function admKey(code){const k=hex(await derive(code,ADM_SALT)),h=hex(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(k))));return h===ADM_CHECK?k:null}
@@ -1083,7 +1099,9 @@ const A={
   try{const k=await admKey(v);if(k){await PR.set('admins/'+uid,k);accLink(v);loadProfile(v);S.code=v;S.joined=1;S.nick='Shai';save();location.reload();return}}catch(e){}
   let id;try{id=await codeId(v)}catch(e){return err('Impossible de vérifier le code pour le moment. Réessaie.')}
   try{const s=await db.doc('codes/'+id).get();if(!s.exists)return err(bad);await PR.set('members/'+uid,id);
-   accLink(v);loadProfile(v);S.code=v;S.joined=1;S.nick=cleanN(s.data().name)||'Joueur';lastSync=0;save();view='home';render();toast('Bienvenue, '+S.nick+' !');watchCode();pushPres()}
+   accLink(v);loadProfile(v);S.code=v;S.joined=1;S.nick=cleanN(s.data().name)||'Joueur';lastSync=0;save();
+   // Recharger : les écoutes ouvertes avant l'entrée du code avaient été refusées par le serveur (pas encore membre)
+   try{sessionStorage.setItem('lpwelcome',S.nick)}catch(e){}location.reload()}
   catch(e){err('Impossible de vérifier le code pour le moment. Réessaie.')}},
  async cadd(){if(!db)return toast('Base indisponible ici');const name=cleanN(val('cn'));let code=val('cc').trim().toLowerCase();
   if(name.length<2)return toast('Écris le nom du joueur (2 caractères minimum)');
@@ -1126,7 +1144,7 @@ const A={
  tclose(){trUI=null;render()},
  tsend(){if(TR||!ME||!room)return;const p=PEERS.find(x=>x.peer===trUI),g=val('tg'),w=val('tw');if(!p)return toast('Ce joueur est parti');if(!S.chars[g]||!HB[w])return;
   if(S.chars[g].n<2&&Object.keys(S.chars).length<2)return toast('Tu ne peux pas donner ton seul héros');
-  TR={to:p.peer,on:pname(p),sd:Math.floor(Math.random()*1e9),g,w};trUI=null;setT({to:TR.to,sd:TR.sd,g,w});render()},
+  TR={to:p.peer,on:pname(p),sd:Math.floor(Math.random()*1e9),g,w,t0:Date.now()};trUI=null;setT({to:TR.to,sd:TR.sd,g,w});render()},
  tcancel(){if(!TR)return;TR=null;setT(null);render()},
  tacc(){const p=TINV,t=p?.presence?.tr;if(!p||!t||TR)return;
   if(!S.chars[t.w]||!parseC(p.presence.c)[t.g]){refused['t'+p.peer+t.sd]=1;TINV=null;drawInv();return toast('Échange impossible : ce héros n\'est plus disponible')}
@@ -1142,9 +1160,9 @@ const A={
  fight(d){if(d.m==='boss'&&!ev())return;if(DU)return toast('Termine d\'abord ton duel');startFight(d.m)},
  dinv(d){if(DU||!ME||!room)return;const p=PEERS.find(x=>x.peer===d.p);if(!p)return toast('Ce joueur est parti');const bet=Math.max(0,Math.floor(+val('bet')||0));
   if(S.pts<bet)return toast('Tu n\'as pas assez de points pour cette mise');if((+p.presence.pts||0)<bet)return toast('Ce joueur n\'a pas assez de points pour cette mise');
-  DU={to:p.peer,on:pname(p),bet,sd:Math.floor(Math.random()*1e9),mv:'',om:'',h:myH(),s:'wait',me:ME.peer,n:0};S.pts-=bet;S.esc={bet,st:'wait'};save();pubD();view='duel';sub={};render()},
+  DU={to:p.peer,on:pname(p),bet,sd:Math.floor(Math.random()*1e9),mv:'',om:'',h:myH(),s:'wait',me:ME.peer,n:0,t0:Date.now()};S.pts-=bet;S.esc={bet,st:'wait'};save();pubD();view='duel';sub={};render()},
  dacc(){const p=INV,d=p?.presence?.d;if(!p||!d||DU||!ME)return;const bet=Math.max(0,Math.min(1e6,Math.floor(+d.bet||0)));if(S.pts<bet)return toast('Tu n\'as pas assez de points pour cette mise');
-  DU={to:p.peer,on:pname(p),bet,sd:+d.sd||0,mv:'',om:'',h:myH(),oh:d.h,s:'play',me:ME.peer,n:0,rt:Date.now()};S.pts-=bet;S.esc={bet,st:'play'};INV=null;save();pubD();drawInv();startDuel()},
+  DU={to:p.peer,on:pname(p),bet,sd:+d.sd||0,mv:'',om:'',h:myH(),oh:d.h,s:'play',me:ME.peer,n:0,rt:Date.now(),seen:Date.now()};S.pts-=bet;S.esc={bet,st:'play'};INV=null;save();pubD();drawInv();startDuel()},
  dref(){const p=INV,d=p?.presence?.d;if(!p||!d)return;refused[p.peer+d.sd]=1;INV=null;drawInv();setD({to:p.peer,sd:d.sd,x:1});setTimeout(()=>{if(!DU)setD(null)},4000)},
  dcancel(){if(DU&&DU.s==='wait')endInvite('Défi annulé')},
  dclose(){if(!DU)return;refused[DU.to+DU.sd]=1;DU=null;setD(null);view='fprep';sub={};render()},
@@ -1211,12 +1229,14 @@ function duelTx(force){
   if(!F||!F.duel||!room||!DU)return;const n=performance.now();if(!force&&n-F.txT<66)return;F.txT=n;
   const p=F.p,cut=Date.now()-2000;F.evq=F.evq.filter(v=>v.at>cut);
   const f={sd:DU.sd,x:Math.round(p.x),y:Math.round(p.y),vx:Math.round(p.vx),vy:Math.round(p.vy),fc:p.face,hp:Math.max(0,Math.round(p.hp)),mhp:Math.round(p.mhp),en:Math.round(p.en),
-    sh:p.shield?1:0,ch:p.charge?1:0,ko:F.myKo?1:0,go:F.intro<=0?1:0,ev:F.evq.map(({at,...v})=>v)};
+    sh:p.shield?1:0,ch:p.charge?1:0,ko:F.myKo?1:0,go:F.intro<=0?1:0,ev:F.evq.map(({at,...v})=>v),n:F.txn=(F.txn||0)+1};
   if(F.quit)f.q=1;
   try{room.live(f).catch(()=>{})}catch(e){}
 }
 function duelRx(f){
   if(!F||!F.duel||!f||f.sd!==DU.sd)return;const e=F.e;
+  // La liste en ligne est renvoyée à chaque changement de n'importe quel joueur : on ignore une image déjà reçue
+  if(f.n&&f.n===F.rxN)return;F.rxN=f.n;DU.seen=Date.now();
   F.rxT=performance.now();if(!F.rx){F.rx=1;e.x=e.tx=+f.x||e.x;e.y=e.ty=+f.y||e.y}
   e.tx=+f.x||0;e.ty=+f.y||GY;e.tvx=+f.vx||0;e.tvy=+f.vy||0;e.face=f.fc<0?-1:1;e.shield=!!f.sh;e.charge=!!f.ch;e.en=+f.en||0;
   if(f.mhp>0)e.mhp=+f.mhp;
@@ -1258,11 +1278,13 @@ function duelRes(){
 }
 function duelEnd(){const res=duelRes();duelTx(true);setTimeout(()=>{try{room&&room.live(null).catch(()=>{})}catch(e){}},3000);finishDuel(res)}
 function finishDuel(res){if(!DU||DU.s==='done')return;DU.s='done';DU.res=res;const b=DU.bet,w=res==='win'||res==='forf';if(w){S.pts+=2*b;S.total+=b;S.dw++;bump('duel');wkAdd(b);sfx('win')}else if(res==='draw')S.pts+=b;else{S.dl++;sfx('lose')}S.esc=null;addXp(S.sel,w?30:10);save();fsOn=false;view='duel';sub={};render()}
-function endInvite(msg){if(!DU)return;S.pts+=DU.bet;S.esc=null;refused[DU.to+DU.sd]=1;DU=null;setD(null);save();toast(msg);view='fprep';render()}
+function endInvite(msg){if(!DU)return;S.pts+=DU.bet;S.esc=null;refused[DU.to+DU.sd]=1;DU=null;setD(null);rtSig='';save();if(msg)toast(msg);view='fprep';render()}
 function roomTick(){
   PEERS=room.peers().filter(p=>p.kind==='viewer');ME=PEERS.find(p=>p.sameTab)||null;if(!ME)return;
   if(DU){const op=PEERS.find(p=>p.peer===DU.to),od=op?.presence?.d,linked=!!od&&od.to===DU.me&&od.sd===DU.sd;
-    if(DU.s==='wait'){if(!op)endInvite('Ce joueur est parti');else if(linked){if(od.x)endInvite('Défi refusé');else{DU.s='play';DU.oh=od.h;S.esc={bet:DU.bet,st:'play'};save();startDuel()}}}
+    if(DU.s==='wait'){if(!op)endInvite('Ce joueur est parti');else if(linked){if(od.x)endInvite('Défi refusé');else{DU.s='play';DU.oh=od.h;DU.seen=Date.now();S.esc={bet:DU.bet,st:'play'};save();startDuel()}}
+      // Les deux joueurs se sont défiés en même temps : celui qui a le plus grand identifiant retire son défi et voit celui de l'autre
+      else if(od&&od.to===DU.me&&!od.x&&od.mv===''&&DU.me>DU.to)endInvite('')}
     else if(DU.s==='play'){
       if(linked&&F&&F.duel){duelRx(op.presence.f);if(od.x===1&&!F.over){F.quitWin=1;F.over=.01}}
       else if(!F||!F.duel)finishDuel('forf')}
@@ -1338,11 +1360,22 @@ function applyCmds(items){
   if(n||mod){save();if(view!=='fight'&&view!=='duel')render()}
   if(n)reward(lastH,S.chars[lastH].st,n>1?n+' cadeaux de l\'admin reçus !':'Cadeau de l\'admin !');else if(mod)toast('L\'admin a modifié ton compte');
 }
-function duelClock(){}
+function duelClock(){
+  const t=Date.now();
+  if(DU&&DU.s==='wait'&&t-(DU.t0||t)>60000)endInvite('Pas de réponse à ton défi');
+  // Adversaire qui ne donne plus signe de vie pendant le duel (appli fermée, téléphone verrouillé) : victoire par abandon
+  if(DU&&DU.s==='play'&&F&&F.duel&&!F.over&&F.intro<=0&&room&&room.up()&&!document.hidden&&t-(DU.seen||t)>10000&&performance.now()-F.rxT>10000){F.quitWin=1;F.over=.01}
+  if(TR&&t-(TR.t0||t)>60000){TR=null;setT(null);toast('Pas de réponse à ta proposition d\'échange');if(view==='heroes'||view==='fprep')render()}
+}
+// Quitter l'appli plus de 8 secondes pendant un duel compte comme un abandon (l'adversaire, lui, gagne au bout de 10 s)
+let hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.hidden){hidAt=performance.now();return}
+  if(F&&F.duel&&DU&&DU.s==='play'&&!F.over&&hidAt&&performance.now()-hidAt>8000){F.quit=1;duelTx(true);pubD(1);setTimeout(()=>{try{room&&room.live(null).catch(()=>{})}catch(e){}},3000);finishDuel('lose');toast('Tu as quitté le duel trop longtemps : mise perdue')}
+  else if(F&&F.duel)F.rxT=performance.now()});
 function duelPanel(){
   const others=PEERS.filter(p=>!p.sameTab&&p.presence?.nick),bets=[0,10,25,50,100,250,500].filter(b=>b<=S.pts);if(!bets.includes(betSel))betSel=0;
   return `<div class="panel" style="border-color:var(--arc)"><h2>Joueurs en ligne</h2>
    ${!room?'<p class="mute">Connexion au serveur impossible pour le moment. Recharge la page.</p>'
+   :room.err()?'<p class="mute">Le serveur refuse pour l\'instant la liste des joueurs en ligne. Recharge la page dans quelques secondes.</p>'
    :`<p class="mute small">Défie un joueur connecté ou propose-lui un échange de héros. En duel, chacun mise des points et le gagnant prend tout. Le duel se joue en direct, joystick contre joystick, 90 secondes maximum : quand le temps est écoulé, celui qui a le plus de vie gagne.</p>
    <label style="max-width:220px">Ta mise<select id="bet">${bets.map(b=>`<option value="${b}" ${b===betSel?'selected':''}>${b?b+' points':'Sans mise'}</option>`).join('')}</select></label>
    ${others.length?others.map(p=>{const h=fz(p.presence?.h),busy=!!p.presence?.d;return `<div class="row"><span class="grow"><b>${esc(pname(p))}</b> <span class="mute small">· ${h.c.n} niv. ${h.l} · ${+p.presence?.pts>=INF?'∞':Math.max(0,Math.floor(+p.presence?.pts||0))} pts</span></span><button class="btn2" data-a="dinv" data-p="${esc(p.peer)}" ${busy||DU?'disabled':''}>${busy?'En duel':'Défier'}</button><button data-a="topen" data-p="${esc(p.peer)}" ${p.presence?.c?'':'disabled'}>Échanger</button></div>`}).join('')
@@ -1372,9 +1405,9 @@ async function boot(){
   $('#hlogo').innerHTML=LOGO;applyLang();render();requestAnimationFrame(loop);
   try{PR=await fbPrims();uid=PR.uid;db=mkDb(PR);room=mkRoom(PR);
     if(S.code){try{const k=await admKey(S.code);isAdmin=!!k&&(await PR.get('admins/'+uid))===k}catch(e){}}
-    if(S.code&&!isAdmin){const m=await PR.get('members/'+uid).catch(()=>null);S.joined=m?1:0;if(!m){S.code=''}}
+    if(S.code&&!isAdmin){let m;try{m=await PR.get('members/'+uid)}catch(e){m=undefined}
+      if(m===undefined)S.joined=S.joined?1:0;else{S.joined=m?1:0;if(!m)S.code=''}}
   }catch(e){console.error('serveur',e);PR=null;db=null;room=null}
-  if(room){try{room.onPeers(roomTick,()=>{})}catch(e){}}
   ready=true;if(isAdmin){S.nick=S.nick||'Shai';S.joined=1}if(boss()){unlockAll();S.pts=INF}render();pushPres();
   if(db&&isAdmin){let seeded=false;db.doc('adm/codes').onSnapshot(s=>{CODES=s.exists?(s.data().list||[]).slice():[];if(!seeded){seeded=true;if(!s.exists)seedCodes(S.code)}if(view==='admin'&&!typing())render()},()=>{})}
   if(db&&S.code&&!isAdmin)watchCode();
@@ -1388,6 +1421,7 @@ async function boot(){
   }
   if(isAdmin){H.forEach(c=>{if(!S.chars[c.id])S.chars[c.id]={n:1,lvl:1,xp:0,st:1}});save();if(view!=='fight'&&view!=='duel')render()}
   if(PEND&&PEND.v&&gated())A.code({v:PEND.v});
+  try{const w=sessionStorage.getItem('lpwelcome');if(w){sessionStorage.removeItem('lpwelcome');toast('Bienvenue, '+w+' !')}}catch(e){}
 }
 boot();
 </script>
