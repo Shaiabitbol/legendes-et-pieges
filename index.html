@@ -108,6 +108,11 @@ canvas.pt{width:100%;max-width:160px;aspect-ratio:18/19;display:block;margin:0 a
 .scene.savane{background:linear-gradient(#ffcf7a 0 55%,#b98a3c 55%)}
 .scene.nuit{background:linear-gradient(#0b1030,#2a2060 70%,#1b3a2a 70%)}
 .scene.labo{background:repeating-linear-gradient(90deg,#20264f 0 40px,#252c5c 40px 80px)}
+.scene.cuisine{background:linear-gradient(#f3e3c3 0 58%,#a8673a 58% 62%,#d9cfbd 62%)}
+.scene.ville{background:linear-gradient(#8fd3ff 0 50%,#9aa3b5 50% 70%,#55596a 70%)}
+.scene.mer{background:linear-gradient(#2fb6e8,#0f5d9c 75%,#d8c08a 75%)}
+.scene.neige{background:linear-gradient(#bfe3ff 0 52%,#f4f9ff 52%)}
+.scene.foret{background:linear-gradient(#a8e6a1 0 50%,#3d7a3a 50% 64%,#5a3d22 64%)}
 .it{position:absolute;transform:translate(-50%,-50%);font-size:calc(var(--s)*1cqw);line-height:1;background:none;border:none;padding:0;min-height:0;cursor:pointer}
 .it.t{font-family:var(--display);padding:2cqw 4cqw;border-radius:2cqw;color:#fff;border:2px solid #fff}
 .res{border-radius:10px;padding:10px 12px;font-weight:700}
@@ -254,7 +259,59 @@ const PICS=[
  {id:'e4',d:3,bg:'nuit',q:'Réveille le chien.',sol:'toucher le chien 8 fois de suite : il dort très profondément',h:'Il dort très profondément. Insiste.',he:{q:'הער את הכלב.',sol:'לגעת בכלב 8 פעמים ברצף: הוא ישן עמוק מאוד',h:'הוא ישן עמוק מאוד. אל תוותר.'},
   it:[{e:'🐶',x:50,y:62,s:22,taps:8},{e:'💤',x:66,y:36,s:8,deco:1},{e:'🔔',x:14,y:72,s:10,drag:1},{e:'⏰',x:86,y:72,s:10}]},
  {id:'e5',d:3,bg:'savane',q:'Touche les animaux du plus petit au plus grand.',sol:'la fourmi, la souris, le chien, puis l\'éléphant',h:'Pense à leur vraie taille, pas à celle du dessin.',he:{q:'גע בחיות מהקטנה לגדולה.',sol:'הנמלה, העכבר, הכלב ואז הפיל',h:'חשוב על הגודל האמיתי שלהן, לא על גודל הציור.'},
-  it:[{e:'🐜',x:24,y:48,s:26,o:1},{e:'🐭',x:56,y:28,s:12,o:2},{e:'🐕',x:80,y:64,s:9,o:3},{e:'🐘',x:50,y:86,s:5,o:4}]}
+  it:[{e:'🐜',x:24,y:48,s:26,o:1},{e:'🐭',x:56,y:28,s:12,o:2},{e:'🐕',x:80,y:64,s:9,o:3},{e:'🐘',x:50,y:86,s:5,o:4}]},
+ // ---- Nouvelles énigmes en images (6 par difficulté) ----
+ {id:'i1',d:0,bg:'cuisine',q:'Allume la bougie.',sol:'faire glisser le feu sur la bougie',h:'Qu\'est-ce qui peut allumer une bougie ? Déplace-le.',he:{q:'הדלק את הנר.',sol:'לגרור את האש אל הנר',h:'מה יכול להדליק נר? הזז אותו.'},
+  it:[{e:'🕯️',x:30,y:62,s:16,n:1},{e:'🔥',x:80,y:72,s:10,drag:1,on:0,rad:14},{e:'🧊',x:60,y:76,s:10,drag:1},{e:'🍳',x:84,y:30,s:10,deco:1}]},
+ {id:'i2',d:0,bg:'ville',q:'Trouve la clé de la maison.',sol:'déplacer le pot de fleurs : la clé était cachée dessous',h:'On cache souvent la clé sous quelque chose, devant la porte.',he:{q:'מצא את המפתח של הבית.',sol:'להזיז את העציץ: המפתח היה מוסתר מתחתיו',h:'לעיתים קרובות מחביאים את המפתח מתחת למשהו ליד הדלת.'},
+  it:[{e:'🏠',x:30,y:52,s:30,deco:1},{e:'🔑',x:58,y:84,s:6,ok:1},{e:'🪴',x:58,y:80,s:16,drag:1},{e:'🚗',x:84,y:80,s:16},{e:'🐈',x:12,y:84,s:10}]},
+ {id:'i3',d:0,bg:'savane',a:4,q:'Combien y a-t-il d\'oiseaux ?',sol:'4 : les deux petits oiseaux, l\'aigle et la poule. La chauve-souris n\'est pas un oiseau',h:'Une poule, c\'est aussi un oiseau. Et une chauve-souris ?',he:{q:'כמה ציפורים יש?',sol:'4: שתי הציפורים הקטנות, הנשר והתרנגולת. העטלף הוא לא ציפור',h:'גם תרנגולת היא ציפור. ומה עם עטלף?'},
+  it:[{e:'🐦',x:20,y:24,s:9,n:1},{e:'🐦',x:46,y:16,s:8,n:1},{e:'🦅',x:78,y:22,s:12,n:1},{e:'🦇',x:60,y:38,s:9,n:1},{e:'🐔',x:34,y:76,s:13,n:1},{e:'🐄',x:74,y:72,s:18,n:1}]},
+ {id:'i4',d:0,bg:'mer',q:'Ramène le poisson chez lui.',sol:'faire glisser le poisson jusqu\'au corail',h:'Un poisson-clown habite dans le corail.',he:{q:'החזר את הדג הביתה.',sol:'לגרור את הדג אל האלמוג',h:'דג ליצן גר באלמוג.'},
+  it:[{e:'🪸',x:78,y:76,s:20,n:1},{e:'🐠',x:20,y:40,s:10,drag:1,on:0,rad:15},{e:'🦈',x:52,y:28,s:14},{e:'🐚',x:30,y:86,s:7,deco:1}]},
+ {id:'i5',d:0,bg:'neige',q:'Le pingouin a froid. Réchauffe-le.',sol:'mettre l\'écharpe sur le pingouin',h:'Qu\'est-ce qu\'on met autour du cou quand il fait froid ?',he:{q:'לפינגווין קר. חמם אותו.',sol:'לשים את הצעיף על הפינגווין',h:'מה שמים סביב הצוואר כשקר?'},
+  it:[{e:'🐧',x:30,y:64,s:20,n:1},{e:'🧣',x:80,y:76,s:11,drag:1,on:0,rad:15},{e:'🧊',x:60,y:80,s:10,drag:1},{e:'❄️',x:70,y:18,s:9,deco:1}]},
+ {id:'i6',d:0,bg:'labo',q:'Fais sonner le réveil.',sol:'garder le doigt appuyé 2 secondes sur le réveil',h:'Un petit coup ne suffit pas : garde le doigt dessus.',he:{q:'גרום לשעון המעורר לצלצל.',sol:'להחזיק את האצבע 2 שניות על השעון המעורר',h:'נגיעה קצרה לא מספיקה: השאר את האצבע עליו.'},
+  it:[{e:'⏰',x:50,y:54,s:22,hold:2},{e:'📱',x:16,y:74,s:10},{e:'🛏️',x:84,y:76,s:14}]},
+
+ {id:'i7',d:1,bg:'foret',q:'Trouve l\'écureuil.',sol:'déplacer le gros arbre : l\'écureuil était caché derrière',h:'Les écureuils adorent se cacher derrière les arbres.',he:{q:'מצא את הסנאי.',sol:'להזיז את העץ הגדול: הסנאי התחבא מאחוריו',h:'סנאים אוהבים להתחבא מאחורי עצים.'},
+  it:[{e:'🐿️',x:66,y:58,s:7,ok:1},{e:'🌳',x:66,y:52,s:30,drag:1},{e:'🌲',x:22,y:50,s:26,drag:1},{e:'🦔',x:42,y:84,s:9},{e:'🍄',x:86,y:86,s:7}]},
+ {id:'i8',d:1,bg:'savane',q:'Fais pousser la fleur.',sol:'faire glisser la goutte d\'eau sur la graine',h:'Une graine a besoin de boire.',he:{q:'גרום לפרח לצמוח.',sol:'לגרור את טיפת המים אל הזרע',h:'זרע צריך לשתות.'},
+  it:[{e:'🌱',x:48,y:72,s:12,n:1},{e:'💧',x:18,y:26,s:9,drag:1,on:0,rad:14},{e:'🔥',x:82,y:28,s:10,drag:1},{e:'🐛',x:80,y:80,s:8}]},
+ {id:'i9',d:1,bg:'ville',a:12,q:'Combien de roues y a-t-il en tout ?',sol:'12 : la voiture (4), le vélo (2), la trottinette (2) et le bus caché derrière l\'immeuble (4)',h:'Compte bien chaque véhicule… même ceux qu\'on ne voit pas.',he:{q:'כמה גלגלים יש בסך הכול?',sol:'12: המכונית (4), האופניים (2), הקורקינט (2) והאוטובוס שהתחבא מאחורי הבניין (4)',h:'ספור כל כלי רכב… גם את אלה שלא רואים.'},
+  it:[{e:'🚗',x:16,y:82,s:14,n:1},{e:'🚲',x:38,y:84,s:11,n:1},{e:'🛴',x:56,y:84,s:9,n:1},{e:'🚌',x:80,y:74,s:10,n:1},{e:'🏢',x:80,y:60,s:30,drag:1}]},
+ {id:'i10',d:1,bg:'nuit',q:'Endors le bébé.',sol:'bercer le bébé : le faire glisser de gauche à droite plusieurs fois',h:'Un bébé s\'endort quand on le berce doucement.',he:{q:'הרדם את התינוק.',sol:'לנדנד את התינוק: לגרור אותו ימינה ושמאלה כמה פעמים',h:'תינוק נרדם כשמנדנדים אותו בעדינות.'},
+  it:[{e:'👶',x:50,y:60,s:18,drag:1,shake:6},{e:'📯',x:16,y:76,s:11},{e:'🥁',x:84,y:76,s:11},{e:'🌙',x:84,y:16,s:9,deco:1}]},
+ {id:'i11',d:1,bg:'mer',q:'La baleine est trop grande pour cet aquarium. Libère-la !',sol:'faire glisser la baleine en dehors de l\'image',h:'L\'océan est plus grand que l\'écran…',he:{q:'הלווייתן גדול מדי לאקווריום הזה. שחרר אותו!',sol:'לגרור את הלווייתן אל מחוץ לתמונה',h:'האוקיינוס גדול יותר מהמסך…'},
+  it:[{e:'🐋',x:48,y:50,s:22,drag:1,out:1},{e:'🐟',x:16,y:30,s:8,n:1},{e:'🦀',x:80,y:84,s:9},{e:'🪸',x:16,y:82,s:12,deco:1}]},
+ {id:'i12',d:1,bg:'savane',q:'Touche les animaux du plus lent au plus rapide.',sol:'l\'escargot, la tortue, l\'éléphant, puis le guépard',h:'Pense à leur vraie vitesse, pas à la taille du dessin.',he:{q:'גע בחיות מהאיטית למהירה.',sol:'החילזון, הצב, הפיל ואז הברדלס',h:'חשוב על המהירות האמיתית שלהן, לא על גודל הציור.'},
+  it:[{e:'🐆',x:22,y:70,s:7,o:4},{e:'🐘',x:48,y:40,s:9,o:3},{e:'🐢',x:74,y:66,s:16,o:2},{e:'🐌',x:84,y:26,s:22,o:1}]},
+
+ {id:'i13',d:2,bg:'cuisine',a:5,q:'Combien y a-t-il d\'œufs ?',sol:'5 : trois œufs, l\'œuf au plat et celui caché sous le bol',h:'Un œuf au plat reste un œuf. Et regarde sous les objets.',he:{q:'כמה ביצים יש?',sol:'5: שלוש ביצים, הביצייה והביצה שהתחבאה מתחת לקערה',h:'ביצייה היא עדיין ביצה. והסתכל מתחת לחפצים.'},
+  it:[{e:'🥚',x:16,y:70,s:9,n:1},{e:'🥚',x:30,y:76,s:9,n:1},{e:'🥚',x:44,y:70,s:9,n:1},{e:'🍳',x:66,y:30,s:14,n:1},{e:'🐔',x:16,y:28,s:13,n:1},{e:'🥚',x:78,y:80,s:7,n:1},{e:'🥣',x:78,y:76,s:18,drag:1}]},
+ {id:'i14',d:2,bg:'foret',q:'Le loup a faim. Protège les moutons.',sol:'amener le chien de berger sur le loup',h:'Qui garde les moutons, d\'habitude ?',he:{q:'הזאב רעב. הגן על הכבשים.',sol:'להביא את כלב הרועים אל הזאב',h:'מי בדרך כלל שומר על הכבשים?'},
+  it:[{e:'🐺',x:80,y:64,s:16,n:1},{e:'🐑',x:30,y:72,s:12,n:1},{e:'🐑',x:46,y:80,s:12,n:1},{e:'🐕',x:14,y:44,s:12,drag:1,on:0,rad:16},{e:'🐈',x:56,y:36,s:9,drag:1},{e:'🌲',x:88,y:30,s:16,deco:1}]},
+ {id:'i15',d:2,bg:'ville',q:'Fais arrêter la pluie.',sol:'pousser le nuage de pluie en dehors de l\'image',h:'D\'où tombe la pluie ? Tu peux le déplacer.',he:{q:'עצור את הגשם.',sol:'לדחוף את ענן הגשם אל מחוץ לתמונה',h:'מאיפה יורד הגשם? אפשר להזיז אותו.'},
+  it:[{e:'🌧️',x:50,y:20,s:20,drag:1,out:1},{e:'☂️',x:20,y:70,s:13,drag:1},{e:'🐱',x:60,y:80,s:11,n:1},{e:'🏠',x:84,y:66,s:22,deco:1}]},
+ {id:'i16',d:2,bg:'labo',q:'Touche les nombres du plus petit au plus grand.',sol:'−3, puis 0, puis ½, puis 2',h:'Un nombre avec un « moins » devant est plus petit que zéro.',he:{q:'גע במספרים מהקטן לגדול.',sol:'‎−3, ואז 0, ואז ½, ואז 2',h:'מספר עם "מינוס" לפניו קטן מאפס.'},
+  it:[{t:'2',x:22,y:34,s:5,col:'#1f8fc4',o:4},{t:'½',x:72,y:28,s:9,col:'#7a2cff',o:3},{t:'0',x:40,y:74,s:7,col:'#3f8f5a',o:2},{t:'−3',x:78,y:72,s:12,col:'#b3261e',o:1}]},
+ {id:'i17',d:2,bg:'neige',q:'Un poisson est coincé dans le glaçon. Libère-le.',sol:'casser le glaçon : le toucher 6 fois, ou taper dessus avec le marteau',h:'La glace finit par casser si on tape assez fort… ou avec le bon outil.',he:{q:'דג תקוע בקוביית הקרח. שחרר אותו.',sol:'לשבור את הקרח: לגעת בו 6 פעמים, או להכות בו עם הפטיש',h:'קרח נשבר בסוף אם מכים מספיק חזק… או עם הכלי הנכון.'},
+  it:[{e:'🧊',x:44,y:60,s:24,taps:6},{e:'🔨',x:82,y:74,s:11,drag:1,on:0,rad:16},{e:'🐧',x:14,y:70,s:12},{e:'❄️',x:80,y:18,s:9,deco:1}]},
+ {id:'i18',d:2,bg:'mer',q:'Trouve la perle.',sol:'garder le doigt appuyé 3 secondes sur l\'huître pour l\'ouvrir',h:'La perle est dans un coquillage qui reste bien fermé. Insiste longtemps.',he:{q:'מצא את הפנינה.',sol:'להחזיק את האצבע 3 שניות על הצדפה כדי לפתוח אותה',h:'הפנינה נמצאת בצדפה שנשארת סגורה היטב. התעקש הרבה זמן.'},
+  it:[{e:'🦪',x:60,y:80,s:12,hold:3},{e:'🐚',x:24,y:82,s:12},{e:'🦀',x:84,y:80,s:10},{e:'🐙',x:40,y:34,s:14,drag:1}]},
+
+ {id:'i19',d:3,bg:'mer',a:26,q:'Combien de bras y a-t-il en tout ?',sol:'26 : la pieuvre (8), le calmar (10) et une autre pieuvre cachée sous le rocher (8)',h:'Un calmar a 10 bras. Et il manque peut-être quelqu\'un.',he:{q:'כמה זרועות יש בסך הכול?',sol:'26: התמנון (8), הדיונון (10) ועוד תמנון שהתחבא מתחת לסלע (8)',h:'לדיונון יש 10 זרועות. ואולי מישהו חסר.'},
+  it:[{e:'🐙',x:22,y:40,s:15,n:1},{e:'🦑',x:62,y:30,s:15,n:1},{e:'🐟',x:84,y:56,s:8,n:1},{e:'🐙',x:46,y:84,s:8,n:1},{e:'🪨',x:46,y:80,s:20,drag:1}]},
+ {id:'i20',d:3,bg:'savane',q:'Le hibou ne se réveille que la nuit. Réveille-le.',sol:'pousser le soleil hors de l\'image pour que la nuit tombe',h:'Ce n\'est pas le bruit qui le réveille. Qu\'est-ce qui change entre le jour et la nuit ?',he:{q:'הינשוף מתעורר רק בלילה. הער אותו.',sol:'לדחוף את השמש אל מחוץ לתמונה כדי שיבוא הלילה',h:'זה לא הרעש שמעיר אותו. מה משתנה בין יום ללילה?'},
+  it:[{e:'🦉',x:40,y:58,s:16,n:1},{e:'☀️',x:78,y:20,s:14,drag:1,out:1},{e:'📯',x:16,y:80,s:10},{e:'🔔',x:70,y:80,s:10}]},
+ {id:'i21',d:3,bg:'labo',q:'Touche le nombre pair.',sol:'le 0 : zéro est un nombre pair',h:'Un nombre pair se divise par 2 sans reste. Même un tout petit nombre…',he:{q:'גע במספר הזוגי.',sol:'ה-0: אפס הוא מספר זוגי',h:'מספר זוגי מתחלק ב-2 בלי שארית. אפילו מספר קטן מאוד…'},
+  it:[{t:'13',x:20,y:36,s:10,col:'#b3261e'},{t:'7',x:46,y:66,s:11,col:'#1f8fc4'},{t:'1 000 001',x:74,y:32,s:5,col:'#7a2cff'},{t:'21',x:80,y:76,s:9,col:'#c77d1f'},{t:'0',x:14,y:84,s:3,col:'#3f8f5a',ok:1}]},
+ {id:'i22',d:3,bg:'foret',a:5,q:'Combien y a-t-il de champignons ?',sol:'5 : deux bien visibles, un sous les feuilles, un sous le tronc et un minuscule en haut de l\'arbre',h:'Il y en a de cachés… et un tout petit, très haut.',he:{q:'כמה פטריות יש?',sol:'5: שתיים שרואים טוב, אחת מתחת לעלים, אחת מתחת לגזע ואחת קטנטנה בראש העץ',h:'יש כמה מוסתרות… ואחת קטנטנה, גבוה מאוד.'},
+  it:[{e:'🍄',x:20,y:80,s:10,n:1},{e:'🍄',x:38,y:84,s:8,n:1},{e:'🍄',x:62,y:84,s:6,n:1},{e:'🍂',x:62,y:80,s:16,drag:1},{e:'🍄',x:84,y:84,s:6,n:1},{e:'🪵',x:84,y:80,s:18,drag:1},{e:'🌳',x:46,y:40,s:30,deco:1},{e:'🍄',x:50,y:14,s:2.5,n:1},{e:'🐸',x:12,y:58,s:8,n:1}]},
+ {id:'i23',d:3,bg:'neige',q:'Touche les saisons dans l\'ordre, en commençant par l\'hiver.',sol:'le bonhomme de neige (hiver), la tulipe (printemps), le soleil (été), puis la feuille morte (automne)',h:'Hiver, printemps, été, automne.',he:{q:'גע בעונות לפי הסדר, החל מהחורף.',sol:'איש השלג (חורף), הצבעוני (אביב), השמש (קיץ) ואז העלה היבש (סתיו)',h:'חורף, אביב, קיץ, סתיו.'},
+  it:[{e:'☀️',x:20,y:30,s:10,o:3},{e:'🍂',x:46,y:72,s:16,o:4},{e:'⛄',x:76,y:62,s:8,o:1},{e:'🌷',x:80,y:22,s:12,o:2}]},
+ {id:'i24',d:3,bg:'savane',q:'Fais peur à l\'éléphant.',sol:'amener la souris jusqu\'à l\'éléphant',h:'Selon la légende, l\'éléphant a peur d\'un tout petit animal.',he:{q:'הפחד את הפיל.',sol:'להביא את העכבר אל הפיל',h:'לפי האגדה, הפיל מפחד מחיה קטנטנה.'},
+  it:[{e:'🐘',x:68,y:60,s:24,n:1},{e:'🦁',x:20,y:66,s:16,drag:1},{e:'🐍',x:44,y:84,s:10},{e:'🐭',x:16,y:28,s:6,drag:1,on:0,rad:18}]}
 ];
 PICS.forEach(r=>{r.type='s';r.act=1;r.ex='';RIDDLES.push(r)});
 
@@ -311,7 +368,7 @@ function allR(){return RIDDLES.concat((CFG.riddles||[]).map(r=>({...r,type:'c',c
 const fin=id=>!!(S.solved[id]||S.failed[id]);
 function ordered(d){return allR().filter(r=>r.d===d)}
 function locked(r){if(boss())return false;for(const x of ordered(r.d)){if(x.id===r.id)return false;if(!fin(x.id))return true}return false}
-function diffOpen(k){return boss()||k===0||ordered(k-1).filter(r=>fin(r.id)).length>=3}
+function diffOpen(k){return boss()||k===0||ordered(k-1).every(r=>fin(r.id))||ordered(k).some(r=>fin(r.id))}
 // Énigme du jour : la prochaine énigme à faire, jouée pour la première fois de la journée
 function dailyR(){for(let k=0;k<4;k++){if(!diffOpen(k))break;const r=ordered(k).find(x=>!fin(x.id));if(r)return r}return null}
 function ansText(r){if(r.sol)return r.sol;if(r.type==='c')return r.o[+r.a];if(r.type==='n')return String(r.a);if(r.word)return 'le mot « '+r.word+' » dans la question';const i=r.it.find(x=>x.ok);return i?(i.e||i.t):''}
@@ -337,7 +394,7 @@ function takeGifts(items){let got=null;for(const it of items||[]){if(!it||!HB[it
 /* ================== LANGUES (français / hébreu) ================== */
 // Le jeu est écrit en français. En hébreu, chaque texte affiché est remplacé grâce à ce dictionnaire.
 let LANG=S.lang==='he'?'he':'fr';
-const HE={'Changer de compte':'החלף חשבון','Changer de compte ?':'להחליף חשבון?','Ta progression reste sauvegardée sur cet appareil. Tu la retrouveras en remettant ton code.':'ההתקדמות שלך נשמרת במכשיר הזה. תמצא אותה שוב כשתכניס את הקוד שלך.','Oui, changer':'כן, להחליף','Termine d\'abord ton combat':'סיים קודם את הקרב שלך',
+const HE={'ÉGALITÉ':'תיקו','EN ATTENTE…':'ממתין…','Duel en cours':'דו־קרב מתנהל','Connexion…':'מתחבר…','Duel contre':'דו־קרב נגד','Termine d\'abord ton duel':'סיים קודם את הדו־קרב שלך','Appuie encore sur « Abandonner » pour quitter le duel (mise perdue)':'לחץ שוב על "כניעה" כדי לעזוב את הדו־קרב (ההימור יאבד)','Changer de compte':'החלף חשבון','Changer de compte ?':'להחליף חשבון?','Ta progression reste sauvegardée sur cet appareil. Tu la retrouveras en remettant ton code.':'ההתקדמות שלך נשמרת במכשיר הזה. תמצא אותה שוב כשתכניס את הקוד שלך.','Oui, changer':'כן, להחליף','Termine d\'abord ton combat':'סיים קודם את הקרב שלך',
  'Accueil':'בית','Énigmes':'חידות','Combat':'קרב','Héros':'גיבורים','Forge':'נפחייה','Admin':'ניהול',
  'Chargement…':'טוען…','Entre ton code':'הכנס את הקוד שלך','Pour jouer, il te faut un code personnel. Demande-le à l\'admin du jeu.':'כדי לשחק צריך קוד אישי. בקש אותו ממנהל המשחק.',
  'Ton code':'הקוד שלך','Ton pseudo':'הכינוי שלך','Sans compte Claude, tu joues en solo : pas de duels ni d\'échanges avec tes potes.':'בלי חשבון Claude משחקים לבד: אין דו־קרבות ואין החלפות עם חברים.','Écris aussi ton pseudo (2 caractères minimum).':'כתוב גם את הכינוי שלך (לפחות 2 תווים).','Entrer':'כניסה','Écris ton code (lettres et chiffres).':'כתוב את הקוד שלך (אותיות ומספרים).',
@@ -373,7 +430,7 @@ const HE={'Changer de compte':'החלף חשבון','Changer de compte ?':'לה�
  // duels
  'Duels entre joueurs':'דו־קרב בין שחקנים',
  'Connexion au serveur impossible pour le moment. Recharge la page.':'כדי לשחק מול חברים (דו־קרבות, החלפות), פתח את המשחק כשאתה מחובר לחשבון Claude. בלי חשבון משחקים לבד.',
- 'Joueurs en ligne':'שחקנים מחוברים','Défie un joueur connecté ou propose-lui un échange de héros. En duel, chacun mise des points et le gagnant prend tout. Le combat se joue au tour par tour : vous choisissez chacun une action en secret, 30 secondes par manche.':'הזמן שחקן מחובר לדו־קרב או הצע לו החלפת גיבורים. בדו־קרב כל אחד מהמר על נקודות והמנצח לוקח הכול. הקרב מתנהל בתורות: כל אחד בוחר פעולה בסוד, 30 שניות לכל סיבוב.',
+ 'Joueurs en ligne':'שחקנים מחוברים','Défie un joueur connecté ou propose-lui un échange de héros. En duel, chacun mise des points et le gagnant prend tout. Le duel se joue en direct, joystick contre joystick, 90 secondes maximum : quand le temps est écoulé, celui qui a le plus de vie gagne.':'הזמן שחקן מחובר לדו־קרב או הצע לו החלפת גיבורים. בדו־קרב כל אחד מהמר על נקודות והמנצח לוקח הכול. הדו־קרב מתנהל בזמן אמת, ג׳ויסטיק מול ג׳ויסטיק, עד 90 שניות: כשהזמן נגמר, מי שנשארו לו יותר חיים מנצח.',
  'Ta mise':'ההימור שלך','Sans mise':'בלי הימור','En duel':'בדו־קרב','Défier':'הזמן',
  'Personne d\'autre n\'est en ligne pour le moment. Envoie le lien du jeu à tes potes : ils apparaîtront ici dès qu\'ils ouvrent le jeu.':'אף אחד אחר לא מחובר כרגע. שלח את הקישור למשחק לחברים: הם יופיעו כאן ברגע שיפתחו את המשחק.',
  'Accepter':'קבל','Refuser':'סרב','Annuler le défi':'בטל את ההזמנה','Duel':'דו־קרב','Toi':'אתה','Toi :':'אתה:',
@@ -433,6 +490,7 @@ RIDDLES.forEach(r=>{if(r.h&&HHE[r.id])HE[r.h]=HHE[r.id];if(r.he){HE[r.q]=r.he.q;
 RIDDLES.forEach(r=>{const h=RHE[r.id];if(!h)return;if(h.q)HE[r.q]=h.q;if(h.ex)HE[r.ex]=h.ex;(h.o||[]).forEach((x,i)=>HE[r.o[i]]=x)});
 const N=x=>HE[x]||x;
 const HP=[
+ [/^Duel contre (.+)$/,m=>'דו־קרב נגד '+m[1]],
  [/^[Nn]iv\. (\d+)$/,m=>'רמה '+m[1]],[/^[Nn]iveau (\d+)$/,m=>'רמה '+m[1]],[/^Niveau (\d+) \(max\)$/,m=>'רמה '+m[1]+' (מקסימום)'],[/^Niveau (\d+) !$/,m=>'רמה '+m[1]+'!'],
  [/^Série (\d+)$/,m=>'רצף '+m[1]],[/^[ÉEé]tage (\d+)$/,m=>'קומה '+m[1]],[/^Événement : (.*)$/,m=>'אירוע: '+m[1]],[/^[Pp]oints ×(\d+)$/,m=>'נקודות ×'+m[1]],[/^[Ff]in dans (.+)$/,m=>'נגמר בעוד '+m[1]],
  [/^Points ×(\d+) sur les énigmes et les combats\.( Recette spéciale à la forge :)?$/,m=>'נקודות ×'+m[1]+' על חידות ועל קרבות.'+(m[2]?' מתכון מיוחד בנפחייה:':'')],
@@ -500,6 +558,7 @@ function mkRoom(P){
   P.on('online',build);
   return {presence:async patch=>{for(const k in patch){if(patch[k]===null)delete mine[k];else mine[k]=patch[k]}
       if(!live){live=true;try{P.dropOnDisconnect(path)}catch(e){}}await P.set(path,clean(mine))},
+    live:async f=>{if(f==null){delete mine.f;await P.remove(path+'/f')}else{mine.f=f;if(!live){live=true;try{P.dropOnDisconnect(path)}catch(e){}}await P.set(path+'/f',clean(f))}},
     peers:()=>list,onPeers:(f)=>{hs.push(f);setTimeout(()=>f({peers:list}),0);return()=>{hs=hs.filter(x=>x!==f)}}};
 }
 const ADM_SALT='lp-admin-v1',ADM_CHECK='1389cc8fbc1827eddb0ad755ec2985e3780c70875d1efabc73c41fe375caa3b2';
@@ -612,9 +671,10 @@ function startFight(mode){
 const cy=e=>e.y-60*e.c.bulk-(e.c.fly?22:0);
 function burst(x,y,col,n,sp=220){for(let i=0;i<n;i++){const a=Math.random()*7,v=sp*(.3+Math.random());F.parts.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,l:.35+Math.random()*.4,col,r:2+Math.random()*3})}}
 function hurt(t,d,from){sfx('hit');
-  if(F.over)return; if(t.shield)d*=.5; d=Math.round(d*(.9+Math.random()*.2)); t.hp=Math.max(0,t.hp-d); t.hitT=.25;
+  if(F.over)return; if(F.duel&&t===F.e){burst(t.x,cy(t),from.c.glow,8);return}
+  if(t.shield)d*=.5; d=Math.round(d*(.9+Math.random()*.2)); t.hp=Math.max(0,t.hp-d); t.hitT=.25;
   F.nums.push({x:t.x,y:cy(t)-40,v:d,l:.9,col:t.shield?'#5ee6ff':'#fff'});F.shake=Math.min(14,F.shake+d/6);burst(t.x,cy(t),t.shield?'#5ee6ff':from.c.glow,t.shield?6:14);
-  if(t.hp<=0){F.over=.01;F.win=t===F.e;burst(t.x,cy(t),t.c.glow,70,420);burst(t.x,cy(t),'#fff',30,300);F.shake=20}
+  if(t.hp<=0){F.over=.01;F.win=t===F.e;if(F.duel){F.myKo=1;duelTx(true)}burst(t.x,cy(t),t.c.glow,70,420);burst(t.x,cy(t),'#fff',30,300);F.shake=20}
 }
 function step(e,i,dt,foe){
   e.atkCd-=dt;e.shCd-=dt;e.spCd-=dt;e.hitT-=dt;e.lock-=dt;e.face=foe.x>=e.x?1:-1;
@@ -658,12 +718,19 @@ function aiInput(e,foe,dt){
 function fightTick(dt,t){
   const cv=$('#arena');if(!cv)return;const g=cv.getContext('2d');
   F.t+=dt;
-  if(F.intro>0)F.intro-=dt;
+  if(F.duel){
+    if(F.intro>0){if(F.rx)F.intro-=dt;if(!F.rx&&performance.now()-F.rxT>15000){F.over=.01;F.quitWin=1}}
+    else if(!F.over){step(F.p,inp,dt,F.e);duelMine();F.left-=dt;if(F.left<=0){F.left=0;F.over=.01;F.timeout=1}
+      if(performance.now()-F.rxT>7000){F.over=.01;F.quitWin=1}}
+    else{F.over+=dt;if(F.over>1.6&&!F.done){F.done=1;duelEnd();return}}
+    oppStep(dt);duelTx();
+  }
+  else if(F.intro>0)F.intro-=dt;
   else if(!F.over){step(F.p,inp,dt,F.e);step(F.e,aiInput(F.e,F.p,dt),dt,F.p)}
   else{F.over+=dt;if(F.over>1.6&&!F.done){F.done=1;endFight()}}
   for(const s of F.shots){s.x+=s.vx*dt;s.y+=s.vy*dt;s.l-=dt;const tg=s.own===F.p?F.e:F.p;
     if(Math.random()<.6)F.parts.push({x:s.x,y:s.y,vx:0,vy:0,l:.25,col:s.col,r:s.r*.6});
-    if(!F.over&&Math.hypot(s.x-tg.x,s.y-cy(tg))<36*tg.c.bulk){hurt(tg,s.dmg,s.own);s.l=0}
+    if((!F.over||F.duel)&&Math.hypot(s.x-tg.x,s.y-cy(tg))<36*tg.c.bulk){if(!F.over)hurt(tg,s.dmg,s.own);s.l=0}
     if(s.y>GY+6){s.l=0;burst(s.x,GY,s.col,8)}}
   F.shots=F.shots.filter(s=>s.l>0&&s.x>-40&&s.x<W+40);
   for(const p of F.parts){p.x+=p.vx*dt;p.y+=p.vy*dt;p.l-=dt}F.parts=F.parts.filter(p=>p.l>0);if(F.parts.length>500)F.parts.splice(0,F.parts.length-500);
@@ -692,7 +759,9 @@ function fightTick(dt,t){
   g.textAlign='center';
   for(const n of F.nums){g.globalAlpha=Math.min(1,n.l*2);g.font=(typeof n.v==='number'?'24px':'18px')+' "Russo One",sans-serif';g.lineWidth=4;g.strokeStyle='#000';g.strokeText(n.v,n.x,n.y);g.fillStyle=n.col;g.fillText(n.v,n.x,n.y)}
   g.globalAlpha=1;g.restore();
-  if(F.intro>0||F.over){g.font='54px "Russo One",sans-serif';g.lineWidth=8;g.strokeStyle='#000';const m=L(F.over?(F.win?'VICTOIRE':'DÉFAITE'):(F.intro>.5?'PRÊT ?':'COMBAT !'));g.strokeText(m,W/2,HH/2-40);g.fillStyle=F.over&&!F.win?'#ff5d73':'#ffd166';g.fillText(m,W/2,HH/2-40)}
+  if(F.intro>0||F.over){g.font='54px "Russo One",sans-serif';g.lineWidth=8;g.strokeStyle='#000';let win=F.win;if(F.duel&&F.over){const r=duelRes();win=r==='win'||r==='forf'?1:r==='draw'?2:0}
+    const m=L(F.over?(win===2?'ÉGALITÉ':win?'VICTOIRE':'DÉFAITE'):F.duel&&!F.rx?'EN ATTENTE…':(F.intro>.5?'PRÊT ?':'COMBAT !'));g.strokeText(m,W/2,HH/2-40);g.fillStyle=F.over&&!win?'#ff5d73':'#ffd166';g.fillText(m,W/2,HH/2-40)}
+  if(F.duel&&F.intro<=0){g.font='30px "Russo One",sans-serif';g.lineWidth=6;g.strokeStyle='#000';const tm=String(Math.ceil(F.left));g.strokeText(tm,W/2,40);g.fillStyle=F.left<10?'#ff5d73':'#fff';g.fillText(tm,W/2,40)}
   const B=(id,v)=>{const el=document.getElementById(id);if(el)el.style.width=Math.max(0,Math.min(100,v*100))+'%'};
   B('php',F.p.hp/F.p.mhp);B('pen',F.p.en/F.p.men);B('psh',F.p.lock>0?0:F.p.sg/2.5);B('ehp',F.e.hp/F.e.mhp);B('een',F.e.en/F.e.men);
   const sb=$('#bsp');if(sb){const rdy=F.p.en>=F.p.men-.5&&F.p.spCd<=0;sb.disabled=!rdy;sb.classList.toggle('rdy',rdy)}
@@ -808,7 +877,7 @@ const V={
   const d=sub.d??0,dy=S.daily!==today()?dailyR():null,list=ordered(d),cnt=k=>ordered(k).filter(r=>fin(r.id)).length;let open=true;
   return `<div class="panel"><h2>Énigmes pièges</h2><p class="mute small">Les énigmes se font dans l'ordre et tu n'as qu'un seul essai. Si tu te trompes, la réponse s'affiche, tu gagnes 0 point et tu passes à la suivante. Tu peux refaire une énigme ratée pour le plaisir, sans points. Une série de bonnes réponses augmente tes gains (+10 % par réponse, jusqu'à ×2).</p>
    <div class="diff">${DIFF.map((n,k)=>`<button class="${k===d?'on':''}" data-a="diff" data-d="${k}" ${diffOpen(k)?'':'disabled'}>${n} · ${DPTS[k]} pts${diffOpen(k)?'':' (verrouillé)'}</button>`).join('')}</div>
-   ${d===3||diffOpen(d+1)?'':`<p class="mute small">Termine encore ${3-cnt(d)} énigme(s) « ${DIFF[d]} » pour ouvrir « ${DIFF[d+1]} ».</p>`}
+   ${d===3||diffOpen(d+1)?'':`<p class="mute small">Termine encore ${ordered(d).length-cnt(d)} énigme(s) « ${DIFF[d]} » pour ouvrir « ${DIFF[d+1]} ».</p>`}
    <div class="rid">${list.map((r,i)=>{const lk=!open;if(!fin(r.id))open=false;return `<button class="${S.solved[r.id]?'done':S.failed[r.id]?'fail':''} ${dy&&r.id===dy.id?'day':''}" data-a="riddle" data-id="${r.id}" ${lk?'disabled':''} title="${S.solved[r.id]?'Réussie':S.failed[r.id]?'Ratée':lk?'Termine d\'abord la précédente':'À faire'}">${S.solved[r.id]?'✓':S.failed[r.id]?'✗':i+1}</button>`}).join('')}</div></div>`;
  },
  riddle(){
@@ -844,28 +913,22 @@ const V={
   const p=F.p,e=F.e;
   return `<div id="fwrap" class="${fsOn?'fs':''}"><div class="fhud"><div><b>${p.c.n} · niv. ${p.lvl}</b><div class="bar"><i id="php"></i></div><div class="bar en"><i id="pen"></i></div><div class="bar sh"><i id="psh"></i></div></div>
    <button data-a="fs" id="bfs" style="min-height:0;padding:6px 8px;font-size:12px">${fsOn?'Réduire':'Plein écran'}</button>
-   <div class="r"><b>${e.c.n} · niv. ${e.lvl}</b><div class="bar"><i id="ehp" style="background:var(--bad)"></i></div><div class="bar en"><i id="een"></i></div></div></div>
+   <div class="r"><b>${F.duel?esc(DU?.on||'')+' · ':''}${e.c.n} · niv. ${e.lvl}</b><div class="bar"><i id="ehp" style="background:var(--bad)"></i></div><div class="bar en"><i id="een"></i></div></div></div>
   <canvas id="arena" width="1280" height="720"></canvas>
   <div id="fres"></div>
   <div class="pad"><div id="joy"><div id="knob"></div></div>
    <div class="acts"><button class="a3" data-k="shield">Bouclier<kbd>L</kbd></button><button class="a4" data-k="charge">Recharge<kbd>U</kbd></button><button class="a5" data-k="sp" id="bsp">Spécial<kbd>I</kbd></button>
-   <button class="a1" data-k="atk">Frapper<kbd>J</kbd></button><button class="a2" data-k="shoot">Tirer<kbd>K</kbd></button><button data-a="quit" style="font-size:11px">Quitter</button></div></div></div>`;
+   <button class="a1" data-k="atk">Frapper<kbd>J</kbd></button><button class="a2" data-k="shoot">Tirer<kbd>K</kbd></button><button data-a="quit" style="font-size:11px">${F.duel?'Abandonner':'Quitter'}</button></div></div></div>`;
  },
  duel(){
   if(!DU){view='fprep';return V.fprep()}
   const on=esc(DU.on);
   if(DU.s==='wait')return `<div class="panel" style="text-align:center;align-items:center"><h2>Défi envoyé à ${on}</h2><p class="mute">Mise : ${DU.bet} points chacun. En attente de sa réponse…</p><button data-a="dcancel">Annuler le défi</button></div>`;
-  const r=duelSim(),me=r.me,o=1-me,P=r.P,last=r.log[r.n-1],moved=DU.mv.length>r.n,done=DU.s==='done';
-  const ok=m=>m==='F'||m==='R'||(m==='T'&&r.en[me]>=15)||(m==='S'&&r.en[me]>=P[me].men)||(m==='B'&&r.prev[me]!=='B');
-  const side=(k,nm,fl)=>`<div><b>${nm}</b><div class="${fl}">${pt(P[k].c.id,P[k].st)}</div><div class="small">${P[k].c.n} · niv. ${P[k].l}</div><div class="bar"><i style="width:${r.hp[k]/P[k].mhp*100}%;${k===me?'':'background:var(--bad)'}"></i></div><div class="small">${r.hp[k]} / ${P[k].mhp} PV</div><div class="bar en"><i style="width:${r.en[k]/P[k].men*100}%"></i></div><div class="small mute">${r.en[k]} énergie</div></div>`;
+  if(DU.s==='play')return `<div class="panel" style="text-align:center;align-items:center"><h2>Duel en cours</h2><p class="mute">Connexion…</p></div>`;
   const RES={win:['Victoire !','Tu gagnes la mise : +'+DU.bet+' points.'],forf:['Victoire par abandon','Ton adversaire a quitté le duel : +'+DU.bet+' points.'],lose:['Défaite…','Tu perds ta mise de '+DU.bet+' points.'],draw:['Égalité','Chacun récupère sa mise.']}[DU.res]||[];
-  return `<div class="panel"><div class="row"><h2 class="grow">Duel · manche ${Math.min(40,r.n+(done?0:1))}</h2><span class="chip pts">Mise ${DU.bet} pts</span></div>
-   <div class="duo">${side(me,esc(S.nick||'Toi'),'')}${side(o,on,'flip')}</div>
-   ${last?`<p class="small" style="text-align:center">Toi : <b>${MV[last.m[me]][0]}</b> (${last.dm[o]} dégâts infligés) · ${on} : <b>${MV[last.m[o]][0]}</b> (${last.dm[me]} dégâts reçus)</p>`:'<p class="small mute" style="text-align:center">Vous choisissez chacun une action en secret. Elles se jouent en même temps.</p>'}
-   ${done?`<div class="res ${DU.res==='lose'?'ko':'ok'}" style="text-align:center"><span style="font:20px var(--display)">${RES[0]}</span><br>${RES[1]}</div><button class="btn" data-a="dclose">Fermer</button>`
-   :`<div class="mvs">${Object.keys(MV).map(m=>`<button data-a="dmv" data-m="${m}" ${moved||!ok(m)?'disabled':''}>${MV[m][0]}<small>${MV[m][1]}</small></button>`).join('')}</div>
-    <p style="text-align:center;font-weight:700" id="dtm">${moved?'Action choisie. En attente de '+on+'…':'Choisis ton action'}</p>
-    <div class="row" style="justify-content:center">${DU.claim?'<button class="btn" data-a="dclaim">Adversaire absent : réclamer la victoire</button>':''}<button data-a="dquit">${sub.dq?'Confirmer l\'abandon (mise perdue)':'Abandonner'}</button></div>`}</div>`;
+  return `<div class="panel" style="text-align:center;align-items:center"><h2>Duel contre ${on}</h2>
+   <div class="res ${DU.res==='lose'?'ko':'ok'}" style="text-align:center;width:100%"><span style="font:20px var(--display)">${RES[0]}</span><br>${RES[1]}</div>
+   <button class="btn" data-a="dclose">Fermer</button></div>`;
  },
  profile(){
   const own=Object.entries(S.chars),pw=([id,o])=>stat(HB[id],o.lvl,o.st,'hp')*stat(HB[id],o.lvl,o.st,'atk'),best=own.slice().sort((a,b)=>pw(b)-pw(a)).slice(0,3),R=wkRank(weekId()),me=R.findIndex(p=>p.id===uid);
@@ -1005,7 +1068,7 @@ async function saveCfg(msg){
 }
 const val=id=>document.getElementById(id)?.value??'';
 const A={
- go(d){view=d.v;sub={};render();scrollTo(0,0)},
+ go(d){if(F&&F.duel&&view==='fight'&&!F.over)return toast(L('Termine d\'abord ton duel'));view=d.v;sub={};render();scrollTo(0,0)},
  diff(d){sub.d=+d.d;render()},
  riddle(d){const r=allR().find(x=>x.id===d.id);if(!r||locked(r))return toast('Termine d\'abord l\'énigme précédente');view='riddle';sub={id:d.id,d:r.d};render()},
  daily(){const r=dailyR();if(!r)return toast('Toutes les énigmes disponibles sont terminées');view='riddle';sub={id:r.id,d:r.d};render()},
@@ -1081,14 +1144,12 @@ const A={
   if(S.pts<bet)return toast('Tu n\'as pas assez de points pour cette mise');if((+p.presence.pts||0)<bet)return toast('Ce joueur n\'a pas assez de points pour cette mise');
   DU={to:p.peer,on:pname(p),bet,sd:Math.floor(Math.random()*1e9),mv:'',om:'',h:myH(),s:'wait',me:ME.peer,n:0};S.pts-=bet;S.esc={bet,st:'wait'};save();pubD();view='duel';sub={};render()},
  dacc(){const p=INV,d=p?.presence?.d;if(!p||!d||DU||!ME)return;const bet=Math.max(0,Math.min(1e6,Math.floor(+d.bet||0)));if(S.pts<bet)return toast('Tu n\'as pas assez de points pour cette mise');
-  DU={to:p.peer,on:pname(p),bet,sd:+d.sd||0,mv:'',om:'',h:myH(),oh:d.h,s:'play',me:ME.peer,n:0,rt:Date.now()};S.pts-=bet;S.esc={bet,st:'play'};INV=null;save();pubD();view='duel';sub={};render();drawInv()},
+  DU={to:p.peer,on:pname(p),bet,sd:+d.sd||0,mv:'',om:'',h:myH(),oh:d.h,s:'play',me:ME.peer,n:0,rt:Date.now()};S.pts-=bet;S.esc={bet,st:'play'};INV=null;save();pubD();drawInv();startDuel()},
  dref(){const p=INV,d=p?.presence?.d;if(!p||!d)return;refused[p.peer+d.sd]=1;INV=null;drawInv();setD({to:p.peer,sd:d.sd,x:1});setTimeout(()=>{if(!DU)setD(null)},4000)},
  dcancel(){if(DU&&DU.s==='wait')endInvite('Défi annulé')},
- dmv(d){if(!DU||DU.s!=='play'||!MV[d.m]||DU.mv.length>DU.n)return;DU.mv+=d.m;pubD();resolveDuel();if(view==='duel')render()},
- dquit(){if(!DU||DU.s!=='play')return;if(!sub.dq){sub.dq=1;render();return}pubD(1);finishDuel('lose')},
- dclaim(){if(!DU||DU.s!=='play')return;pubD(2);finishDuel('forf')},
  dclose(){if(!DU)return;refused[DU.to+DU.sd]=1;DU=null;setD(null);view='fprep';sub={};render()},
- quit(){view='fprep';render()},
+ quit(){if(F&&F.duel){if(F.over)return;if(!F.qc){F.qc=1;toast(L('Appuie encore sur « Abandonner » pour quitter le duel (mise perdue)'));setTimeout(()=>{if(F)F.qc=0},3000);return}
+   F.quit=1;duelTx(true);pubD(1);setTimeout(()=>{try{room&&room.live(null).catch(()=>{})}catch(e){}},3000);finishDuel('lose');return}view='fprep';render()},
  close(){$('#modal').hidden=true;$('#modal').innerHTML=''},
  logout(){if(view==='fight'&&F&&!F.result||view==='duel')return toast(L('Termine d\'abord ton combat'));const m=$('#modal');m.hidden=false;
   m.innerHTML=`<div class="panel"><h2>${L('Changer de compte ?')}</h2><p class="mute">${L('Ta progression reste sauvegardée sur cet appareil. Tu la retrouveras en remettant ton code.')}</p><div class="row" style="justify-content:center"><button data-a="close">${L('Annuler')}</button><button class="btn" data-a="logout2">${L('Oui, changer')}</button></div></div>`},
@@ -1128,44 +1189,85 @@ function bindPad(){
 }
 
 /* ================== DUELS EN LIGNE (tour par tour, via la présence des joueurs) ================== */
-let PR=null,room=null,PEERS=[],ME=null,DU=null,INV=null,refused={},presSig='',betSel=0,peerSig='';
-const MV={F:['Frapper','Gratuit'],T:['Tirer','Dégâts ×1,4 · 15 énergie'],B:['Bouclier','Dégâts reçus −50 % · pas 2 fois de suite'],R:['Recharger','+40 énergie · +20 % de dégâts reçus'],S:['Spécial','Dégâts ×3,2 · énergie pleine']};
+let rtSig='',PR=null,room=null,PEERS=[],ME=null,DU=null,INV=null,refused={},presSig='',betSel=0,peerSig='';
 function myH(){const o=S.chars[S.sel];return [S.sel,o.lvl,o.st]}
 function pname(p){return String(p?.presence?.nick||'Joueur').replace(/[^\p{L}\p{N} _.\-']/gu,'').slice(0,16)||'Joueur'}
 function pushPres(){if(!room||!ready||gated())return;const p={nick:(S.nick||'Joueur').replace(/[^\p{L}\p{N} _.\-']/gu,'').slice(0,16)||'Joueur',tot:S.total,pts:S.pts,h:myH(),cid:myCid||null,a:S.arena,c:Object.entries(S.chars).map(([k,v])=>k+':'+v.n+':'+v.lvl+':'+v.st).join(',').slice(0,900),sv:Object.keys(S.solved).join(',').slice(0,900),fl:Object.keys(S.failed).join(',').slice(0,900)};const s=JSON.stringify(p);if(s===presSig)return;presSig=s;room.presence(p).catch(()=>{})}
 function setD(d){if(room)room.presence({d}).catch(()=>{})}
 function pubD(x){const d={to:DU.to,bet:DU.bet,sd:DU.sd,mv:DU.mv,h:DU.h};if(x)d.x=x;setD(d)}
 function fz(h){const c=HB[h&&h[0]]||HB.braskar,l=Math.max(1,Math.min(20,Math.floor(+(h&&h[1])||1))),st=Math.max(1,Math.min(3,Math.floor(+(h&&h[2])||1)));return {c,l,st,mhp:stat(c,l,st,'hp'),atk:stat(c,l,st,'atk'),men:c.en}}
-function sim(h1,h2,m1,m2,sd){
-  const P=[fz(h1),fz(h2)],hp=[P[0].mhp,P[1].mhp],en=[Math.round(P[0].men/2),Math.round(P[1].men/2)],prev=['',''],log=[],n=Math.min(m1.length,m2.length,40),r=rng(sd|0);let over=false,win=null;
-  for(let i=0;i<n&&!over;i++){
-    const m=[m1[i],m2[i]].map((x,k)=>(x==='T'&&en[k]>=15)||(x==='S'&&en[k]>=P[k].men)||(x==='B'&&prev[k]!=='B')||x==='R'?x:'F'),dm=[0,0],raw=[0,0];
-    for(let k=0;k<2;k++){const o=1-k,b={F:1,T:1.4,S:3.2}[m[k]]||0;if(m[k]==='T')en[k]-=15;if(m[k]==='S')en[k]=0;dm[o]=Math.round(b*P[k].atk*2*(.9+.2*r())*(m[o]==='B'?.5:m[o]==='R'?1.2:1))}
-    for(let k=0;k<2;k++){if(m[k]==='R')en[k]+=40;en[k]=Math.min(P[k].men,en[k]+5);raw[k]=hp[k]-dm[k];hp[k]=Math.max(0,raw[k]);prev[k]=m[k]}
-    log.push({m,dm});
-    if(hp[0]<=0||hp[1]<=0||i===39){over=true;const a=raw[0]/P[0].mhp,b=raw[1]/P[1].mhp;win=a===b?-1:a>b?0:1}
+/* ---- Duel en direct : chaque joueur joue son propre héros et l'envoie ~15 fois par seconde ----
+   Chaque téléphone décide seulement des coups qu'il REÇOIT (vie de son propre héros), pour qu'il n'y ait jamais de désaccord. */
+function startDuel(){
+  const left=DU.me<DU.to,m=fz(DU.h),o=fz(DU.oh);
+  F={mode:'duel',duel:1,stage:1,p:mkFighter(m.c,m.l,m.st,left?200:600,left?1:-1),e:mkFighter(o.c,o.l,o.st,left?600:200,left?-1:1),shots:[],parts:[],nums:[],shake:0,t:0,over:0,intro:3,bg:arenaBg(4),
+    evq:[],evi:0,lastEv:0,rx:0,rxT:performance.now(),left:90,txT:0,qc:0};
+  F.p.hp=F.p.mhp;F.e.hp=F.e.mhp;if(m.c.fly)F.p.y=GY-80;if(o.c.fly)F.e.y=GY-80;
+  const e=F.e;e.tx=e.x;e.ty=e.y;e.tvx=0;e.tvy=0;
+  view='fight';sub={};render();duelTx(true);
+}
+function duelEv(o){o.i=++F.evi;o.at=Date.now();F.evq.push(o);if(F.evq.length>14)F.evq.shift()}
+function duelTx(force){
+  if(!F||!F.duel||!room||!DU)return;const n=performance.now();if(!force&&n-F.txT<66)return;F.txT=n;
+  const p=F.p,cut=Date.now()-2000;F.evq=F.evq.filter(v=>v.at>cut);
+  const f={sd:DU.sd,x:Math.round(p.x),y:Math.round(p.y),vx:Math.round(p.vx),vy:Math.round(p.vy),fc:p.face,hp:Math.max(0,Math.round(p.hp)),mhp:Math.round(p.mhp),en:Math.round(p.en),
+    sh:p.shield?1:0,ch:p.charge?1:0,ko:F.myKo?1:0,go:F.intro<=0?1:0,ev:F.evq.map(({at,...v})=>v)};
+  if(F.quit)f.q=1;
+  try{room.live(f).catch(()=>{})}catch(e){}
+}
+function duelRx(f){
+  if(!F||!F.duel||!f||f.sd!==DU.sd)return;const e=F.e;
+  F.rxT=performance.now();if(!F.rx){F.rx=1;e.x=e.tx=+f.x||e.x;e.y=e.ty=+f.y||e.y}
+  e.tx=+f.x||0;e.ty=+f.y||GY;e.tvx=+f.vx||0;e.tvy=+f.vy||0;e.face=f.fc<0?-1:1;e.shield=!!f.sh;e.charge=!!f.ch;e.en=+f.en||0;
+  if(f.mhp>0)e.mhp=+f.mhp;
+  const hp=Math.max(0,+f.hp||0);
+  if(hp<e.hp-.5){const d=Math.round(e.hp-hp);e.hitT=.25;F.nums.push({x:e.x,y:cy(e)-40,v:d,l:.9,col:e.shield?'#5ee6ff':'#fff'});burst(e.x,cy(e),e.shield?'#5ee6ff':F.p.c.glow,12);F.shake=Math.min(14,F.shake+d/6);sfx('hit')}
+  e.hp=hp;
+  if(f.ko&&!F.oppKo){F.oppKo=1;burst(e.x,cy(e),e.c.glow,70,420);burst(e.x,cy(e),'#fff',30,300);F.shake=20;if(!F.over)F.over=.01}
+  if(f.q&&!F.over){F.quitWin=1;F.over=.01}
+  for(const v of (Array.isArray(f.ev)?f.ev:[])){if(!(v.i>F.lastEv))continue;F.lastEv=v.i;if(F.over)continue;
+    if(v.k==='a'){e.atkT=1}
+    else if(v.k==='s'){F.shots.push({x:+v.x,y:+v.y,vx:+v.vx,vy:+v.vy,own:e,dmg:Math.min(e.atk*1.2,+v.d||0),col:e.c.glow,r:+v.r||9,l:Math.min(3.2,+v.l||2.2)})}
+    else if(v.k==='p'&&['dash','beam','nova','meteor'].includes(v.ty)){e.spA={type:v.ty,t:0,face:v.f<0?-1:1,y:+v.y||cy(e)};F.nums.push({x:e.x,y:cy(e)-70,v:L(e.c.spn),l:1.2,col:e.c.glow});sfx('sp')}
   }
-  return {P,hp,en,prev,log,over,win,n:log.length};
 }
-function duelSim(){const f=DU.me<DU.to,r=sim(f?DU.h:DU.oh,f?DU.oh:DU.h,f?DU.mv:DU.om,f?DU.om:DU.mv,DU.sd);r.me=f?0:1;return r}
-function finishDuel(res){if(!DU||DU.s==='done')return;DU.s='done';DU.res=res;const b=DU.bet,w=res==='win'||res==='forf';if(w){S.pts+=2*b;S.total+=b;S.dw++;bump('duel');wkAdd(b);sfx('win')}else if(res==='draw')S.pts+=b;else{S.dl++;sfx('lose')}S.esc=null;addXp(S.sel,w?30:10);save();view='duel';sub={};render()}
+function oppStep(dt){
+  const e=F.e,me=F.p;e.hitT-=dt;
+  const k=Math.min(1,dt*14),ag=Math.min(.12,(performance.now()-F.rxT)/1000);
+  e.x+=(e.tx+e.tvx*ag-e.x)*k;e.y+=(e.ty+e.tvy*ag-e.y)*k;
+  if(e.atkT>0){const p=e.atkT;e.atkT-=dt/.26;if(!F.over&&p>.5&&e.atkT<=.5&&Math.abs(me.x-e.x)<82*e.c.bulk&&Math.abs(cy(me)-cy(e))<72)hurt(me,e.atk,e)}
+  if(e.charge&&Math.random()<.5)F.parts.push({x:e.x+(Math.random()-.5)*70,y:cy(e)+40,vx:0,vy:-140,l:.5,col:e.c.glow,r:2.5});
+  const a=e.spA;if(!a)return;a.t+=dt;
+  if(a.type==='dash'){F.parts.push({x:e.x,y:cy(e),vx:0,vy:0,l:.3,col:e.c.glow,r:9});if(!a.done&&!F.over&&Math.abs(e.x-me.x)<70&&Math.abs(cy(e)-cy(me))<85){a.done=1;hurt(me,e.atk*2.6,e)}if(a.t>.45)e.spA=null}
+  else if(a.type==='meteor'){if(a.t>.3)e.spA=null}
+  else{if(!a.done&&a.t>.4){a.done=1;F.shake=12;
+      if(a.type==='beam'){if(!F.over&&(me.x-e.x)*a.face>0&&Math.abs(cy(me)-a.y)<62)hurt(me,e.atk*3.2,e)}
+      else{burst(e.x,cy(e),e.c.glow,50,480);if(!F.over&&Math.hypot(me.x-e.x,cy(me)-cy(e))<190)hurt(me,e.atk*2.8,e)}}
+    if(a.t>.8)e.spA=null}
+}
+function duelMine(){
+  const p=F.p;
+  if(p.atkT===1)duelEv({k:'a'});
+  if(p.spA&&!p.spA.sent){p.spA.sent=1;duelEv({k:'p',ty:p.spA.type,f:p.face,y:Math.round(p.spA.y)})}
+  for(const s of F.shots)if(s.own===p&&!s.sent){s.sent=1;duelEv({k:'s',x:Math.round(s.x),y:Math.round(s.y),vx:Math.round(s.vx),vy:Math.round(s.vy),d:Math.round(s.dmg),r:s.r,l:s.l})}
+}
+function duelRes(){
+  if(F.quitWin)return 'forf';
+  if(F.myKo&&F.oppKo)return 'draw';if(F.oppKo)return 'win';if(F.myKo)return 'lose';
+  const a=F.p.hp/F.p.mhp,b=F.e.hp/F.e.mhp;return Math.abs(a-b)<.005?'draw':a>b?'win':'lose';
+}
+function duelEnd(){const res=duelRes();duelTx(true);setTimeout(()=>{try{room&&room.live(null).catch(()=>{})}catch(e){}},3000);finishDuel(res)}
+function finishDuel(res){if(!DU||DU.s==='done')return;DU.s='done';DU.res=res;const b=DU.bet,w=res==='win'||res==='forf';if(w){S.pts+=2*b;S.total+=b;S.dw++;bump('duel');wkAdd(b);sfx('win')}else if(res==='draw')S.pts+=b;else{S.dl++;sfx('lose')}S.esc=null;addXp(S.sel,w?30:10);save();fsOn=false;view='duel';sub={};render()}
 function endInvite(msg){if(!DU)return;S.pts+=DU.bet;S.esc=null;refused[DU.to+DU.sd]=1;DU=null;setD(null);save();toast(msg);view='fprep';render()}
-function resolveDuel(){
-  if(!DU||DU.s!=='play')return;const r=duelSim();
-  if(r.over)return finishDuel(r.win===-1?'draw':r.win===r.me?'win':'lose');
-  if(DU.gone&&Date.now()-DU.gone>6000)return finishDuel('forf');
-  if(r.n!==DU.n){DU.n=r.n;DU.rt=Date.now();DU.claim=0}
-  const sig=r.n+':'+DU.mv.length+':'+DU.om.length;if(sig!==DU.sig){DU.sig=sig;if(view==='duel')render()}
-}
 function roomTick(){
   PEERS=room.peers().filter(p=>p.kind==='viewer');ME=PEERS.find(p=>p.sameTab)||null;if(!ME)return;
   if(DU){const op=PEERS.find(p=>p.peer===DU.to),od=op?.presence?.d,linked=!!od&&od.to===DU.me&&od.sd===DU.sd;
-    if(DU.s==='wait'){if(!op)endInvite('Ce joueur est parti');else if(linked){if(od.x)endInvite('Défi refusé');else{DU.s='play';DU.oh=od.h;DU.rt=Date.now();S.esc={bet:DU.bet,st:'play'};save();view='duel';render()}}}
+    if(DU.s==='wait'){if(!op)endInvite('Ce joueur est parti');else if(linked){if(od.x)endInvite('Défi refusé');else{DU.s='play';DU.oh=od.h;S.esc={bet:DU.bet,st:'play'};save();startDuel()}}}
     else if(DU.s==='play'){
-      if(linked){DU.gone=0;DU.om=String(od.mv||'').slice(0,40).replace(/[^FTBRS]/g,'F');if(od.x===1)finishDuel('forf');else if(od.x===2)finishDuel('lose')}
-      else if(!DU.gone)DU.gone=Date.now();
-      resolveDuel()}
+      if(linked&&F&&F.duel){duelRx(op.presence.f);if(od.x===1&&!F.over){F.quitWin=1;F.over=.01}}
+      else if(!F||!F.duel)finishDuel('forf')}
   }
+  {const k2=PEERS.map(p=>p.peer+JSON.stringify(Object.assign({},p.presence,{f:0}))).join('|');if(k2===rtSig)return;rtSig=k2}
   tradeTick();seenSync();
   INV=null;if(!DU)for(const p of PEERS){const d=p.presence?.d;if(!p.sameTab&&d&&d.to===ME.peer&&!d.x&&d.mv===''&&!refused[p.peer+d.sd]){INV=p;break}}
   drawInv();
@@ -1236,17 +1338,12 @@ function applyCmds(items){
   if(n||mod){save();if(view!=='fight'&&view!=='duel')render()}
   if(n)reward(lastH,S.chars[lastH].st,n>1?n+' cadeaux de l\'admin reçus !':'Cadeau de l\'admin !');else if(mod)toast('L\'admin a modifié ton compte');
 }
-function duelClock(){
-  if(!DU||DU.s!=='play')return;resolveDuel();if(!DU||DU.s!=='play')return;
-  const left=30-Math.floor((Date.now()-DU.rt)/1000),moved=DU.mv.length>DU.n,el=$('#dtm');
-  if(!moved){if(left<=0)A.dmv({m:'F'});else if(el)el.textContent='Choisis ton action · '+left+' s'}
-  else if(left<-20&&DU.om.length<=DU.n&&!DU.claim){DU.claim=1;if(view==='duel')render()}
-}
+function duelClock(){}
 function duelPanel(){
   const others=PEERS.filter(p=>!p.sameTab&&p.presence?.nick),bets=[0,10,25,50,100,250,500].filter(b=>b<=S.pts);if(!bets.includes(betSel))betSel=0;
   return `<div class="panel" style="border-color:var(--arc)"><h2>Joueurs en ligne</h2>
    ${!room?'<p class="mute">Connexion au serveur impossible pour le moment. Recharge la page.</p>'
-   :`<p class="mute small">Défie un joueur connecté ou propose-lui un échange de héros. En duel, chacun mise des points et le gagnant prend tout. Le combat se joue au tour par tour : vous choisissez chacun une action en secret, 30 secondes par manche.</p>
+   :`<p class="mute small">Défie un joueur connecté ou propose-lui un échange de héros. En duel, chacun mise des points et le gagnant prend tout. Le duel se joue en direct, joystick contre joystick, 90 secondes maximum : quand le temps est écoulé, celui qui a le plus de vie gagne.</p>
    <label style="max-width:220px">Ta mise<select id="bet">${bets.map(b=>`<option value="${b}" ${b===betSel?'selected':''}>${b?b+' points':'Sans mise'}</option>`).join('')}</select></label>
    ${others.length?others.map(p=>{const h=fz(p.presence?.h),busy=!!p.presence?.d;return `<div class="row"><span class="grow"><b>${esc(pname(p))}</b> <span class="mute small">· ${h.c.n} niv. ${h.l} · ${+p.presence?.pts>=INF?'∞':Math.max(0,Math.floor(+p.presence?.pts||0))} pts</span></span><button class="btn2" data-a="dinv" data-p="${esc(p.peer)}" ${busy||DU?'disabled':''}>${busy?'En duel':'Défier'}</button><button data-a="topen" data-p="${esc(p.peer)}" ${p.presence?.c?'':'disabled'}>Échanger</button></div>`}).join('')
    :'<p class="mute">Personne d\'autre n\'est en ligne pour le moment. Envoie le lien du jeu à tes potes : ils apparaîtront ici dès qu\'ils ouvrent le jeu.</p>'}`}</div>`;
