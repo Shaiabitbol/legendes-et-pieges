@@ -131,6 +131,8 @@ canvas.pt{width:100%;max-width:160px;aspect-ratio:18/19;display:block;margin:0 a
 .acts button kbd{font:11px var(--body);color:var(--mute)}
 .acts .a1{background:#7a2b22;border-color:var(--ember)}.acts .a2{background:#134a66;border-color:var(--arc)}
 .acts .a3{background:#5a4712;border-color:var(--gold)}.acts .a4{background:#1d4a3c;border-color:var(--ok)}.acts .a5{background:#4b1e66;border-color:#c77dff}
+.acts .a6{background:#5a1f2a;border-color:#ff5d73;gap:0}
+.acts .aq{grid-column:1/-1;aspect-ratio:auto;border-radius:12px;min-height:30px}
 .acts button.dn{filter:brightness(1.6)}
 .reg{display:flex;flex-direction:row;align-items:center;gap:12px;border-color:var(--ec);background:linear-gradient(90deg,color-mix(in srgb,var(--ec) 18%,#161938),#161938);cursor:pointer;text-align:left;width:100%}
 .reg.lock{filter:grayscale(.85);opacity:.6}
@@ -201,6 +203,14 @@ function give(id){const o=S.chars[id];if(o){o.n++;return true}S.chars[id]={n:1,l
 // Recettes qui tournent : [ingrédient A, ingrédient B, résultat, rare?]
 const POOL=[['braskar','sylvar','givrelame'],['braskar','givrelame','pyralis'],['sylvar','tonnerok','ombrax'],['givrelame','tonnerok','ombrax'],['sylvar','givrelame','tonnerok'],['ombrax','pyralis','drakonir'],['pyralis','tonnerok','aethon'],['ombrax','givrelame','aethon'],['drakonir','aethon','neantis',1],['drakonir','ombrax','kaelthar',1]];
 const DIFF=['Facile','Moyen','Difficile','Extrême'], DPTS=[10,20,35,60];
+// Armes : achetées à l'armurerie, une seule équipée. Bouton « Arme » en combat (solo, Aventure et duels). dmg = × attaque du héros
+const WEAP=[
+ {id:'pistolet',n:'Pistolet laser',ic:'🔫',p:400,ammo:15,cd:.32,dmg:.75,spd:760,r:6,col:'#ff5d73',d:'Tir rapide et précis.'},
+ {id:'fusil',n:'Fusil à pompe',ic:'💥',p:900,ammo:8,cd:.9,dmg:.45,pel:5,spread:.3,spd:620,r:7,col:'#ffb238',d:'5 plombs en éventail : terrible de près.'},
+ {id:'givre',n:'Canon de givre',ic:'❄️',p:1400,ammo:10,cd:.7,dmg:1,spd:560,r:11,col:'#7fe7ff',slow:1,d:'Ralentit l\'adversaire touché pendant 2 secondes.'},
+ {id:'mitra',n:'Mitraillette',ic:'🔥',p:2000,ammo:45,cd:.1,dmg:.32,spd:820,r:5,col:'#ffe45e',jit:.09,d:'Une rafale de balles sans s\'arrêter.'},
+ {id:'bazooka',n:'Bazooka',ic:'🚀',p:3000,ammo:4,cd:1.6,dmg:2.6,spd:430,r:15,col:'#ff7b2e',boom:1,d:'Une roquette énorme qui explose.'}];
+const WB=Object.fromEntries(WEAP.map(w=>[w.id,w]));
 // Énigmes : type 'c' choix, 'n' nombre, 's' scène à toucher. d = difficulté 0..3
 const RIDDLES=[
  {id:'r1',d:0,type:'s',q:'Qu\'est-ce qui est le plus chaud ?',bg:'plage',it:[{e:'☀️',x:82,y:18,s:9,ok:1},{e:'🔥',x:35,y:74,s:20},{e:'🧨',x:66,y:80,s:11},{e:'🌴',x:12,y:52,s:22,deco:1}],ex:'Le Soleil ! Sa surface dépasse 5 500 °C, bien plus qu\'un feu de camp.'},
@@ -456,7 +466,7 @@ const HE={'ÉGALITÉ':'תיקו','EN ATTENTE…':'ממתין…','Duel en cours'
  'Victoire par abandon':'ניצחון טכני','Égalité':'תיקו','Chacun récupère sa mise.':'כל אחד מקבל את ההימור שלו בחזרה.','Fermer':'סגור',
  'Gratuit':'חינם','Dégâts ×1,4':'נזק ×1.4','Dégâts reçus −50 %':'חצי מהנזק שסופגים','pas 2 fois de suite':'לא פעמיים ברצף','+20 % de dégâts reçus':'סופגים 20% יותר נזק','Dégâts ×3,2':'נזק ×3.2','énergie pleine':'אנרגיה מלאה',
  'Choisis ton action':'בחר פעולה','Adversaire absent : réclamer la victoire':'היריב לא מגיב: דרוש ניצחון','Confirmer l\'abandon (mise perdue)':'אשר כניעה (ההימור אבוד)','Abandonner':'כניעה',
- 'Ce joueur est parti':'השחקן הזה עזב','Aventure':'הרפתקה','Fusion des 5 éléments':'מיזוג 5 היסודות','Question piège':'שאלת מלכודת','← Carte':'← מפה','Retour à la carte':'חזרה למפה','Niveau suivant':'השלב הבא','Réessayer':'נסה שוב','Aller à la forge':'לך לנפחייה','Ultime':'אולטימטיבי','Victoire !':'ניצחון!','Défaite…':'הפסד…','Terre':'אדמה','Feu':'אש','Eau':'מים','Air':'אוויר','Foudre':'ברק','Vallée des Monolithes':'עמק המונוליתים','Volcan des Braises':'הר הגעש של הגחלים','Abysses de Cristal':'תהומות הבדולח','Cimes des Vents':'פסגות הרוחות','Citadelle de l\'Orage':'מצודת הסערה','Gaïarok':'גאיארוק','Ignivor':'איגניבור','Maréa':'מראה','Zéphyra':'זפירה','Voltarix':'וולטריקס','Primordius':'פרימורדיוס','Colosse de la Terre':'ענק האדמה','Dragon du Feu':'דרקון האש','Reine de l\'Eau':'מלכת המים','Esprit de l\'Air':'רוח האוויר','Dragon de la Foudre':'דרקון הברק','Avatar des cinq éléments':'התגלמות חמשת היסודות','Séisme':'רעידת אדמה','Pluie de lave':'גשם לבה','Raz-de-marée':'צונאמי','Tornade':'טורנדו','Éclair foudroyant':'ברק מהמם','Cataclysme élémentaire':'אסון היסודות','✓ Région terminée':'✓ האזור הושלם','Fusion ultime':'מיזוג אולטימטיבי','Traverse les 5 régions des éléments. Chaque région a ses combats, ses questions pièges et un boss qui garde un héros exclusif. Finis toutes les énigmes d\'une difficulté pour ouvrir la région suivante. Avec les 5 héros des éléments, forge le héros ultime !':'עבור את 5 אזורי היסודות. בכל אזור יש קרבות, שאלות מלכודת ובוס ששומר על גיבור בלעדי. סיים את כל החידות של רמת קושי כדי לפתוח את האזור הבא. עם 5 גיבורי היסודות, צור בנפחייה את הגיבור האולטימטיבי!','Réunis les 5 héros des éléments pour forger le héros ultime.':'אסוף את 5 גיבורי היסודות כדי ליצור את הגיבור האולטימטיבי.','Raté ! Ce n\'est pas ça… Réfléchis bien et réessaie.':'טעות! זה לא זה… חשוב טוב ונסה שוב.','Primordius est déjà à toi !':'פרימורדיוס כבר שלך!','Nouvelle version du jeu disponible':'גרסה חדשה של המשחק זמינה','Mettre à jour':'עדכן','Cadeau du jour':'מתנת היום','Joueurs':'שחקנים','pas encore venu':'עוד לא נכנס','Connecte-toi chaque jour : si tu rates un jour, tu recommences au jour 1. Le 7e jour, un coffre runique gratuit !':'התחבר כל יום: אם תפספס יום, תתחיל מחדש מיום 1. ביום השביעי – תיבת רונות בחינם!','Récupérer le coffre runique':'קבל את תיבת הרונות','Personne d\'autre pour le moment. Envoie le lien du jeu à tes potes : ils apparaîtront ici.':'אין עוד אף אחד כרגע. שלח את הקישור לחברים: הם יופיעו כאן.','Appuie encore pour relancer : tu perds le duel et ta mise':'לחץ שוב כדי להפעיל מחדש: תפסיד את הדו־קרב ואת ההימור','Relancer le jeu':'הפעל מחדש את המשחק','Pas de réponse à ton défi':'אין תשובה להזמנה שלך','Pas de réponse à ta proposition d\'échange':'אין תשובה להצעת ההחלפה שלך','Tu as quitté le duel trop longtemps : mise perdue':'יצאת מהדו־קרב יותר מדי זמן: ההימור אבד','Le serveur refuse pour l\'instant la liste des joueurs en ligne. Recharge la page dans quelques secondes.':'השרת לא מאפשר כרגע לראות את השחקנים המחוברים. טען מחדש את הדף בעוד כמה שניות.','Tu n\'as pas assez de points pour cette mise':'אין לך מספיק נקודות להימור הזה','Ce joueur n\'a pas assez de points pour cette mise':'לשחקן הזה אין מספיק נקודות להימור הזה','Défi annulé':'ההזמנה בוטלה','Défi refusé':'ההזמנה נדחתה',
+ 'Ce joueur est parti':'השחקן הזה עזב','Armurerie':'נשקייה','Pistolet laser':'אקדח לייזר','Fusil à pompe':'רובה ציד','Canon de givre':'תותח קרח','Mitraillette':'מקלע','Bazooka':'בזוקה','Équiper':'צייד','Équipée ✓':'מצויד ✓','Combattre sans arme':'להילחם בלי נשק','Tir rapide et précis.':'ירי מהיר ומדויק.','5 plombs en éventail : terrible de près.':'5 כדורים במניפה: נורא מקרוב.','Ralentit l\'adversaire touché pendant 2 secondes.':'מאט את היריב לשתי שניות.','Une rafale de balles sans s\'arrêter.':'צרור כדורים בלי הפסקה.','Une roquette énorme qui explose.':'רקטה ענקית שמתפוצצת.','Pas assez de points':'אין מספיק נקודות','Aventure':'הרפתקה','Fusion des 5 éléments':'מיזוג 5 היסודות','Question piège':'שאלת מלכודת','← Carte':'← מפה','Retour à la carte':'חזרה למפה','Niveau suivant':'השלב הבא','Réessayer':'נסה שוב','Aller à la forge':'לך לנפחייה','Ultime':'אולטימטיבי','Victoire !':'ניצחון!','Défaite…':'הפסד…','Terre':'אדמה','Feu':'אש','Eau':'מים','Air':'אוויר','Foudre':'ברק','Vallée des Monolithes':'עמק המונוליתים','Volcan des Braises':'הר הגעש של הגחלים','Abysses de Cristal':'תהומות הבדולח','Cimes des Vents':'פסגות הרוחות','Citadelle de l\'Orage':'מצודת הסערה','Gaïarok':'גאיארוק','Ignivor':'איגניבור','Maréa':'מראה','Zéphyra':'זפירה','Voltarix':'וולטריקס','Primordius':'פרימורדיוס','Colosse de la Terre':'ענק האדמה','Dragon du Feu':'דרקון האש','Reine de l\'Eau':'מלכת המים','Esprit de l\'Air':'רוח האוויר','Dragon de la Foudre':'דרקון הברק','Avatar des cinq éléments':'התגלמות חמשת היסודות','Séisme':'רעידת אדמה','Pluie de lave':'גשם לבה','Raz-de-marée':'צונאמי','Tornade':'טורנדו','Éclair foudroyant':'ברק מהמם','Cataclysme élémentaire':'אסון היסודות','✓ Région terminée':'✓ האזור הושלם','Fusion ultime':'מיזוג אולטימטיבי','Traverse les 5 régions des éléments. Chaque région a ses combats, ses questions pièges et un boss qui garde un héros exclusif. Finis toutes les énigmes d\'une difficulté pour ouvrir la région suivante. Avec les 5 héros des éléments, forge le héros ultime !':'עבור את 5 אזורי היסודות. בכל אזור יש קרבות, שאלות מלכודת ובוס ששומר על גיבור בלעדי. סיים את כל החידות של רמת קושי כדי לפתוח את האזור הבא. עם 5 גיבורי היסודות, צור בנפחייה את הגיבור האולטימטיבי!','Réunis les 5 héros des éléments pour forger le héros ultime.':'אסוף את 5 גיבורי היסודות כדי ליצור את הגיבור האולטימטיבי.','Raté ! Ce n\'est pas ça… Réfléchis bien et réessaie.':'טעות! זה לא זה… חשוב טוב ונסה שוב.','Primordius est déjà à toi !':'פרימורדיוס כבר שלך!','Nouvelle version du jeu disponible':'גרסה חדשה של המשחק זמינה','Mettre à jour':'עדכן','Cadeau du jour':'מתנת היום','Joueurs':'שחקנים','pas encore venu':'עוד לא נכנס','Connecte-toi chaque jour : si tu rates un jour, tu recommences au jour 1. Le 7e jour, un coffre runique gratuit !':'התחבר כל יום: אם תפספס יום, תתחיל מחדש מיום 1. ביום השביעי – תיבת רונות בחינם!','Récupérer le coffre runique':'קבל את תיבת הרונות','Personne d\'autre pour le moment. Envoie le lien du jeu à tes potes : ils apparaîtront ici.':'אין עוד אף אחד כרגע. שלח את הקישור לחברים: הם יופיעו כאן.','Appuie encore pour relancer : tu perds le duel et ta mise':'לחץ שוב כדי להפעיל מחדש: תפסיד את הדו־קרב ואת ההימור','Relancer le jeu':'הפעל מחדש את המשחק','Pas de réponse à ton défi':'אין תשובה להזמנה שלך','Pas de réponse à ta proposition d\'échange':'אין תשובה להצעת ההחלפה שלך','Tu as quitté le duel trop longtemps : mise perdue':'יצאת מהדו־קרב יותר מדי זמן: ההימור אבד','Le serveur refuse pour l\'instant la liste des joueurs en ligne. Recharge la page dans quelques secondes.':'השרת לא מאפשר כרגע לראות את השחקנים המחוברים. טען מחדש את הדף בעוד כמה שניות.','Tu n\'as pas assez de points pour cette mise':'אין לך מספיק נקודות להימור הזה','Ce joueur n\'a pas assez de points pour cette mise':'לשחקן הזה אין מספיק נקודות להימור הזה','Défi annulé':'ההזמנה בוטלה','Défi refusé':'ההזמנה נדחתה',
  // héros, coffres
  'volant':'מעופף','Vie':'חיים','Attaque':'התקפה','Vitesse':'מהירות','Énergie':'אנרגיה','Spéciale :':'מתקפה מיוחדת:','(quand l\'énergie est pleine)':'(כשהאנרגיה מלאה)','Pas encore débloqué.':'עדיין לא נפתח.',
  'Héros actif':'הגיבור הפעיל','Choisir ce héros':'בחר בגיבור הזה','Niveau +1':'רמה +1','S\'obtient dans les coffres ou à la forge.':'משיגים אותו בתיבות או בנפחייה.',
@@ -673,7 +683,7 @@ function drawPortraits(t){
 }
 
 /* ================== COMBAT ================== */
-const W=800,HH=450,GY=392, inp={x:0,y:0,atk:0,shoot:0,shield:0,charge:0,sp:0};
+const W=800,HH=450,GY=392, inp={x:0,y:0,atk:0,shoot:0,shield:0,charge:0,sp:0,gun:0};
 let bgCache={};
 function arenaBg(k){
   if(bgCache[k])return bgCache[k];
@@ -704,7 +714,7 @@ function startFight(mode,adv){
   else{const order=['sylvar','braskar','givrelame','tonnerok','ombrax','pyralis','drakonir','aethon','neantis','kaelthar'];ec=HB[order[(stage-1)%10]];el=stage;es=1+Math.min(2,Math.floor((stage-1)/10))}
   F={mode,stage,adv,p:mkFighter(mc,me.lvl,me.st,200,1),e:mkFighter(ec,el,es,600,-1,k),shots:[],parts:[],nums:[],shake:0,t:0,over:0,intro:1.6,bg:arenaBg(mode==='adv'?10+adv.r:mode==='boss'?2:Math.floor((stage-1)/3))};
   F.p.hp=F.p.mhp;F.e.hp=F.e.mhp;F.e.skill=Math.min(.85,skill||.2+.04*(mode==='boss'?12:stage));
-  if(mc.fly)F.p.y=GY-80; if(ec.fly)F.e.y=GY-80;
+  if(mc.fly)F.p.y=GY-80; if(ec.fly)F.e.y=GY-80;armGun(F.p);
   view='fight';render();
 }
 const cy=e=>e.y-60*e.c.bulk-(e.c.fly?22:0);
@@ -715,8 +725,14 @@ function hurt(t,d,from){sfx('hit');
   F.nums.push({x:t.x,y:cy(t)-40,v:d,l:.9,col:t.shield?'#5ee6ff':'#fff'});F.shake=Math.min(14,F.shake+d/6);burst(t.x,cy(t),t.shield?'#5ee6ff':from.c.glow,t.shield?6:14);
   if(t.hp<=0){F.over=.01;F.win=t===F.e;if(F.duel){F.myKo=1;duelTx(true)}burst(t.x,cy(t),t.c.glow,70,420);burst(t.x,cy(t),'#fff',30,300);F.shake=20}
 }
+function armGun(e){const w=WB[S.weq];if(w&&S.wp&&S.wp[w.id]){e.gun=w;e.ammo=w.ammo;e.gunCd=0}}
+function fireGun(e,foe){const w=e.gun;e.ammo--;e.gunCd=w.cd;sfx('shoot');
+  const ox=e.x+e.face*34,oy=cy(e)-8,a0=Math.atan2(cy(foe)-oy,foe.x-ox),n=w.pel||1;
+  for(let k=0;k<n;k++){const a=a0+(n>1?(k/(n-1)-.5)*w.spread:0)+(w.jit?(Math.random()-.5)*w.jit:0);
+    F.shots.push({x:ox,y:oy,vx:Math.cos(a)*w.spd,vy:Math.sin(a)*w.spd,own:e,dmg:e.atk*w.dmg,col:w.col,r:w.r,l:2.2,w:w.id})}
+  burst(ox,oy,w.col,6);const b=$('#gammo');if(b&&e===F.p)b.textContent=e.ammo}
 function step(e,i,dt,foe){
-  e.atkCd-=dt;e.shCd-=dt;e.spCd-=dt;e.hitT-=dt;e.lock-=dt;e.face=foe.x>=e.x?1:-1;
+  e.atkCd-=dt;e.shCd-=dt;e.spCd-=dt;e.hitT-=dt;e.lock-=dt;e.gunCd=(e.gunCd||0)-dt;e.slowT=(e.slowT||0)-dt;e.face=foe.x>=e.x?1:-1;
   if(e.atkT>0){const p=e.atkT;e.atkT-=dt/.26;if(p>.5&&e.atkT<=.5&&Math.abs(foe.x-e.x)<82*e.c.bulk&&Math.abs(cy(foe)-cy(e))<72)hurt(foe,e.atk,e)}
   const sh=!!i.shield&&e.lock<=0&&e.sg>0&&!e.spA;
   if(sh){e.sg-=dt;if(e.sg<=0)e.lock=3}else e.sg=Math.min(2.5,e.sg+dt*.55);
@@ -732,7 +748,8 @@ function step(e,i,dt,foe){
   }
   const still=sh||e.charge||(e.spA&&e.spA.type!=='meteor');
   if(!still){
-    e.vx=(i.x||0)*e.spd*.55;e.vy=(i.y||0)*e.spd*.55;
+    const sp=e.spd*.55*(e.slowT>0?.5:1);e.vx=(i.x||0)*sp;e.vy=(i.y||0)*sp;
+    if(i.gun&&e.gun&&e.gunCd<=0&&e.ammo>0)fireGun(e,foe);
     if(!i.y&&!e.c.fly&&e.y<GY)e.vy=60;
     if(i.atk&&e.atkCd<=0&&e.atkT<=0){e.atkT=1;e.atkCd=.4}
     if(i.shoot&&e.shCd<=0&&e.en>=12){e.en-=12;e.shCd=.42;if(e===F.p)sfx('shoot');const ox=e.x+e.face*34,oy=cy(e)-8,dx=foe.x-ox,dy=cy(foe)-oy,d=Math.hypot(dx,dy)||1;F.shots.push({x:ox,y:oy,vx:dx/d*470,vy:dy/d*470,own:e,dmg:e.atk*.8,col:e.c.glow,r:9,l:2.2})}
@@ -769,7 +786,7 @@ function fightTick(dt,t){
   else{F.over+=dt;if(F.over>1.6&&!F.done){F.done=1;endFight()}}
   for(const s of F.shots){s.x+=s.vx*dt;s.y+=s.vy*dt;s.l-=dt;const tg=s.own===F.p?F.e:F.p;
     if(Math.random()<.6)F.parts.push({x:s.x,y:s.y,vx:0,vy:0,l:.25,col:s.col,r:s.r*.6});
-    if((!F.over||F.duel)&&Math.hypot(s.x-tg.x,s.y-cy(tg))<36*tg.c.bulk){if(!F.over)hurt(tg,s.dmg,s.own);s.l=0}
+    if((!F.over||F.duel)&&Math.hypot(s.x-tg.x,s.y-cy(tg))<36*tg.c.bulk){if(!F.over){const w=WB[s.w];if(w&&w.slow&&!tg.shield)tg.slowT=2;if(w&&w.boom){burst(s.x,s.y,w.col,60,460);burst(s.x,s.y,'#fff',20,300);F.shake=Math.max(F.shake,16)}hurt(tg,s.dmg,s.own)}s.l=0}
     if(s.y>GY+6){s.l=0;burst(s.x,GY,s.col,8)}}
   F.shots=F.shots.filter(s=>s.l>0&&s.x>-40&&s.x<W+40);
   for(const p of F.parts){p.x+=p.vx*dt;p.y+=p.vy*dt;p.l-=dt}F.parts=F.parts.filter(p=>p.l>0);if(F.parts.length>500)F.parts.splice(0,F.parts.length-500);
@@ -893,6 +910,12 @@ const REG=[
      {q:'Pendant un orage, qu\'est-ce qui arrive en premier ?',o:['Le tonnerre','L\'éclair','Les deux en même temps','Ça dépend'],a:1,ex:'La lumière va bien plus vite que le son : on voit l\'éclair avant d\'entendre le tonnerre.'}]}
 ];
 const ADVP={f:r=>25+12*r,q:r=>15+6*r,b:r=>120+60*r};
+function armory(){const own=S.wp||{};
+  return `<div class="panel" style="border-color:#ff5d73"><h2>Armurerie</h2><p class="mute small">Achète une arme avec tes points et équipe-la : en combat, un nouveau bouton « Arme » apparaît (touche O). Chaque arme a un nombre de munitions par combat. Elle marche aussi en duel contre tes potes !</p>
+   <div class="split">${WEAP.map(w=>{const has=own[w.id],eq=S.weq===w.id;return `<div class="panel" style="border-color:${eq?w.col:'var(--line)'}"><div class="row"><span style="font-size:30px">${w.ic}</span><div class="grow"><b style="color:${w.col}">${w.n}</b><div class="small mute">${w.d}</div></div></div>
+    <div class="small">Dégâts ×${String(w.dmg*(w.pel||1)).replace('.',',')} · ${w.ammo} munitions${w.pel?' · '+w.pel+' plombs':''}</div>
+    ${eq?'<button disabled>Équipée ✓</button>':has?`<button class="btn2" data-a="weq" data-id="${w.id}">Équiper</button>`:`<button class="btn" data-a="wbuy" data-id="${w.id}" ${S.pts<w.p?'disabled':''}>Acheter · ${w.p} pts</button>`}</div>`}).join('')}</div>
+   ${S.weq?'<div><button data-a="weq" data-id="">Combattre sans arme</button></div>':''}</div>`}
 function advDone(r){return (S.adv||{})[r]||0}
 // Une région reste ouverte une fois débloquée, même si de nouvelles énigmes sont ajoutées ensuite
 function advOpen(r){if(r===0||boss()||(S.advU||{})[r])return true;if(ordered(r-1).length&&ordered(r-1).every(x=>fin(x.id))){S.advU=S.advU||{};S.advU[r]=1;return true}return false}
@@ -1026,7 +1049,7 @@ const V={
     <button class="btn" data-a="fight" data-m="arena">Combattre</button>
     <h3>Commandes</h3><p class="small mute">Téléphone : joystick à gauche, boutons à droite. Pousse le joystick vers le haut pour voler.</p>
     <p class="small mute">Clavier : flèches ou ZQSD pour bouger et voler, J frapper, K tirer (12 d'énergie), L bouclier (dégâts −50 %, 2,5 s max), U recharger l'énergie, I attaque spéciale.</p>
-    <p class="small mute">L'attaque spéciale se lance seulement quand ta barre d'énergie est pleine, et elle la vide d'un coup. Bouclier et recharge t'immobilisent. Un bouclier vidé met 3 s à revenir.</p></div></div>${duelPanel()}`;
+    <p class="small mute">L'attaque spéciale se lance seulement quand ta barre d'énergie est pleine, et elle la vide d'un coup. Bouclier et recharge t'immobilisent. Un bouclier vidé met 3 s à revenir.</p></div></div>${armory()}${duelPanel()}`;
  },
  fight(){
   const p=F.p,e=F.e;
@@ -1037,7 +1060,7 @@ const V={
   <div id="fres"></div>
   <div class="pad"><div id="joy"><div id="knob"></div></div>
    <div class="acts"><button class="a3" data-k="shield">Bouclier<kbd>L</kbd></button><button class="a4" data-k="charge">Recharge<kbd>U</kbd></button><button class="a5" data-k="sp" id="bsp">Spécial<kbd>I</kbd></button>
-   <button class="a1" data-k="atk">Frapper<kbd>J</kbd></button><button class="a2" data-k="shoot">Tirer<kbd>K</kbd></button><button data-a="quit" style="font-size:11px">${F.duel?'Abandonner':'Quitter'}</button></div></div></div>`;
+   <button class="a1" data-k="atk">Frapper<kbd>J</kbd></button><button class="a2" data-k="shoot">Tirer<kbd>K</kbd></button>${p.gun?`<button class="a6" data-k="gun"><span style="font-size:20px">${p.gun.ic}</span><span id="gammo">${p.ammo}</span><kbd>O</kbd></button>`:''}<button data-a="quit" class="${p.gun?'aq':''}" style="font-size:11px">${F.duel?'Abandonner':'Quitter'}</button></div></div></div>`;
  },
  duel(){
   if(!DU){view='fprep';return V.fprep()}
@@ -1264,6 +1287,8 @@ const A={
  craft(d){const r=JSON.parse(d.r);if(S.craft)return;const a=S.chars[r.a],b=S.chars[r.b];
   if(r.evo){if(a.n<2||a.st>=3)return;a.n--;S.craft={out:r.out,evo:1,st:a.st+1}}else{if(!a||!b||a.n<2||b.n<2)return;a.n--;b.n--;S.craft={out:r.out,st:S.chars[r.out]?.st||1}}
   S.craft.dur=RAR[HB[r.out].r].t*1000;S.craft.end=Date.now()+S.craft.dur;save();render();scrollTo(0,0)},
+ wbuy(d){const w=WB[d.id];if(!w||(S.wp||{})[w.id])return;if(S.pts<w.p)return toast('Pas assez de points');S.pts-=w.p;S.wp={...(S.wp||{}),[w.id]:1};S.weq=w.id;save();render();sfx('chest');toast(w.n+' achetée et équipée !')},
+ weq(d){if(d.id&&!(S.wp||{})[d.id])return;S.weq=d.id||'';save();render()},
  craft5(){if(S.craft||S.chars.primordius||!REG.every(R=>S.chars[R.hero]))return;S.craft={out:'primordius',st:1,dur:RAR[5].t*1000};S.craft.end=Date.now()+S.craft.dur;save();render();scrollTo(0,0)},
  claim(){const c=S.craft;if(!c||c.end>Date.now())return;S.craft=null;let o=S.chars[c.out];
   S.fus++;bump('forge');if(c.evo){o.st=c.st;save();render();reward(c.out,o.st,'Évolution réussie : +25 % de puissance')}
@@ -1310,7 +1335,7 @@ const A={
 document.addEventListener('click',e=>{const el=e.target.closest('[data-a]');if(el&&(!ready||gated())&&!['code','lang','reload'].includes(el.dataset.a))return;if(el&&!el.disabled&&A[el.dataset.a])A[el.dataset.a](el.dataset)});
 document.addEventListener('change',e=>{if(e.target.id==='bet')betSel=+e.target.value;if(e.target.id==='stg')admStage=+e.target.value;});
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='num')A.num();if(e.key==='Enter'&&e.target.id==='code')A.code()});
-const KEYS={j:'atk',k:'shoot',l:'shield',u:'charge',i:'sp'},kd={};
+const KEYS={j:'atk',k:'shoot',l:'shield',u:'charge',i:'sp',o:'gun'},kd={};
 function keyMove(){inp.x=(kd.arrowright||kd.d?1:0)-(kd.arrowleft||kd.q||kd.a?1:0);inp.y=(kd.arrowdown||kd.s?1:0)-(kd.arrowup||kd.z||kd.w?1:0)}
 addEventListener('keydown',e=>{if(view!=='fight')return;const k=e.key.toLowerCase();if(KEYS[k])inp[KEYS[k]]=1;else if(k.startsWith('arrow')||'zqsdaw'.includes(k)){kd[k]=1;keyMove()}else return;e.preventDefault()});
 addEventListener('keyup',e=>{const k=e.key.toLowerCase();if(KEYS[k])inp[KEYS[k]]=0;else{kd[k]=0;if(view==='fight')keyMove()}});
@@ -1339,7 +1364,7 @@ function startDuel(){
   const left=DU.me<DU.to,m=fz(DU.h),o=fz(DU.oh);
   F={mode:'duel',duel:1,stage:1,p:mkFighter(m.c,m.l,m.st,left?200:600,left?1:-1),e:mkFighter(o.c,o.l,o.st,left?600:200,left?-1:1),shots:[],parts:[],nums:[],shake:0,t:0,over:0,intro:3,bg:arenaBg(4),
     evq:[],evi:0,lastEv:0,rx:0,rxT:performance.now(),left:90,txT:0,qc:0};
-  F.p.hp=F.p.mhp;F.e.hp=F.e.mhp;if(m.c.fly)F.p.y=GY-80;if(o.c.fly)F.e.y=GY-80;
+  F.p.hp=F.p.mhp;F.e.hp=F.e.mhp;if(m.c.fly)F.p.y=GY-80;if(o.c.fly)F.e.y=GY-80;armGun(F.p);
   const e=F.e;e.tx=e.x;e.ty=e.y;e.tvx=0;e.tvy=0;
   view='fight';sub={};render();duelTx(true);
 }
@@ -1364,9 +1389,9 @@ function duelRx(f){
   e.hp=hp;
   if(f.ko&&!F.oppKo){F.oppKo=1;burst(e.x,cy(e),e.c.glow,70,420);burst(e.x,cy(e),'#fff',30,300);F.shake=20;if(!F.over)F.over=.01}
   if(f.q&&!F.over){F.quitWin=1;F.over=.01}
-  for(const v of (Array.isArray(f.ev)?f.ev:[])){if(!(v.i>F.lastEv))continue;F.lastEv=v.i;if(F.over)continue;
+  for(const v of asArr(f.ev)){if(!(v.i>F.lastEv))continue;F.lastEv=v.i;if(F.over)continue;
     if(v.k==='a'){e.atkT=1}
-    else if(v.k==='s'){F.shots.push({x:+v.x,y:+v.y,vx:+v.vx,vy:+v.vy,own:e,dmg:Math.min(e.atk*1.2,+v.d||0),col:e.c.glow,r:+v.r||9,l:Math.min(3.2,+v.l||2.2)})}
+    else if(v.k==='s'){const w=WB[v.w];F.shots.push({x:+v.x,y:+v.y,vx:+v.vx,vy:+v.vy,own:e,dmg:Math.min(e.atk*(w?w.dmg*1.05:1.2),+v.d||0),col:w?w.col:e.c.glow,r:Math.min(16,+v.r||9),l:Math.min(3.2,+v.l||2.2),w:w?w.id:undefined})}
     else if(v.k==='p'&&['dash','beam','nova','meteor'].includes(v.ty)){e.spA={type:v.ty,t:0,face:v.f<0?-1:1,y:+v.y||cy(e)};F.nums.push({x:e.x,y:cy(e)-70,v:L(e.c.spn),l:1.2,col:e.c.glow});sfx('sp')}
   }
 }
@@ -1388,7 +1413,7 @@ function duelMine(){
   const p=F.p;
   if(p.atkT===1)duelEv({k:'a'});
   if(p.spA&&!p.spA.sent){p.spA.sent=1;duelEv({k:'p',ty:p.spA.type,f:p.face,y:Math.round(p.spA.y)})}
-  for(const s of F.shots)if(s.own===p&&!s.sent){s.sent=1;duelEv({k:'s',x:Math.round(s.x),y:Math.round(s.y),vx:Math.round(s.vx),vy:Math.round(s.vy),d:Math.round(s.dmg),r:s.r,l:s.l})}
+  for(const s of F.shots)if(s.own===p&&!s.sent){s.sent=1;const o={k:'s',x:Math.round(s.x),y:Math.round(s.y),vx:Math.round(s.vx),vy:Math.round(s.vy),d:Math.round(s.dmg),r:s.r,l:s.l};if(s.w)o.w=s.w;duelEv(o)}
 }
 function duelRes(){
   if(F.quitWin)return 'forf';
