@@ -141,8 +141,8 @@ td,th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left}
 
 <div id="app">
   <header>
-    <div class="row" style="gap:8px;flex-wrap:nowrap"><div id="hlogo" style="width:38px;flex:none;line-height:0"></div><div><div class="logo">LÉGENDES <b>&amp;</b> PIÈGES</div><div id="hnick" class="small mute" hidden></div></div></div>
-    <div class="stats"><span class="chip pts" id="hpts">◆ 0</span><span class="chip" id="hlvl">Niv. 1</span><span class="chip" id="hstk">Série 0</span><button class="chip" id="hlang" data-a="lang" data-nt>עברית</button></div>
+    <div class="row" style="gap:8px;flex-wrap:nowrap"><div id="hlogo" style="width:38px;flex:none;line-height:0"></div><div><div class="logo">LÉGENDES <b>&amp;</b> PIÈGES</div><button id="hnick" class="small mute" data-a="go" data-v="profile" style="min-height:0;padding:0;border:0;background:none;text-align:start;color:var(--arc)" hidden></button></div></div>
+    <div class="stats"><span class="chip pts" id="hpts">◆ 0</span><span class="chip" id="hlvl">Niv. 1</span><span class="chip" id="hstk">Série 0</span><button class="chip" id="hsnd" data-a="mute" aria-label="Son">🔊</button><button class="chip" id="hlang" data-a="lang" data-nt>עברית</button></div>
   </header>
   <div id="evbar" hidden></div>
   <div id="invbar" hidden></div>
@@ -284,11 +284,11 @@ function unlockAll(){H.forEach(c=>{if(!S.chars[c.id])S.chars[c.id]={n:1,lvl:1,xp
 const typing=()=>/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName||'');
 function save(){if(boss())S.pts=INF;try{localStorage.setItem('lp1',JSON.stringify(S))}catch(e){} hud(); syncPlayer(); pushPres()}
 if(S.esc){if(S.esc.st==='wait')S.pts+=S.esc.bet;S.esc=null}
-S.hint=S.hint||{};S.trd=S.trd||{};S.failed=S.failed||{};
+S.hint=S.hint||{};S.trd=S.trd||{};S.failed=S.failed||{};S.snd=S.snd||{fx:1,mu:1};S.wins=S.wins||0;S.dw=S.dw||0;S.dl=S.dl||0;S.boxes=S.boxes||0;S.fus=S.fus||0;S.since=S.since||Date.now();
 function plvl(){return Math.floor(Math.sqrt(S.total/50))+1}
 function ev(){const e=CFG.event;return e&&e.end>Date.now()?e:null}
 function mult(){return ev()?.mult||1}
-function gain(p){p=Math.round(p);S.pts+=p;S.total+=p;return p}
+function gain(p){p=Math.round(p);S.pts+=p;S.total+=p;if(p>0){bump('pts',p);wkAdd(p)}return p}
 function today(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()}
 function allR(){return RIDDLES.concat((CFG.riddles||[]).map(r=>({...r,type:'c',custom:1})))}
 const fin=id=>!!(S.solved[id]||S.failed[id]);
@@ -382,6 +382,7 @@ const HE={
  'Échanger':'החלף','Tu donnes':'אתה נותן','Tu reçois':'אתה מקבל','Proposer l\'échange':'הצע החלפה','Annuler':'בטל','Annuler la proposition':'בטל את ההצעה',
  'Échange refusé':'ההחלפה נדחתה','Échange réussi !':'ההחלפה הצליחה!','Échange impossible : ce héros n\'est plus disponible':'אי אפשר להחליף: הגיבור הזה כבר לא זמין','Tu ne peux pas donner ton seul héros':'אי אפשר לתת את הגיבור היחיד שלך',
  'Personne d\'autre n\'est en ligne pour le moment.':'אף אחד אחר לא מחובר כרגע.','Les échanges ne sont pas disponibles dans cette vue.':'החלפות לא זמינות בתצוגה הזאת.','L\'admin a modifié ton compte':'המנהל שינה את החשבון שלך',
+ "Missions du jour":"משימות היום","Réussis 3 énigmes":"פתור 3 חידות","Réussis 5 énigmes":"פתור 5 חידות","Gagne 2 combats dans l'arène":"נצח ב־2 קרבות בזירה","Gagne 4 combats dans l'arène":"נצח ב־4 קרבות בזירה","Ouvre 1 coffre":"פתח תיבה אחת","Gagne 1 duel contre un pote":"נצח בדו־קרב אחד נגד חבר","Fais 1 fusion à la forge":"בצע מיזוג אחד בנפחייה","Gagne 150 points":"הרווח 150 נקודות","Gagne 300 points":"הרווח 300 נקודות","Récupérer":"אסוף","Récupérée":"נאסף","Bonus : finis les 3 missions pour gagner un coffre de bronze gratuit.":"בונוס: סיים את 3 המשימות וקבל תיבת ארד בחינם.","Ouvrir le coffre":"פתח את התיבה","Coffre ouvert":"התיבה נפתחה","Classement de la semaine":"דירוג השבוע","Classement général":"דירוג כללי","Récompense du 1er :":"הפרס למקום הראשון:","Personne n'a encore marqué de points cette semaine. Sois le premier !":"עוד אף אחד לא צבר נקודות השבוע. תהיה הראשון!","Tes points cette semaine :":"הנקודות שלך השבוע:","Mon profil":"הפרופיל שלי","Mes stats":"הסטטיסטיקות שלי","Mes meilleurs héros":"הגיבורים הכי טובים שלי","Réglages":"הגדרות","Effets sonores":"אפקטים קוליים","Musique":"מוזיקה","Langue":"שפה","Activé":"פעיל","Coupé":"כבוי","points":"נקודות","points gagnés au total":"נקודות שנצברו בסך הכול","points cette semaine":"נקודות השבוע","place cette semaine":"מקום השבוע","combats gagnés":"קרבות שניצחת","duels gagnés":"דו־קרבות שניצחת","énigmes réussies":"חידות שנפתרו","énigmes ratées":"חידות שנכשלת בהן","indices utilisés":"רמזים שהשתמשת בהם","héros":"גיבורים","coffres ouverts":"תיבות שנפתחו","fusions":"מיזוגים",
  'Machine occupée':'המכונה תפוסה','Il faut un double':'צריך כפיל','Recette d\'événement':'מתכון של אירוע','Évolution : plus fort, nouvelle aura':'אבולוציה: חזק יותר, הילה חדשה','Un double de chaque est consommé':'משתמשים בכפיל אחד מכל גיבור'
 };
 const RHE={
@@ -433,6 +434,8 @@ const HP=[
  [/^(Commun|Rare|Épique|Légendaire|Mythique) ([\d,]+) %$/,m=>N(m[1])+' '+m[2].replace(',','.')+'%'],
  [/^(\d+) cadeaux de l'admin reçus !$/,m=>'קיבלת '+m[1]+' מתנות מהמנהל!'],[/^(.+) passe niveau (\d+)$/,m=>N(m[1])+' עלה לרמה '+m[2]],[/^changent dans (.+)$/,m=>'מתחלפים בעוד '+m[1]],
  [/^Double de (.+) requis$/,m=>'נדרש כפיל של '+N(m[1])],[/^Bienvenue, (.+) !$/,m=>'ברוך הבא, '+m[1]+'!'],[/^(.+) niv\. (\d+)$/,m=>N(m[1])+' רמה '+m[2]],
+ [/^nouvelles dans (.+)$/,m=>'חדשות בעוד '+m[1]],[/^fin dans (\d+) j (\d+) h$/,m=>'נגמר בעוד '+m[1]+' ימים ו־'+m[2]+' שעות'],[/^fin dans (\d+) h (\d+)$/,m=>'נגמר בעוד '+m[1]+':'+m[2]],
+ [/^(\d+) \/ (\d+)$/,m=>m[1]+' / '+m[2]],[/^place (\d+)$/,m=>'מקום '+m[1]],[/^Niveau (\d+) · joue depuis le (.+)$/,m=>'רמה '+m[1]+' · משחק מאז '+m[2]],[/^Étage (\d+)$/,m=>'קומה '+m[1]],
  [/^(.+) te propose (.+) contre ton (.+)$/,m=>m[1]+' מציע לך את '+N(m[2])+' תמורת '+N(m[3])+' שלך'],
  [/^Proposition envoyée à (.+) : (.+) contre (.+)\. En attente de sa réponse…$/,m=>'ההצעה נשלחה אל '+m[1]+': '+N(m[2])+' תמורת '+N(m[3])+'. ממתין לתשובה…'],
  [/^(.+) ×(\d+)$/,m=>N(m[1])+' ×'+m[2]]
@@ -591,7 +594,7 @@ function startFight(mode){
 }
 const cy=e=>e.y-60*e.c.bulk-(e.c.fly?22:0);
 function burst(x,y,col,n,sp=220){for(let i=0;i<n;i++){const a=Math.random()*7,v=sp*(.3+Math.random());F.parts.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,l:.35+Math.random()*.4,col,r:2+Math.random()*3})}}
-function hurt(t,d,from){
+function hurt(t,d,from){sfx('hit');
   if(F.over)return; if(t.shield)d*=.5; d=Math.round(d*(.9+Math.random()*.2)); t.hp=Math.max(0,t.hp-d); t.hitT=.25;
   F.nums.push({x:t.x,y:cy(t)-40,v:d,l:.9,col:t.shield?'#5ee6ff':'#fff'});F.shake=Math.min(14,F.shake+d/6);burst(t.x,cy(t),t.shield?'#5ee6ff':from.c.glow,t.shield?6:14);
   if(t.hp<=0){F.over=.01;F.win=t===F.e;burst(t.x,cy(t),t.c.glow,70,420);burst(t.x,cy(t),'#fff',30,300);F.shake=20}
@@ -616,8 +619,8 @@ function step(e,i,dt,foe){
     e.vx=(i.x||0)*e.spd*.55;e.vy=(i.y||0)*e.spd*.55;
     if(!i.y&&!e.c.fly&&e.y<GY)e.vy=60;
     if(i.atk&&e.atkCd<=0&&e.atkT<=0){e.atkT=1;e.atkCd=.4}
-    if(i.shoot&&e.shCd<=0&&e.en>=12){e.en-=12;e.shCd=.42;const ox=e.x+e.face*34,oy=cy(e)-8,dx=foe.x-ox,dy=cy(foe)-oy,d=Math.hypot(dx,dy)||1;F.shots.push({x:ox,y:oy,vx:dx/d*470,vy:dy/d*470,own:e,dmg:e.atk*.8,col:e.c.glow,r:9,l:2.2})}
-    if(i.sp&&e.spCd<=0&&e.en>=e.men-.5){e.en=0;e.spCd=2;e.spA={type:e.c.sp,t:0,face:e.face,y:cy(e)};F.nums.push({x:e.x,y:cy(e)-70,v:L(e.c.spn),l:1.2,col:e.c.glow});
+    if(i.shoot&&e.shCd<=0&&e.en>=12){e.en-=12;e.shCd=.42;if(e===F.p)sfx('shoot');const ox=e.x+e.face*34,oy=cy(e)-8,dx=foe.x-ox,dy=cy(foe)-oy,d=Math.hypot(dx,dy)||1;F.shots.push({x:ox,y:oy,vx:dx/d*470,vy:dy/d*470,own:e,dmg:e.atk*.8,col:e.c.glow,r:9,l:2.2})}
+    if(i.sp&&e.spCd<=0&&e.en>=e.men-.5){e.en=0;e.spCd=2;sfx('sp');e.spA={type:e.c.sp,t:0,face:e.face,y:cy(e)};F.nums.push({x:e.x,y:cy(e)-70,v:L(e.c.spn),l:1.2,col:e.c.glow});
       if(e.c.sp==='meteor')for(let n=0;n<6;n++)F.shots.push({x:foe.x+(Math.random()-.5)*190,y:-30-n*70,vx:(Math.random()-.5)*60,vy:520,own:e,dmg:e.atk*.85,col:e.c.glow,r:12,l:3})}
   }else{e.vx=0;e.vy=0}
   e.x=Math.max(40,Math.min(W-40,e.x+e.vx*dt));e.y+=e.vy*dt;
@@ -680,9 +683,9 @@ function fightTick(dt,t){
 function addXp(id,x){const h=S.chars[id];let up=0;h.xp+=x;while(h.lvl<20&&h.xp>=40*h.lvl){h.xp-=40*h.lvl;h.lvl++;up++}return up}
 function endFight(){
   const m=mult();let pts,xp,txt='';
-  if(F.win){if(F.mode==='boss'){const e=ev();pts=gain(e?.reward||150);S.boss=e?.end||1;xp=80}else{pts=gain((15+6*F.stage)*m);xp=25+5*F.stage;if(F.stage>=S.arena)S.arena=F.stage+1;S.wins++}}
+  if(F.win){if(F.mode==='boss'){const e=ev();pts=gain(e?.reward||150);S.boss=e?.end||1;xp=80}else{pts=gain((15+6*F.stage)*m);xp=25+5*F.stage;if(F.stage>=S.arena)S.arena=F.stage+1;S.wins++;bump('win')}}
   else{pts=gain(3);xp=8}
-  const up=addXp(S.sel,xp);save();
+  const up=addXp(S.sel,xp);save();sfx(F.win?'win':'lose');if(up)setTimeout(()=>sfx('lvl'),700);
   F.result=`<div class="panel" style="text-align:center;align-items:center"><h2 style="color:${F.win?'var(--gold)':'var(--bad)'}">${F.win?'Victoire !':'Défaite…'}</h2>
    <p>+${pts} points · +${xp} XP pour ${HB[S.sel].n}${up?` · <b style="color:var(--gold)">Niveau ${S.chars[S.sel].lvl} !</b>`:''}</p>
    ${F.win?'':'<p class="mute small">Astuce : améliore ton héros dans « Héros », ou recharge ton énergie à distance.</p>'}
@@ -690,15 +693,71 @@ function endFight(){
   const r=$('#fres');if(r)r.innerHTML=F.result;
 }
 
+
+/* ================== SONS ET MUSIQUE (générés, sans fichiers) ================== */
+let AC=null,lastHit=0,musT=null,musStep=0;
+function ac(){try{if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume()}catch(e){AC=null}return AC}
+function tone(f,d,type,vol,slide,delay,dest){const a=ac();if(!a)return;const t=a.currentTime+(delay||0),o=a.createOscillator(),g=a.createGain();o.type=type||'square';o.frequency.setValueAtTime(f,t);if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(30,slide),t+d);
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol||.06,t+.01);g.gain.exponentialRampToValueAtTime(.0005,t+d);o.connect(g);g.connect(dest||a.destination);o.start(t);o.stop(t+d+.05)}
+function noise(d,vol,delay){const a=ac();if(!a)return;const t=a.currentTime+(delay||0),b=a.createBuffer(1,Math.floor(a.sampleRate*d),a.sampleRate),c=b.getChannelData(0);for(let i=0;i<c.length;i++)c[i]=(Math.random()*2-1)*(1-i/c.length);
+  const s=a.createBufferSource(),g=a.createGain(),f=a.createBiquadFilter();f.type='lowpass';f.frequency.value=1400;s.buffer=b;g.gain.value=vol||.12;s.connect(f);f.connect(g);g.connect(a.destination);s.start(t)}
+function sfx(k){if(!S.snd||!S.snd.fx)return;try{
+  if(k==='hit'){const n=performance.now();if(n-lastHit<70)return;lastHit=n;noise(.12,.14);tone(140,.12,'square',.05,60)}
+  else if(k==='shoot'){tone(500,.18,'sawtooth',.035,1300)}
+  else if(k==='sp'){tone(110,.7,'sawtooth',.07,700);tone(220,.7,'square',.04,1400,.05);noise(.6,.12,.15)}
+  else if(k==='ok'){[523,659,784].forEach((f,i)=>tone(f,.18,'triangle',.08,0,i*.08))}
+  else if(k==='ko'){[392,330,262].forEach((f,i)=>tone(f,.22,'triangle',.08,0,i*.1))}
+  else if(k==='chest'){[523,659,784,1047,1319].forEach((f,i)=>tone(f,.25,'triangle',.07,0,i*.07));noise(.3,.05,.05)}
+  else if(k==='lvl'){[392,523,659,784].forEach((f,i)=>tone(f,.3,'square',.05,0,i*.11))}
+  else if(k==='win'){[523,659,784,1047].forEach((f,i)=>tone(f,.35,'square',.05,0,i*.13))}
+  else if(k==='lose'){[330,294,262,196].forEach((f,i)=>tone(f,.35,'triangle',.07,0,i*.15))}
+  else if(k==='click'){tone(900,.04,'square',.02)}
+ }catch(e){}}
+// Musique de fond : une petite boucle en mineur, très douce
+const MEL=[57,0,60,64,62,0,60,59,57,0,55,57,59,0,64,0],BAS=[45,45,43,43,41,41,40,40];
+function musTick(){if(!S.snd||!S.snd.mu||document.hidden||!AC)return;const a=AC,f=n=>440*Math.pow(2,(n-69)/12),m=MEL[musStep%16];
+  if(m)tone(f(m+12),.28,'triangle',.022);if(musStep%2===0)tone(f(BAS[(musStep>>1)%8]),.5,'sine',.035);musStep++}
+function musStart(){if(musT||!S.snd||!S.snd.mu)return;if(!ac())return;musT=setInterval(musTick,240)}
+function musStop(){clearInterval(musT);musT=null}
+addEventListener('pointerdown',()=>{ac();if(S.snd&&S.snd.mu)musStart()},{passive:true});
+document.addEventListener('click',e=>{if(e.target.closest('button'))sfx('click')},true);
+
+/* ================== MISSIONS DU JOUR ================== */
+const MPOOL=[{k:'rid',n:3,t:'Réussis 3 énigmes',r:60},{k:'win',n:2,t:'Gagne 2 combats dans l\'arène',r:60},{k:'box',n:1,t:'Ouvre 1 coffre',r:40},
+ {k:'duel',n:1,t:'Gagne 1 duel contre un pote',r:120},{k:'forge',n:1,t:'Fais 1 fusion à la forge',r:50},{k:'pts',n:150,t:'Gagne 150 points',r:50},
+ {k:'rid',n:5,t:'Réussis 5 énigmes',r:100},{k:'win',n:4,t:'Gagne 4 combats dans l\'arène',r:100},{k:'pts',n:300,t:'Gagne 300 points',r:90}];
+function dayMissions(){const d=today();if(!S.mis||S.mis.d!==d)S.mis={d,p:{},c:{},b:0};let h=0;for(const ch of d)h=h*31+ch.charCodeAt(0)|0;const r=rng(h),out=[],ks={};
+  for(const m of MPOOL.map(m=>[r(),m]).sort((a,b)=>a[0]-b[0]).map(x=>x[1])){if(ks[m.k])continue;ks[m.k]=1;out.push(m);if(out.length===3)break}return out}
+function bump(k,n){dayMissions();S.mis.p[k]=(S.mis.p[k]||0)+(n||1)}
+function missionsPanel(){const L3=dayMissions(),allC=L3.every((m,i)=>S.mis.c[i]);
+  return `<div class="panel" style="border-color:var(--gold)"><div class="row"><h2 class="grow">Missions du jour</h2><span class="chip">nouvelles dans ${fmt(tomorrow()-Date.now())}</span></div>
+  ${L3.map((m,i)=>{const v=Math.min(S.mis.p[m.k]||0,m.n),ok=v>=m.n,c=S.mis.c[i];return `<div class="row"><div class="grow" style="display:flex;flex-direction:column;gap:4px;min-width:140px"><b>${m.t}</b><div class="bar xp"><i style="width:${v/m.n*100}%"></i></div><span class="small mute">${v} / ${m.n} · +${m.r} points</span></div>
+   <button class="${ok&&!c?'btn':''}" data-a="mclaim" data-i="${i}" ${ok&&!c?'':'disabled'}>${c?'Récupérée':'Récupérer'}</button></div>`}).join('')}
+  <div class="row"><span class="grow small">Bonus : finis les 3 missions pour gagner un coffre de bronze gratuit.</span><button class="${allC&&!S.mis.b?'btn2':''}" data-a="mbonus" ${allC&&!S.mis.b?'':'disabled'}>${S.mis.b?'Coffre ouvert':'Ouvrir le coffre'}</button></div></div>`}
+function tomorrow(){const d=new Date();d.setHours(24,0,0,0);return d.getTime()}
+
+/* ================== CLASSEMENT DE LA SEMAINE (dimanche → samedi) ================== */
+function weekStart(off){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-d.getDay()+7*(off||0));return d}
+function weekId(off){const d=weekStart(off);return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()}
+function wkAdd(p){const w=weekId();if(!S.wk||S.wk.id!==w){if(S.wk&&S.wk.id===weekId(-1))S.lwk={id:S.wk.id,p:S.wk.p};S.wk={id:w,p:0}}if(p>0)S.wk.p+=p}
+function wkRank(id){return PLAYERS.filter(p=>!p.adm&&p.nick&&(id===weekId()?p.wk===id:(p.wk===id||p.lwk===id))).map(p=>({id:p.id,nick:p.nick,v:p.wk===id?p.wp||0:p.lwp||0})).filter(p=>p.v>0).sort((a,b)=>b.v-a.v)}
+function prizeText(){const w=CFG.weekly||{};return [HB[w.h]?'<span>'+HB[w.h].n+'</span>':'',w.pts>0?'<span>'+Math.floor(w.pts)+' points</span>':''].filter(Boolean).join(' + ')}
+function weekPanel(){wkAdd(0);const R=wkRank(weekId()),pr=prizeText(),me=R.findIndex(p=>p.id===uid);
+  return `<div class="panel"><div class="row"><h2 class="grow">Classement de la semaine</h2><span class="chip">fin dans ${fmtD(weekStart(1)-Date.now())}</span></div>
+  ${pr?`<p class="small">Récompense du 1er : <b style="color:var(--gold)">${pr}</b></p>`:''}
+  ${R.length?`<div class="tw"><table>${R.slice(0,10).map((p,i)=>`<tr style="${p.id===uid?'color:var(--gold);font-weight:700':''}"><td>${i===0?'🏆':i+1}</td><td>${esc(p.nick)}</td><td>${p.v.toLocaleString('fr-FR')} pts</td></tr>`).join('')}</table></div>`:'<p class="mute small">Personne n\'a encore marqué de points cette semaine. Sois le premier !</p>'}
+  ${isAdmin?'':`<p class="small mute">Tes points cette semaine : <b>${(S.wk?.p||0).toLocaleString('fr-FR')}</b>${me>=0?' · place '+(me+1):''}</p>`}</div>`}
+function fmtD(ms){const h=Math.max(0,Math.floor(ms/3600000));return h>=24?Math.floor(h/24)+' j '+(h%24)+' h':h+' h '+String(Math.floor(ms%3600000/60000)).padStart(2,'0')}
+
 /* ================== VUES ================== */
 const ICON={home:'<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',rid:'<path d="M9 9a3 3 0 1 1 4 2.8c-.7.4-1 1-1 1.7V14"/><circle cx="12" cy="18" r=".6"/><circle cx="12" cy="12" r="10"/>',fprep:'<path d="M4 4l10 10M14 4L4 14M14 14l6 6M17 11l-6 6"/>',heroes:'<path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/>',forge:'<path d="M4 9h12a4 4 0 0 0 4-4M6 9v3a4 4 0 0 0 4 4h0a4 4 0 0 0 4-4V9M8 21h8M10 16v5M14 16v5"/>',admin:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>'};
 function nav(){
   const tabs=[['home','Accueil'],['rid','Énigmes'],['fprep','Combat'],['heroes','Héros'],['forge','Forge']];if(isAdmin)tabs.push(['admin','Admin']);
-  const cur=view==='fight'||view==='duel'?'fprep':view==='riddle'?'rid':view;
+  const cur=view==='fight'||view==='duel'?'fprep':view==='riddle'?'rid':view==='profile'?'home':view;
   $('#nav').innerHTML=tabs.map(([v,l])=>`<button class="${cur===v?'on':''}" data-a="go" data-v="${v}"><svg viewBox="0 0 24 24">${ICON[v]}</svg>${l}</button>`).join('');
 }
 function hud(){
-  $('#hpts').textContent='◆ '+(boss()?'∞':S.pts.toLocaleString('fr-FR'));$('#hlvl').textContent='Niv. '+plvl();$('#hstk').textContent='Série '+S.streak;const hn=$('#hnick'),lg=ready&&!gated();hn.hidden=!S.nick||!lg;hn.textContent=S.nick;for(const i of['hpts','hlvl','hstk'])$('#'+i).hidden=!lg;
+  $('#hpts').textContent='◆ '+(boss()?'∞':S.pts.toLocaleString('fr-FR'));$('#hlvl').textContent='Niv. '+plvl();$('#hstk').textContent='Série '+S.streak;const hn=$('#hnick'),lg=ready&&!gated();hn.hidden=!S.nick||!lg;hn.textContent=S.nick;const hs=$('#hsnd');if(hs){hs.textContent=S.snd&&(S.snd.fx||S.snd.mu)?'🔊':'🔇';hs.hidden=!lg}for(const i of['hpts','hlvl','hstk'])$('#'+i).hidden=!lg;
   const e=ev(),b=$('#evbar');b.hidden=!e;if(e)b.innerHTML=`<span>Événement : ${esc(e.name)} · points ×${e.mult}</span><span>fin dans ${fmt(e.end-Date.now())}</span>`;
 }
 function stars(n){return '<span class="stars">'+'★'.repeat(n)+'<span style="opacity:.25">'+'★'.repeat(3-n)+'</span></span>'}
@@ -706,15 +765,17 @@ function card(c,extra='',cls=''){const o=S.chars[c.id];return `<div class="card 
 const V={
  home(){
   const c=HB[S.sel],o=S.chars[S.sel],all=allR(),done=all.filter(r=>S.solved[r.id]).length,e=ev(),d=dailyR();
-  const top=PLAYERS.slice().sort((a,b)=>(b.total||0)-(a.total||0)).slice(0,5);
+  const top=PLAYERS.filter(p=>!p.adm).sort((a,b)=>(b.total||0)-(a.total||0)).slice(0,5);
   return `<div class="split">
    <div class="panel" style="align-items:center;text-align:center">${pt(c.id,o.st)}<h2>${c.n} ${stars(o.st)}</h2><p class="mute">${c.ti} · niveau ${o.lvl}</p></div>
    <div class="panel"><h2>À toi de jouer</h2>
     <button class="btn" data-a="daily">Énigme du jour ${S.daily===today()?'(déjà jouée)':'· points ×3'}</button>
     <button class="btn2" data-a="go" data-v="fprep">Arène · étage ${S.arena}</button>
+    <button data-a="go" data-v="profile">Mon profil</button>
     <button data-a="go" data-v="forge">Forge de fusion ${S.craft?(S.craft.end<=Date.now()?'· prête !':'· en cours'):''}</button>
     <p class="mute small">Résous des énigmes pour gagner des points, ouvre des coffres pour obtenir des héros, améliore-les, puis fais-les combattre et fusionner.</p></div>
   </div>
+  ${missionsPanel()}
   ${duelPanel()}
   ${e?`<div class="panel" style="border-color:var(--ember)"><h2>Événement : ${esc(e.name)}</h2><p>Points ×${e.mult} sur les énigmes et les combats. ${HB[e.out]?`Recette spéciale à la forge : <b>${HB[e.out].n}</b>.`:''}</p>
     <div class="row"><button class="btn" data-a="fight" data-m="boss" ${S.boss===e.end?'disabled':''}>${S.boss===e.end?'Boss vaincu':'Défier le boss · '+(e.reward||150)+' points'}</button><span class="mute">Fin dans ${fmt(e.end-Date.now())}</span></div></div>`:''}
@@ -723,7 +784,8 @@ const V={
     <div><b>Étage ${S.arena}</b><div class="mute small">dans l'arène</div></div>
     <div><b>${Object.keys(S.chars).length} / ${H.length}</b><div class="mute small">héros débloqués</div></div>
     <div><b>${S.total.toLocaleString('fr-FR')}</b><div class="mute small">points gagnés au total</div></div></div></div>
-  ${top.length?`<div class="panel"><h2>Classement</h2><div class="tw"><table>${top.map((p,i)=>`<tr><td>${i+1}</td><td>${esc(p.nick||'Joueur')}</td><td>${(p.total||0).toLocaleString('fr-FR')} pts</td><td>étage ${p.arena||1}</td></tr>`).join('')}</table></div></div>`:''}`;
+  ${weekPanel()}
+  ${top.length?`<details class="panel"><summary style="cursor:pointer"><b>Classement général</b></summary><div class="tw"><table>${top.map((p,i)=>`<tr><td>${i+1}</td><td>${esc(p.nick||'Joueur')}</td><td>${(p.total||0).toLocaleString('fr-FR')} pts</td><td>étage ${p.arena||1}</td></tr>`).join('')}</table></div></details>`:''}`;
  },
  rid(){
   const d=sub.d??0,dy=S.daily!==today()?dailyR():null,list=ordered(d),cnt=k=>ordered(k).filter(r=>fin(r.id)).length;let open=true;
@@ -788,6 +850,18 @@ const V={
     <p style="text-align:center;font-weight:700" id="dtm">${moved?'Action choisie. En attente de '+on+'…':'Choisis ton action'}</p>
     <div class="row" style="justify-content:center">${DU.claim?'<button class="btn" data-a="dclaim">Adversaire absent : réclamer la victoire</button>':''}<button data-a="dquit">${sub.dq?'Confirmer l\'abandon (mise perdue)':'Abandonner'}</button></div>`}</div>`;
  },
+ profile(){
+  const own=Object.entries(S.chars),pw=([id,o])=>stat(HB[id],o.lvl,o.st,'hp')*stat(HB[id],o.lvl,o.st,'atk'),best=own.slice().sort((a,b)=>pw(b)-pw(a)).slice(0,3),R=wkRank(weekId()),me=R.findIndex(p=>p.id===uid);
+  const st=(v,l)=>`<div><b style="font-size:20px">${v}</b><div class="mute small">${l}</div></div>`,n=x=>Object.keys(x||{}).length,tog=(k,l)=>`<div class="row"><span class="grow">${l}</span><button class="${S.snd[k]?'btn2':''}" data-a="snd" data-k="${k}">${S.snd[k]?'Activé':'Coupé'}</button></div>`;
+  return `<div class="panel" style="border-color:var(--arc);text-align:center;align-items:center"><div style="width:130px">${pt(S.sel,S.chars[S.sel].st)}</div><h2>${esc(S.nick||'Joueur')}</h2>
+   <p class="mute">Niveau ${plvl()} · joue depuis le ${new Date(S.since).toLocaleDateString('fr-FR')}</p></div>
+  <div class="panel"><h2>Mes stats</h2><div class="grid">
+   ${st(boss()?'∞':S.pts.toLocaleString('fr-FR'),'points')}${st(S.total.toLocaleString('fr-FR'),'points gagnés au total')}${st((S.wk?.p||0).toLocaleString('fr-FR'),'points cette semaine')}${st(me>=0?me+1:'–','place cette semaine')}
+   ${st('Étage '+S.arena,'dans l\'arène')}${st(S.wins,'combats gagnés')}${st(S.dw+' / '+(S.dw+S.dl),'duels gagnés')}${st(n(S.solved),'énigmes réussies')}
+   ${st(n(S.failed),'énigmes ratées')}${st(n(S.hint),'indices utilisés')}${st(own.length+' / '+H.length,'héros')}${st(S.boxes,'coffres ouverts')}${st(S.fus,'fusions')}</div></div>
+  <div class="panel"><h2>Mes meilleurs héros</h2><div class="grid">${best.map(([id,o])=>card(HB[id],`<div class="small">${stars(o.st)} niv. ${o.lvl}</div>`)).join('')}</div></div>
+  <div class="panel"><h2>Réglages</h2>${tog('fx','Effets sonores')}${tog('mu','Musique')}<div class="row"><span class="grow">Langue</span><button data-a="lang">${LANG==='he'?'Français':'עברית'}</button></div></div>`;
+ },
  heroes(){
   const id=sub.h||S.sel,c=HB[id],o=S.chars[id],R=RAR[c.r],cost=o?25*o.lvl:0;
   const det=`<div class="panel" style="border-color:${R.c}"><div class="row" style="align-items:flex-start"><div style="width:150px;flex:none" class="${o?'':'card lock'}">${pt(id,o?.st||1)}</div>
@@ -827,6 +901,14 @@ const V={
    <div class="row"><label class="grow">Nom du joueur<input id="cn" maxlength="16" autocomplete="off"></label><label class="grow">Code (vide = au hasard)<input id="cc" maxlength="12" autocomplete="off" autocapitalize="none"></label></div>
    <button class="btn" data-a="cadd">Créer le code</button>
    ${CODES.map(c=>`<div class="row"><span class="grow">${esc(c.name)}</span><span class="code">${esc(c.code)}</span><button class="btn2" data-a="pview" data-id="${esc(c.id)}">Voir${plRecs(c.id).some(x=>x.on)?' · en ligne':''}</button><button data-a="cdel" data-id="${esc(c.id)}">${sub.cd===c.id?'Confirmer':'Supprimer'}</button></div>`).join('')||'<p class="small mute">Aucun code pour l\'instant.</p>'}</div>
+  <div class="panel" style="border-color:var(--gold)"><h3>Classement de la semaine</h3>
+   <p class="small mute">Choisis ce que gagne le 1er de la semaine (dimanche → samedi), puis donne-la quand tu veux. Tu n'apparais pas dans le classement.</p>
+   <div class="row"><label class="grow">Héros offert<select id="wh"><option value="">Aucun</option>${H.map(c=>`<option value="${c.id}" ${(CFG.weekly||{}).h===c.id?'selected':''}>${c.n}</option>`).join('')}</select></label>
+   <label class="grow">Points offerts<input id="wp" type="number" min="0" value="${(CFG.weekly||{}).pts||0}"></label></div>
+   <button data-a="wsave">Enregistrer la récompense</button>
+   <div class="row"><button data-a="wl">${sub.wl?'Voir cette semaine':'Voir la semaine dernière'}</button></div>
+   ${(()=>{const id=sub.wl?weekId(-1):weekId(),R=wkRank(id),paid=(CFG.weekly||{}).paid===id;return `<p class="small"><b>${sub.wl?'Semaine dernière':'Cette semaine'}</b>${paid?' · récompense déjà donnée':''}</p>
+    ${R.length?`<div class="tw"><table>${R.slice(0,5).map((p,i)=>`<tr><td>${i+1}</td><td>${esc(p.nick)}</td><td>${p.v} pts</td></tr>`).join('')}</table></div><button class="btn" data-a="wpay" ${paid?'disabled':''}>Donner la récompense à ${esc(R[0].nick)}</button>`:'<p class="small mute">Personne pour l\'instant.</p>'}`})()}</div>
   <div class="panel"><h3>Événement spécial ${e?'· en cours':''}</h3>
    <label>Nom<input id="en" maxlength="40" value="${esc(e?.name||'Éclipse des dragons')}"></label>
    <div class="row"><label class="grow">Points<select id="em">${[2,3,5].map(m=>`<option value="${m}" ${e?.mult===m?'selected':''}>×${m}</option>`).join('')}</select></label>
@@ -889,15 +971,15 @@ function bindScene(){
 }
 
 /* ================== ACTIONS ================== */
-function reward(id,st,title){const c=HB[id],R=RAR[c.r];const m=$('#modal');m.hidden=false;
+function reward(id,st,title){sfx('chest');const c=HB[id],R=RAR[c.r];const m=$('#modal');m.hidden=false;
   m.innerHTML=`<div class="panel" style="--rc:${R.c}"><div class="rar" style="--rc:${R.c}">${R.n}</div><div style="width:190px">${pt(id,st)}</div><h2>${c.n} ${stars(st)}</h2><p>${title}</p><button class="btn" data-a="close">Continuer</button></div>`}
 function answer(ok){
-  const r=allR().find(x=>x.id===sub.id);if(r&&sub.retry&&!sub.res&&S.failed[r.id]){sub.res=ok?'ok':'ko';sub.pts=0;render();return}
+  const r=allR().find(x=>x.id===sub.id);if(r&&sub.retry&&!sub.res&&S.failed[r.id]){sub.res=ok?'ok':'ko';sub.pts=0;sfx(ok?'ok':'ko');render();return}
   if(!r||sub.res||fin(r.id)||locked(r))return;
   const isDay=S.daily!==today()&&dailyR()?.id===r.id;if(isDay)S.daily=today();
-  if(!ok){S.streak=0;S.failed[r.id]=1;sub.res='ko';save();render();return}
+  if(!ok){S.streak=0;S.failed[r.id]=1;sub.res='ko';sfx('ko');save();render();return}
   const p=gain(DPTS[r.d]*(1+Math.min(S.streak,10)*.1)*mult()*(isDay?3:1)*(S.hint[r.id]?.5:1));
-  S.solved[r.id]=1;S.streak++;sub.res='ok';sub.pts=p;save();render();
+  S.solved[r.id]=1;S.streak++;bump('rid');sub.res='ok';sub.pts=p;sfx('ok');save();render();
 }
 async function saveCfg(msg){
   if(!db){toast('Base indisponible ici : réglage non enregistré');render();return}
@@ -934,13 +1016,21 @@ const A={
  ans(d){answer(d.ok==='1')},
  giveup(){if(!sub.gu){sub.gu=1;toast('Appuie encore une fois pour voir la réponse (0 point)');return}answer(false)},
  retry(){const id=sub.id,d=sub.d;if(!S.failed[id])return;sub={id,d,retry:1};render();scrollTo(0,0)},
+ mclaim(d){const L3=dayMissions(),i=+d.i,m=L3[i];if(!m||S.mis.c[i]||(S.mis.p[m.k]||0)<m.n)return;S.mis.c[i]=1;gain(m.r);save();render();sfx('ok');toast('+'+m.r+' points')},
+ mbonus(){const L3=dayMissions();if(S.mis.b||!L3.every((m,i)=>S.mis.c[i]))return;S.mis.b=1;A.box({i:0,free:1})},
+ snd(d){S.snd[d.k]=S.snd[d.k]?0:1;if(d.k==='mu'){if(S.snd.mu)musStart();else musStop()}save();render()},
+ mute(){const on=S.snd.fx||S.snd.mu;S.snd.fx=on?0:1;S.snd.mu=on?0:1;if(S.snd.mu)musStart();else musStop();save();hud()},
+ async wpay(){if(!db)return toast('Serveur injoignable');const R=wkRank(sub.wl?weekId(-1):weekId()),w=CFG.weekly||{},t=R[0];if(!t)return toast('Personne dans ce classement');if(!HB[w.h]&&!(w.pts>0))return toast('Choisis d\'abord une récompense');
+  try{if(HB[w.h])await sendCmd(t.id,{h:w.h});if(w.pts>0)await sendCmd(t.id,{op:'pts',v:Math.floor(w.pts)});CFG.weekly={...w,paid:sub.wl?weekId(-1):weekId()};await saveCfg('Récompense envoyée à '+t.nick)}catch(e){toast('Envoi refusé : '+(e.code||'erreur'))}},
+ wsave(){CFG.weekly={...(CFG.weekly||{}),h:val('wh'),pts:Math.max(0,Math.floor(+val('wp')||0))};saveCfg('Récompense de la semaine enregistrée')},
+ wl(){sub.wl=!sub.wl;render()},
  hint(){const r=allR().find(x=>x.id===sub.id);if(!r||!r.h||sub.res||(fin(r.id)&&!sub.retry))return;S.hint[r.id]=1;save();render()},
  num(){const v=val('num').trim();if(v==='')return toast('Écris un nombre');const r=allR().find(x=>x.id===sub.id);answer(parseInt(v,10)===r.a)},
  next(){const r=allR().find(x=>x.id===sub.id),n=ordered(r.d).find(x=>!fin(x.id));if(n){sub={id:n.id,d:r.d};render()}else{view='rid';sub={d:r.d};render();toast('Niveau « '+DIFF[r.d]+' » terminé !')}},
  hero(d){if(view!=='heroes')view='heroes';sub={h:d.id};render();scrollTo(0,0)},
  pick(d){S.sel=d.id;save();render()},
  up(d){const o=S.chars[d.id],c=25*o.lvl;if(S.pts<c||o.lvl>=20)return;S.pts-=c;o.lvl++;o.xp=0;save();render();toast(HB[d.id].n+' passe niveau '+o.lvl)},
- box(d){const b=BOX[+d.i];if(!b||S.pts<b.p)return;S.pts-=b.p;let x=Math.random()*100,r=0;while(r<4&&x>=b.o[r]){x-=b.o[r];r++}
+ box(d){const b=BOX[+d.i];if(!b||(!d.free&&S.pts<b.p))return;if(!d.free){S.pts-=b.p;bump('box')}S.boxes++;let x=Math.random()*100,r=0;while(r<4&&x>=b.o[r]){x-=b.o[r];r++}
   const pool=H.filter(c=>c.r===r),c=pool[Math.floor(Math.random()*pool.length)],had=give(c.id);save();render();reward(c.id,S.chars[c.id].st,had?'Double obtenu : utilise-le à la forge':'Nouveau héros débloqué !')},
  async gift(){if(!db)return toast('Base indisponible ici');const p=val('gp'),h=val('gh');if(!p||!HB[h])return;
   try{await sendCmd(p,{h});toast(HB[h].n+' offert à '+((giftList().find(x=>x.id===p)||{}).nick||'Joueur'))}catch(e){toast('Don refusé : '+(e.code||'erreur'))}},
@@ -966,7 +1056,7 @@ const A={
   if(r.evo){if(a.n<2||a.st>=3)return;a.n--;S.craft={out:r.out,evo:1,st:a.st+1}}else{if(!a||!b||a.n<2||b.n<2)return;a.n--;b.n--;S.craft={out:r.out,st:S.chars[r.out]?.st||1}}
   S.craft.dur=RAR[HB[r.out].r].t*1000;S.craft.end=Date.now()+S.craft.dur;save();render();scrollTo(0,0)},
  claim(){const c=S.craft;if(!c||c.end>Date.now())return;S.craft=null;let o=S.chars[c.out];
-  if(c.evo){o.st=c.st;save();render();reward(c.out,o.st,'Évolution réussie : +25 % de puissance')}
+  S.fus++;bump('forge');if(c.evo){o.st=c.st;save();render();reward(c.out,o.st,'Évolution réussie : +25 % de puissance')}
   else{if(o)o.n++;else o=S.chars[c.out]={n:1,lvl:1,xp:0,st:1};save();render();reward(c.out,o.st,o.n>1?'Un exemplaire de plus !':'Nouveau héros forgé !')}},
  fight(d){if(d.m==='boss'&&!ev())return;if(DU)return toast('Termine d\'abord ton duel');startFight(d.m)},
  dinv(d){if(DU||!ME||!room)return;const p=PEERS.find(x=>x.peer===d.p);if(!p)return toast('Ce joueur est parti');const bet=Math.max(0,Math.floor(+val('bet')||0));
@@ -1034,7 +1124,7 @@ function sim(h1,h2,m1,m2,sd){
   return {P,hp,en,prev,log,over,win,n:log.length};
 }
 function duelSim(){const f=DU.me<DU.to,r=sim(f?DU.h:DU.oh,f?DU.oh:DU.h,f?DU.mv:DU.om,f?DU.om:DU.mv,DU.sd);r.me=f?0:1;return r}
-function finishDuel(res){if(!DU||DU.s==='done')return;DU.s='done';DU.res=res;const b=DU.bet,w=res==='win'||res==='forf';if(w){S.pts+=2*b;S.total+=b;S.wins++}else if(res==='draw')S.pts+=b;S.esc=null;addXp(S.sel,w?30:10);save();view='duel';sub={};render()}
+function finishDuel(res){if(!DU||DU.s==='done')return;DU.s='done';DU.res=res;const b=DU.bet,w=res==='win'||res==='forf';if(w){S.pts+=2*b;S.total+=b;S.dw++;bump('duel');wkAdd(b);sfx('win')}else if(res==='draw')S.pts+=b;else{S.dl++;sfx('lose')}S.esc=null;addXp(S.sel,w?30:10);save();view='duel';sub={};render()}
 function endInvite(msg){if(!DU)return;S.pts+=DU.bet;S.esc=null;refused[DU.to+DU.sd]=1;DU=null;setD(null);save();toast(msg);view='fprep';render()}
 function resolveDuel(){
   if(!DU||DU.s!=='play')return;const r=duelSim();
@@ -1143,13 +1233,13 @@ function giftList(){const m=new Map(PLAYERS.map(p=>[p.id,{id:p.id,nick:p.nick}])
 let last=0;
 function loop(ts){const t=ts/1000,dt=Math.min(.033,t-last||.016);last=t;try{if(F&&view==='fight')fightTick(dt,t);drawPortraits(t)}catch(e){console.error(e)}requestAnimationFrame(loop)}
 let wasEv=false;
-setInterval(()=>{hud();duelClock();seenSync();const e=!!ev();if(e!==wasEv){wasEv=e;if(view==='home'||view==='forge')render()}
+let lastMin=0;setInterval(()=>{hud();duelClock();seenSync();const mn=Math.floor(Date.now()/60000);if(mn!==lastMin){lastMin=mn;if(view==='home'&&ready&&!gated()&&!typing())render()}const e=!!ev();if(e!==wasEv){wasEv=e;if(view==='home'||view==='forge')render()}
   if(view==='forge'){const c=S.craft,b=$('#cbtn');if(c&&b){const left=c.end-Date.now();if(left<=0){if(b.disabled)render()}else{b.textContent=fmt(left);$('#cbar').style.width=(1-left/c.dur)*100+'%'}}const r=$('#rot');if(r){const n=nextRot();r.textContent='changent dans '+fmt(n);if(n>(CFG.rot||60)*60000-1500&&!S.craft)render()}}
 },1000);
 async function syncPlayer(){
   if(!db||!uid||syncDead||syncing||!ready||gated())return;
-  const d={nick:S.nick||'Joueur',pts:S.pts,total:S.total,arena:S.arena,heroes:Object.keys(S.chars).length,solved:Object.keys(S.solved).length},sig=JSON.stringify(d);
-  if(sig===lastSig||Date.now()-lastSync<45000)return;
+  wkAdd(0);const d={nick:S.nick||'Joueur',pts:S.pts,total:S.total,arena:S.arena,heroes:Object.keys(S.chars).length,solved:Object.keys(S.solved).length,wk:S.wk.id,wp:S.wk.p,lwk:S.lwk?.id||'',lwp:S.lwk?.p||0,adm:isAdmin?1:0},sig=JSON.stringify(d);
+  if(sig===lastSig||Date.now()-lastSync<20000)return;
   syncing=true;lastSync=Date.now();try{await db.doc('players/'+uid).set({...d,at:Date.now()});lastSig=sig}catch(e){if(e&&e.code!=='unavailable')syncDead=true}syncing=false;
 }
 async function codeId(code){const en=new TextEncoder(),k=await crypto.subtle.importKey('raw',en.encode(code),'PBKDF2',false,['deriveBits']),b=await crypto.subtle.deriveBits({name:'PBKDF2',salt:en.encode('legendes-pieges-v1'),iterations:60000,hash:'SHA-256'},k,128);return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
