@@ -30,6 +30,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:10px;fl
 .logo b{color:var(--ember);font-weight:400}
 .stats{display:flex;gap:8px;flex-wrap:wrap}
 .chip{background:var(--deep);border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+#updbar{background:#3d2f10;border:1px solid var(--gold);border-radius:10px;padding:8px 12px;font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 #invbar{background:#123a4d;border:1px solid var(--arc);border-radius:10px;padding:8px 12px;font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 .duo{display:grid;grid-template-columns:1fr 1fr;gap:12px;text-align:center}.duo>div{display:flex;flex-direction:column;gap:4px;min-width:0}.flip{transform:scaleX(-1)}
 .mvs{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}.mvs button{display:flex;flex-direction:column;gap:2px;align-items:center}.mvs small{font-weight:400;color:var(--mute);font-size:12px}
@@ -152,7 +153,7 @@ td,th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left}
     <div class="stats"><span class="chip pts" id="hpts">◆ 0</span><span class="chip" id="hlvl">Niv. 1</span><span class="chip" id="hstk">Série 0</span><button class="chip" id="hrel" data-a="reload" aria-label="Relancer le jeu" title="Relancer le jeu">↻</button><button class="chip" id="hsnd" data-a="mute" aria-label="Son">🔊</button><button class="chip" id="hout" data-a="logout" data-nt hidden><svg viewBox="0 0 24 24"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l-4-4 4-4M6 12h10"/></svg><span id="houtl">Changer de compte</span></button><button class="chip" id="hlang" data-a="lang" data-nt>עברית</button></div>
   </header>
   <div id="evbar" hidden></div>
-  <div id="invbar" hidden></div>
+  <div id="updbar" hidden></div><div id="invbar" hidden></div>
   <main id="view" style="display:flex;flex-direction:column;gap:12px"></main>
 </div>
 <nav id="nav"></nav>
@@ -439,7 +440,7 @@ const HE={'ÉGALITÉ':'תיקו','EN ATTENTE…':'ממתין…','Duel en cours'
  'Victoire par abandon':'ניצחון טכני','Égalité':'תיקו','Chacun récupère sa mise.':'כל אחד מקבל את ההימור שלו בחזרה.','Fermer':'סגור',
  'Gratuit':'חינם','Dégâts ×1,4':'נזק ×1.4','Dégâts reçus −50 %':'חצי מהנזק שסופגים','pas 2 fois de suite':'לא פעמיים ברצף','+20 % de dégâts reçus':'סופגים 20% יותר נזק','Dégâts ×3,2':'נזק ×3.2','énergie pleine':'אנרגיה מלאה',
  'Choisis ton action':'בחר פעולה','Adversaire absent : réclamer la victoire':'היריב לא מגיב: דרוש ניצחון','Confirmer l\'abandon (mise perdue)':'אשר כניעה (ההימור אבוד)','Abandonner':'כניעה',
- 'Ce joueur est parti':'השחקן הזה עזב','Cadeau du jour':'מתנת היום','Joueurs':'שחקנים','pas encore venu':'עוד לא נכנס','Connecte-toi chaque jour : si tu rates un jour, tu recommences au jour 1. Le 7e jour, un coffre runique gratuit !':'התחבר כל יום: אם תפספס יום, תתחיל מחדש מיום 1. ביום השביעי – תיבת רונות בחינם!','Récupérer le coffre runique':'קבל את תיבת הרונות','Personne d\'autre pour le moment. Envoie le lien du jeu à tes potes : ils apparaîtront ici.':'אין עוד אף אחד כרגע. שלח את הקישור לחברים: הם יופיעו כאן.','Appuie encore pour relancer : tu perds le duel et ta mise':'לחץ שוב כדי להפעיל מחדש: תפסיד את הדו־קרב ואת ההימור','Relancer le jeu':'הפעל מחדש את המשחק','Pas de réponse à ton défi':'אין תשובה להזמנה שלך','Pas de réponse à ta proposition d\'échange':'אין תשובה להצעת ההחלפה שלך','Tu as quitté le duel trop longtemps : mise perdue':'יצאת מהדו־קרב יותר מדי זמן: ההימור אבד','Le serveur refuse pour l\'instant la liste des joueurs en ligne. Recharge la page dans quelques secondes.':'השרת לא מאפשר כרגע לראות את השחקנים המחוברים. טען מחדש את הדף בעוד כמה שניות.','Tu n\'as pas assez de points pour cette mise':'אין לך מספיק נקודות להימור הזה','Ce joueur n\'a pas assez de points pour cette mise':'לשחקן הזה אין מספיק נקודות להימור הזה','Défi annulé':'ההזמנה בוטלה','Défi refusé':'ההזמנה נדחתה',
+ 'Ce joueur est parti':'השחקן הזה עזב','Nouvelle version du jeu disponible':'גרסה חדשה של המשחק זמינה','Mettre à jour':'עדכן','Cadeau du jour':'מתנת היום','Joueurs':'שחקנים','pas encore venu':'עוד לא נכנס','Connecte-toi chaque jour : si tu rates un jour, tu recommences au jour 1. Le 7e jour, un coffre runique gratuit !':'התחבר כל יום: אם תפספס יום, תתחיל מחדש מיום 1. ביום השביעי – תיבת רונות בחינם!','Récupérer le coffre runique':'קבל את תיבת הרונות','Personne d\'autre pour le moment. Envoie le lien du jeu à tes potes : ils apparaîtront ici.':'אין עוד אף אחד כרגע. שלח את הקישור לחברים: הם יופיעו כאן.','Appuie encore pour relancer : tu perds le duel et ta mise':'לחץ שוב כדי להפעיל מחדש: תפסיד את הדו־קרב ואת ההימור','Relancer le jeu':'הפעל מחדש את המשחק','Pas de réponse à ton défi':'אין תשובה להזמנה שלך','Pas de réponse à ta proposition d\'échange':'אין תשובה להצעת ההחלפה שלך','Tu as quitté le duel trop longtemps : mise perdue':'יצאת מהדו־קרב יותר מדי זמן: ההימור אבד','Le serveur refuse pour l\'instant la liste des joueurs en ligne. Recharge la page dans quelques secondes.':'השרת לא מאפשר כרגע לראות את השחקנים המחוברים. טען מחדש את הדף בעוד כמה שניות.','Tu n\'as pas assez de points pour cette mise':'אין לך מספיק נקודות להימור הזה','Ce joueur n\'a pas assez de points pour cette mise':'לשחקן הזה אין מספיק נקודות להימור הזה','Défi annulé':'ההזמנה בוטלה','Défi refusé':'ההזמנה נדחתה',
  // héros, coffres
  'volant':'מעופף','Vie':'חיים','Attaque':'התקפה','Vitesse':'מהירות','Énergie':'אנרגיה','Spéciale :':'מתקפה מיוחדת:','(quand l\'énergie est pleine)':'(כשהאנרגיה מלאה)','Pas encore débloqué.':'עדיין לא נפתח.',
  'Héros actif':'הגיבור הפעיל','Choisir ce héros':'בחר בגיבור הזה','Niveau +1':'רמה +1','S\'obtient dans les coffres ou à la forge.':'משיגים אותו בתיבות או בנפחייה.',
@@ -1400,6 +1401,12 @@ function allPlayers(){
 function rosterSync(){if(!isAdmin||!db||!rosterOk)return;const ids=new Set(CODES.map(c=>c.id));
   for(const c of CODES){const n=cleanN(c.name);if(n&&(!ROSTER[c.id]||ROSTER[c.id].name!==n))db.doc('roster/'+c.id).set({name:n}).catch(()=>{})}
   for(const id in ROSTER)if(!ids.has(id))db.doc('roster/'+id).delete().catch(()=>{})}
+/* ---- Mises à jour automatiques : on relit régulièrement la page sur le serveur ; si elle a changé, on propose de mettre à jour ---- */
+let verH=null,verT=0;
+async function verCheck(){if(!/^https?:$/.test(location.protocol)||Date.now()-verT<60000)return;verT=Date.now();
+  try{const r=await fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text();let h=0;for(let i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))|0;
+    if(verH===null){verH=h;return}const b=$('#updbar');if(h!==verH&&b&&b.hidden){b.innerHTML=`<span>${L('Nouvelle version du jeu disponible')}</span><button class="btn" data-a="reload">${L('Mettre à jour')}</button>`;b.hidden=false}}catch(e){}}
+setTimeout(verCheck,3000);setInterval(verCheck,5*60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)verCheck()});
 function duelClock(){
   const t=Date.now();
   if(DU&&DU.s==='wait'&&t-(DU.t0||t)>60000)endInvite('Pas de réponse à ton défi');
