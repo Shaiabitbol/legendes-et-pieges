@@ -38,6 +38,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:10px;fl
 [dir=rtl] .pad,[dir=rtl] .fhud,[dir=rtl] .duo,[dir=rtl] .recipe,[dir=rtl] .scene,[dir=rtl] .logo{direction:ltr}
 [dir=rtl] .opts button{text-align:right}
 #hout{min-height:0;padding:4px 12px;cursor:pointer;color:var(--bad);display:inline-flex;align-items:center;gap:6px}#hout svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#hrel{min-height:0;cursor:pointer;font-size:16px;line-height:1}
 #hlang{min-height:0;padding:4px 12px;cursor:pointer;color:var(--arc)}
 .fhud{grid-template-columns:1fr auto 1fr!important;align-items:start}
 #fwrap{display:flex;flex-direction:column;gap:12px}
@@ -148,7 +149,7 @@ td,th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left}
 <div id="app">
   <header>
     <div class="row" style="gap:8px;flex-wrap:nowrap"><div id="hlogo" style="width:38px;flex:none;line-height:0"></div><div><div class="logo">LÉGENDES <b>&amp;</b> PIÈGES</div><button id="hnick" class="small mute" data-a="go" data-v="profile" style="min-height:0;padding:0;border:0;background:none;text-align:start;color:var(--arc)" hidden></button></div></div>
-    <div class="stats"><span class="chip pts" id="hpts">◆ 0</span><span class="chip" id="hlvl">Niv. 1</span><span class="chip" id="hstk">Série 0</span><button class="chip" id="hsnd" data-a="mute" aria-label="Son">🔊</button><button class="chip" id="hout" data-a="logout" data-nt hidden><svg viewBox="0 0 24 24"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l-4-4 4-4M6 12h10"/></svg><span id="houtl">Changer de compte</span></button><button class="chip" id="hlang" data-a="lang" data-nt>עברית</button></div>
+    <div class="stats"><span class="chip pts" id="hpts">◆ 0</span><span class="chip" id="hlvl">Niv. 1</span><span class="chip" id="hstk">Série 0</span><button class="chip" id="hrel" data-a="reload" aria-label="Relancer le jeu" title="Relancer le jeu">↻</button><button class="chip" id="hsnd" data-a="mute" aria-label="Son">🔊</button><button class="chip" id="hout" data-a="logout" data-nt hidden><svg viewBox="0 0 24 24"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l-4-4 4-4M6 12h10"/></svg><span id="houtl">Changer de compte</span></button><button class="chip" id="hlang" data-a="lang" data-nt>עברית</button></div>
   </header>
   <div id="evbar" hidden></div>
   <div id="invbar" hidden></div>
@@ -438,7 +439,7 @@ const HE={'ÉGALITÉ':'תיקו','EN ATTENTE…':'ממתין…','Duel en cours'
  'Victoire par abandon':'ניצחון טכני','Égalité':'תיקו','Chacun récupère sa mise.':'כל אחד מקבל את ההימור שלו בחזרה.','Fermer':'סגור',
  'Gratuit':'חינם','Dégâts ×1,4':'נזק ×1.4','Dégâts reçus −50 %':'חצי מהנזק שסופגים','pas 2 fois de suite':'לא פעמיים ברצף','+20 % de dégâts reçus':'סופגים 20% יותר נזק','Dégâts ×3,2':'נזק ×3.2','énergie pleine':'אנרגיה מלאה',
  'Choisis ton action':'בחר פעולה','Adversaire absent : réclamer la victoire':'היריב לא מגיב: דרוש ניצחון','Confirmer l\'abandon (mise perdue)':'אשר כניעה (ההימור אבוד)','Abandonner':'כניעה',
- 'Ce joueur est parti':'השחקן הזה עזב','Pas de réponse à ton défi':'אין תשובה להזמנה שלך','Pas de réponse à ta proposition d\'échange':'אין תשובה להצעת ההחלפה שלך','Tu as quitté le duel trop longtemps : mise perdue':'יצאת מהדו־קרב יותר מדי זמן: ההימור אבד','Le serveur refuse pour l\'instant la liste des joueurs en ligne. Recharge la page dans quelques secondes.':'השרת לא מאפשר כרגע לראות את השחקנים המחוברים. טען מחדש את הדף בעוד כמה שניות.','Tu n\'as pas assez de points pour cette mise':'אין לך מספיק נקודות להימור הזה','Ce joueur n\'a pas assez de points pour cette mise':'לשחקן הזה אין מספיק נקודות להימור הזה','Défi annulé':'ההזמנה בוטלה','Défi refusé':'ההזמנה נדחתה',
+ 'Ce joueur est parti':'השחקן הזה עזב','Appuie encore pour relancer : tu perds le duel et ta mise':'לחץ שוב כדי להפעיל מחדש: תפסיד את הדו־קרב ואת ההימור','Relancer le jeu':'הפעל מחדש את המשחק','Pas de réponse à ton défi':'אין תשובה להזמנה שלך','Pas de réponse à ta proposition d\'échange':'אין תשובה להצעת ההחלפה שלך','Tu as quitté le duel trop longtemps : mise perdue':'יצאת מהדו־קרב יותר מדי זמן: ההימור אבד','Le serveur refuse pour l\'instant la liste des joueurs en ligne. Recharge la page dans quelques secondes.':'השרת לא מאפשר כרגע לראות את השחקנים המחוברים. טען מחדש את הדף בעוד כמה שניות.','Tu n\'as pas assez de points pour cette mise':'אין לך מספיק נקודות להימור הזה','Ce joueur n\'a pas assez de points pour cette mise':'לשחקן הזה אין מספיק נקודות להימור הזה','Défi annulé':'ההזמנה בוטלה','Défi refusé':'ההזמנה נדחתה',
  // héros, coffres
  'volant':'מעופף','Vie':'חיים','Attaque':'התקפה','Vitesse':'מהירות','Énergie':'אנרגיה','Spéciale :':'מתקפה מיוחדת:','(quand l\'énergie est pleine)':'(כשהאנרגיה מלאה)','Pas encore débloqué.':'עדיין לא נפתח.',
  'Héros actif':'הגיבור הפעיל','Choisir ce héros':'בחר בגיבור הזה','Niveau +1':'רמה +1','S\'obtient dans les coffres ou à la forge.':'משיגים אותו בתיבות או בנפחייה.',
@@ -1168,6 +1169,9 @@ const A={
  dclose(){if(!DU)return;refused[DU.to+DU.sd]=1;DU=null;setD(null);view='fprep';sub={};render()},
  quit(){if(F&&F.duel){if(F.over)return;if(!F.qc){F.qc=1;toast(L('Appuie encore sur « Abandonner » pour quitter le duel (mise perdue)'));setTimeout(()=>{if(F)F.qc=0},3000);return}
    F.quit=1;duelTx(true);pubD(1);setTimeout(()=>{try{room&&room.live(null).catch(()=>{})}catch(e){}},3000);finishDuel('lose');return}view='fprep';render()},
+ // Relancer le jeu comme si on le fermait et le rouvrait (la progression est gardée)
+ reload(){if(F&&F.duel&&!F.over&&DU&&DU.s==='play'){if(!sub.rl){sub.rl=1;toast(L('Appuie encore pour relancer : tu perds le duel et ta mise'));setTimeout(()=>{sub.rl=0},3000);return}}
+  try{save();stashProfile()}catch(e){}location.reload()},
  close(){$('#modal').hidden=true;$('#modal').innerHTML=''},
  logout(){if(view==='fight'&&F&&!F.result||view==='duel')return toast(L('Termine d\'abord ton combat'));const m=$('#modal');m.hidden=false;
   m.innerHTML=`<div class="panel"><h2>${L('Changer de compte ?')}</h2><p class="mute">${L('Ta progression reste sauvegardée sur cet appareil. Tu la retrouveras en remettant ton code.')}</p><div class="row" style="justify-content:center"><button data-a="close">${L('Annuler')}</button><button class="btn" data-a="logout2">${L('Oui, changer')}</button></div></div>`},
@@ -1188,7 +1192,7 @@ const A={
  t3(){S.chars[S.sel].lvl=20;S.chars[S.sel].xp=0;save();render();toast(HB[S.sel].n+' niveau 20')},
  t4(){if(!sub.rst){sub.rst=1;render();return}const gf=S.gifted,nk=S.nick;S=JSON.parse(JSON.stringify(DEF));S.gifted=gf;S.nick=nk;if(isAdmin)H.forEach(c=>S.chars[c.id]=S.chars[c.id]||{n:1,lvl:1,xp:0,st:1});sub={};save();render();toast('Partie remise à zéro')}
 };
-document.addEventListener('click',e=>{const el=e.target.closest('[data-a]');if(el&&(!ready||gated())&&!['code','lang'].includes(el.dataset.a))return;if(el&&!el.disabled&&A[el.dataset.a])A[el.dataset.a](el.dataset)});
+document.addEventListener('click',e=>{const el=e.target.closest('[data-a]');if(el&&(!ready||gated())&&!['code','lang','reload'].includes(el.dataset.a))return;if(el&&!el.disabled&&A[el.dataset.a])A[el.dataset.a](el.dataset)});
 document.addEventListener('change',e=>{if(e.target.id==='bet')betSel=+e.target.value;if(e.target.id==='stg')admStage=+e.target.value;});
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='num')A.num();if(e.key==='Enter'&&e.target.id==='code')A.code()});
 const KEYS={j:'atk',k:'shoot',l:'shield',u:'charge',i:'sp'},kd={};
