@@ -190,7 +190,7 @@ td,th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left}
 
 <div id="app">
   <header>
-    <div class="row" style="gap:8px;flex-wrap:nowrap"><div id="hlogo" style="width:38px;flex:none;line-height:0"></div><div><div class="logo">LÉGENDES <b>&amp;</b> PIÈGES</div><button id="hnick" class="small mute" data-a="go" data-v="profile" style="min-height:0;padding:0;border:0;background:none;text-align:start;color:var(--arc)" hidden></button></div></div>
+    <div class="row" style="gap:8px;flex-wrap:nowrap"><div id="hlogo" style="width:38px;flex:none;line-height:0"></div><div><div class="logo">LÉGENDES <b>&amp;</b> PIÈGES<span id="hhal" hidden> 🎃</span></div><button id="hnick" class="small mute" data-a="go" data-v="profile" style="min-height:0;padding:0;border:0;background:none;text-align:start;color:var(--arc)" hidden></button></div></div>
     <div class="stats"><span class="chip pts" id="hpts">◆ 0</span><span class="chip" id="hlvl">Niv. 1</span><span class="chip" id="hstk">Série 0</span><button class="chip" id="hcfg" data-a="cfg" aria-label="Réglages" title="Réglages" hidden>⚙️</button><button class="chip" id="hrel" data-a="reload" aria-label="Relancer le jeu" title="Relancer le jeu">↻</button><button class="chip" id="hsnd" data-a="mute" aria-label="Son">🔊</button><button class="chip" id="hout" data-a="logout" data-nt hidden><svg viewBox="0 0 24 24"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l-4-4 4-4M6 12h10"/></svg><span id="houtl">Changer de compte</span></button><button class="chip" id="hlang" data-a="lang" data-nt>עברית</button></div>
   </header>
   <div id="evbar" hidden></div>
@@ -235,6 +235,8 @@ const H=[
  {id:'spectrelune',n:'Spectrelune',ti:'Faucheuse lunaire',r:3,ex:1,cx:1,rig:'human',fly:1,ghost:1,cape:1,blade:1,halo:1,c1:'#9fb4d8',c2:'#2a3556',c3:'#0f1426',glow:'#e3ecff',hp:380,atk:29,spd:290,en:125,sp:'dash',spn:'Faux lunaire'},
  {id:'abyssor',n:'Abyssor',ti:'Kraken des abysses',r:4,ex:1,cx:1,rig:'dragon',bulk:1.35,fly:1,wings:1,horns:3,c1:'#0f5c5a',c2:'#06302f',c3:'#3dffd0',glow:'#3dffd0',hp:495,atk:31,spd:240,en:130,sp:'meteor',spn:'Tentacules des abysses'},
  {id:'omnirex',n:'Omnirex',ti:'Empereur de la forge',r:5,ex:1,prism:1,orbs:['#4fb6ff','#c77dff','#ffb238','#ff4d6d','#ffffff'],rig:'human',bulk:1.35,fly:1,wings:1,crown:1,halo:1,armor:1,blade:1,cape:1,horns:3,c1:'#2b2b33',c2:'#8a6a1a',c3:'#ffd166',glow:'#ffe9a8',hp:600,atk:38,spd:280,en:145,sp:'beam',spn:'Jugement suprême'},
+ // Héros d'Halloween : seulement en battant le boss d'Halloween (20 octobre → 2 novembre)
+ {id:'spectrouille',n:'Spectrouille',ti:'Fantôme citrouille',r:3,ex:1,hal:1,rig:'human',fly:1,ghost:1,cape:1,horns:2,c1:'#ff8a00',c2:'#3a1a05',c3:'#120700',glow:'#ffb347',hp:400,atk:27,spd:280,en:125,sp:'meteor',spn:'Pluie de citrouilles'},
  {id:'primordius',n:'Primordius',ti:'Avatar des cinq éléments',r:5,ex:1,prism:1,rig:'human',bulk:1.25,fly:1,wings:1,crown:1,halo:1,cape:1,armor:1,blade:1,horns:2,c1:'#f4f1ff',c2:'#5a4a9e',c3:'#1a1238',glow:'#ffffff',hp:540,atk:35,spd:275,en:140,sp:'nova',spn:'Cataclysme élémentaire'}
 ];
 H.forEach((c,i)=>{c.seed=i*1.7;c.bulk=c.bulk||1});
@@ -248,6 +250,20 @@ function give(id){const o=S.chars[id];if(o){o.n++;return true}S.chars[id]={n:1,l
 // Recettes qui tournent : [ingrédient A, ingrédient B, résultat, rare?]
 // Recettes qui tournent : [ingrédient A, ingrédient B, résultat, rare ?, exclusif de forge propre à cette recette (5 %)]
 const POOL=[['braskar','sylvar','givrelame',0,'lamebrume'],['braskar','givrelame','pyralis',0,'nyxara'],['sylvar','tonnerok','ombrax',0,'venomira'],['givrelame','tonnerok','ombrax',0,'glacior'],['sylvar','givrelame','tonnerok',0,'ronceroc'],['ombrax','pyralis','drakonir',0,'aurelion'],['pyralis','tonnerok','aethon',0,'solkar'],['ombrax','givrelame','aethon',0,'spectrelune'],['drakonir','aethon','neantis',1,'chronarque'],['drakonir','ombrax','kaelthar',1,'abyssor']];
+// Danses de victoire : achetées à la boutique, jouées quand ton héros gagne (ton adversaire la voit en duel).
+// Plus la danse fait rager, plus elle coûte cher. f(t) -> déplacement du héros + dessin en plus (fx)
+const dTxt=(g,face,txt,y,size,col)=>{g.save();g.scale(face,1);g.font=size+'px "Russo One",sans-serif';g.textAlign='center';g.lineWidth=5;g.strokeStyle='#000';g.strokeText(txt,0,y);g.fillStyle=col||'#fff';g.fillText(txt,0,y);g.restore()};
+const DANCES=[
+ {id:'coucou',n:'Coucou',ic:'👋',p:250,d:'Un petit salut de la main.',f:t=>({arm:-2.6+Math.sin(t*9)*.45})},
+ {id:'sautille',n:'Sautillement',ic:'🦘',p:500,d:'Des petits sauts de joie.',f:t=>({dy:-Math.abs(Math.sin(t*8))*14,arm:-1.2+Math.sin(t*8)*.6})},
+ {id:'toupie',n:'La Toupie',ic:'🌀',p:900,d:'Tourne sur lui-même comme une toupie.',f:t=>({sx:Math.cos(t*7),dy:-Math.abs(Math.sin(t*7))*6,arm:-1.6})},
+ {id:'balancier',n:'Le Balancier',ic:'🕺',p:1400,d:'Balance les hanches et les bras, trop fier.',f:t=>({rot:Math.sin(t*7)*.22,dx:Math.sin(t*7)*6,arm:Math.sin(t*14)*1.3})},
+ {id:'dab',n:'Le Dab',ic:'💪',p:2000,d:'Le dab, encore et encore.',f:t=>{const on=Math.floor(t*1.6)%2;return {rot:on?-.28:.05,arm:on?-2.3:-.4,dy:on?-4:0}}},
+ {id:'mdr',n:'MDR',ic:'😂',p:3000,d:'Se tord de rire en te regardant. Ça pique.',f:t=>({rot:.32+Math.sin(t*26)*.06,arm:.9+Math.sin(t*26)*.2,fx:(g,c,t,face)=>{dTxt(g,face,'MDR',-150-Math.sin(t*6)*6,26,'#ffd166');dTxt(g,face,'😂',-185,24)}})},
+ {id:'clown',n:'Le Clown',ic:'🤡',p:4500,d:'Te montre du doigt et te traite de clown.',f:t=>({rot:Math.sin(t*20)*.05,arm:-1.45,fx:(g,c,t,face)=>{dTxt(g,face,'🤡',-160-Math.abs(Math.sin(t*5))*10,34);dTxt(g,face,'HAHA',-118+Math.sin(t*10)*3,16,'#ff5d73')}})},
+ {id:'loser',n:'Le L sur le front',ic:'🫵',p:6500,d:'Un L sur le front en sautant d\'un pied à l\'autre. Rage garantie.',f:t=>({dx:Math.sin(t*6)*10,dy:-Math.abs(Math.sin(t*6))*9,rot:Math.sin(t*6)*.08,arm:-2.75,fx:(g,c,t,face)=>{g.save();glowOn(g,'#7dff7a',14);g.strokeStyle='#7dff7a';g.lineWidth=6;g.lineCap='round';g.beginPath();g.moveTo(-6,-128);g.lineTo(-6,-106);g.lineTo(10,-106);g.stroke();g.restore();dTxt(g,face,'L',-150,30,'#7dff7a')}})},
+ {id:'the',n:'Le Thé',ic:'☕',p:9000,d:'Boit tranquillement son thé pendant que tu perds. Le plus vexant de tous.',f:t=>({arm:-1.9+Math.sin(t*1.5)*.15,fx:(g,c,t,face)=>{g.save();g.translate(22,-104);g.fillStyle='#f4efe6';g.fillRect(-8,-6,16,13);g.strokeStyle='#f4efe6';g.lineWidth=3;g.beginPath();g.arc(10,0,5,-1.4,1.4);g.stroke();g.strokeStyle='rgba(255,255,255,.6)';g.lineWidth=2;for(let i=0;i<2;i++){g.beginPath();g.moveTo(-3+i*6,-8);g.quadraticCurveTo(-8+i*6+Math.sin(t*3+i)*4,-18,-2+i*6,-28);g.stroke()}g.restore();dTxt(g,face,'☕',-160,26)}})}];
+const DNB=Object.fromEntries(DANCES.map(d=>[d.id,d]));
 const DIFF=['Facile','Moyen','Difficile','Extrême'], DPTS=[10,20,35,60];
 // Armes : achetées à l'armurerie, une seule équipée. Bouton « Arme » en combat (solo, Aventure et duels). dmg = × attaque du héros
 const WEAP=[
@@ -514,7 +530,7 @@ const HE={'ÉGALITÉ':'תיקו','EN ATTENTE…':'ממתין…','Duel en cours'
  'Victoire par abandon':'ניצחון טכני','Égalité':'תיקו','Chacun récupère sa mise.':'כל אחד מקבל את ההימור שלו בחזרה.','Fermer':'סגור',
  'Gratuit':'חינם','Dégâts ×1,4':'נזק ×1.4','Dégâts reçus −50 %':'חצי מהנזק שסופגים','pas 2 fois de suite':'לא פעמיים ברצף','+20 % de dégâts reçus':'סופגים 20% יותר נזק','Dégâts ×3,2':'נזק ×3.2','énergie pleine':'אנרגיה מלאה',
  'Choisis ton action':'בחר פעולה','Adversaire absent : réclamer la victoire':'היריב לא מגיב: דרוש ניצחון','Confirmer l\'abandon (mise perdue)':'אשר כניעה (ההימור אבוד)','Abandonner':'כניעה',
- 'Ce joueur est parti':'השחקן הזה עזב','🎡 Roue de la fortune':'🎡 גלגל המזל','Tourner la roue':'סובב את הגלגל','Reviens demain pour un nouveau tour':'חזור מחר לסיבוב חדש','La roue tourne…':'הגלגל מסתובב…','1 tour gratuit':'סיבוב חינם','demain':'מחר','🎨 Thèmes du jeu':'🎨 ערכות צבע','Change les couleurs de tout le jeu.':'משנה את הצבעים של כל המשחק.','Choisir':'בחר','Actif ✓':'פעיל ✓','Nuit':'לילה','Océan':'אוקיינוס','Forêt':'יער','Lave':'לבה','Or royal':'זהב מלכותי','Secret trouvé !':'מצאת סוד!','Le logo magique':'הלוגו הקסום','Décrocher la lune':'להוריד את הירח','Intouchable':'בלתי ניתן לפגיעה','⏱️ Mes records de vitesse':'⏱️ שיאי המהירות שלי','Ses stats':'הסטטיסטיקות שלו','Ses meilleurs héros':'הגיבורים הטובים שלו','← Joueurs':'← שחקנים','Ronceroc':'רונסרוק','Venomira':'ונומירה','Glacior':'גלסיור','Solkar':'סולקר','Spectrelune':'ספקטרלון','Abyssor':'אביסור','Golem de ronces':'גולם קוצים','Reine des serpents':'מלכת הנחשים','Wyverne de glace':'וייברן הקרח','Gardien du soleil':'שומר השמש','Faucheuse lunaire':'קוצרת הירח','Kraken des abysses':'קרקן התהומות','Niveau max (20)':'רמה מקסימלית (20)','VAGUE':'גל','Donjon infini':'מבוך אינסופי','🏰 Donjon infini':'🏰 מבוך אינסופי','Classement de la semaine':'דירוג השבוע','Fin de la course':'סוף הריצה','Recommencer':'התחל מחדש','Choisis un bonus pour la suite :':'בחר בונוס להמשך:','Cœur de titan':'לב של טיטאן','Potion':'שיקוי','Rage':'זעם','Tirs lourds':'יריות כבדות','Batterie':'סוללה','Bottes de vent':'מגפי רוח','Bouclier renforcé':'מגן משופר','Munitions':'תחמושת','🏆 <b>Nouveau record personnel !</b>':'🏆 שיא אישי חדש!','change dans':'מתחלף בעוד','Recette du moment':'המתכון של הרגע','Fusion suprême':'מיזוג עליון','Évolutions':'התפתחויות','Lamebrume':'למברום','Nyxara':'ניקסרה','Aurelion':'אורליון','Chronarque':'כרונרק','Omnirex':'אומניירקס','Duelliste des brumes':'דוקרן הערפל','Sorcière de l\'éclipse':'מכשפת הליקוי','Dragon d\'or céleste':'דרקון הזהב השמימי','Maître du temps':'אדון הזמן','Empereur de la forge':'קיסר הנפחייה','Lame fantôme':'להב רפאים','Éclipse':'ליקוי','Souffle d\'or':'נשימת זהב','Pluie d\'étoiles':'גשם כוכבים','Jugement suprême':'שיפוט עליון','Forge 5 %':'נפחייה 5%','Il te manque des exclusifs de forge':'חסרים לך בלעדיי נפחייה','Dash':'זינוק','ANNULÉ':'בוטל','Duel annulé':'הדו־קרב בוטל','La connexion entre vous a été perdue : chacun récupère sa mise.':'החיבור ביניכם אבד: כל אחד מקבל בחזרה את ההימור.','Réglages':'הגדרות','Son activé':'צליל פעיל','Son coupé':'צליל כבוי','Fermer':'סגור','Mon profil →':'הפרופיל שלי →','Voir tous les joueurs →':'לכל השחקנים →','Personne d\'autre n\'est en ligne pour le moment.':'אין עוד אף אחד מחובר כרגע.','Commandes':'שליטה','aucune arme équipée':'אין נשק מצויד','Crée ton énigme piège':'צור חידת מלכודת משלך','Ton énigme a rapporté':'החידה שלך הרוויחה','Mes énigmes':'החידות שלי','Envoyer à l\'admin':'שלח למנהל','⏳ En attente de l\'admin':'⏳ ממתין למנהל','✅ Acceptée':'✅ אושרה','❌ Refusée':'❌ נדחתה','Énigme envoyée à l\'admin !':'החידה נשלחה למנהל!','Écris une vraie question':'כתוב שאלה אמיתית','Remplis les 4 réponses':'מלא את 4 התשובות','Les 4 réponses doivent être différentes':'4 התשובות חייבות להיות שונות','Explication (montrée après la réponse)':'הסבר (מוצג אחרי התשובה)','Armurerie':'נשקייה','Pistolet laser':'אקדח לייזר','Fusil à pompe':'רובה ציד','Canon de givre':'תותח קרח','Mitraillette':'מקלע','Bazooka':'בזוקה','Équiper':'צייד','Équipée ✓':'מצויד ✓','Combattre sans arme':'להילחם בלי נשק','Tir rapide et précis.':'ירי מהיר ומדויק.','5 plombs en éventail : terrible de près.':'5 כדורים במניפה: נורא מקרוב.','Ralentit l\'adversaire touché pendant 2 secondes.':'מאט את היריב לשתי שניות.','Une rafale de balles sans s\'arrêter.':'צרור כדורים בלי הפסקה.','Une roquette énorme qui explose.':'רקטה ענקית שמתפוצצת.','Pas assez de points':'אין מספיק נקודות','Aventure':'הרפתקה','Fusion des 5 éléments':'מיזוג 5 היסודות','Question piège':'שאלת מלכודת','← Carte':'← מפה','Retour à la carte':'חזרה למפה','Niveau suivant':'השלב הבא','Réessayer':'נסה שוב','Aller à la forge':'לך לנפחייה','Ultime':'אולטימטיבי','Victoire !':'ניצחון!','Défaite…':'הפסד…','Terre':'אדמה','Feu':'אש','Eau':'מים','Air':'אוויר','Foudre':'ברק','Vallée des Monolithes':'עמק המונוליתים','Volcan des Braises':'הר הגעש של הגחלים','Abysses de Cristal':'תהומות הבדולח','Cimes des Vents':'פסגות הרוחות','Citadelle de l\'Orage':'מצודת הסערה','Gaïarok':'גאיארוק','Ignivor':'איגניבור','Maréa':'מראה','Zéphyra':'זפירה','Voltarix':'וולטריקס','Primordius':'פרימורדיוס','Colosse de la Terre':'ענק האדמה','Dragon du Feu':'דרקון האש','Reine de l\'Eau':'מלכת המים','Esprit de l\'Air':'רוח האוויר','Dragon de la Foudre':'דרקון הברק','Avatar des cinq éléments':'התגלמות חמשת היסודות','Séisme':'רעידת אדמה','Pluie de lave':'גשם לבה','Raz-de-marée':'צונאמי','Tornade':'טורנדו','Éclair foudroyant':'ברק מהמם','Cataclysme élémentaire':'אסון היסודות','✓ Région terminée':'✓ האזור הושלם','Fusion ultime':'מיזוג אולטימטיבי','Traverse les 5 régions des éléments. Chaque région a ses combats, ses questions pièges et un boss qui garde un héros exclusif. Finis toutes les énigmes d\'une difficulté pour ouvrir la région suivante. Avec les 5 héros des éléments, forge le héros ultime !':'עבור את 5 אזורי היסודות. בכל אזור יש קרבות, שאלות מלכודת ובוס ששומר על גיבור בלעדי. סיים את כל החידות של רמת קושי כדי לפתוח את האזור הבא. עם 5 גיבורי היסודות, צור בנפחייה את הגיבור האולטימטיבי!','Réunis les 5 héros des éléments pour forger le héros ultime.':'אסוף את 5 גיבורי היסודות כדי ליצור את הגיבור האולטימטיבי.','Raté ! Ce n\'est pas ça… Réfléchis bien et réessaie.':'טעות! זה לא זה… חשוב טוב ונסה שוב.','Primordius est déjà à toi !':'פרימורדיוס כבר שלך!','Nouvelle version du jeu disponible':'גרסה חדשה של המשחק זמינה','Mettre à jour':'עדכן','Cadeau du jour':'מתנת היום','Joueurs':'שחקנים','pas encore venu':'עוד לא נכנס','Connecte-toi chaque jour : si tu rates un jour, tu recommences au jour 1. Le 7e jour, un coffre runique gratuit !':'התחבר כל יום: אם תפספס יום, תתחיל מחדש מיום 1. ביום השביעי – תיבת רונות בחינם!','Récupérer le coffre runique':'קבל את תיבת הרונות','Personne d\'autre pour le moment. Envoie le lien du jeu à tes potes : ils apparaîtront ici.':'אין עוד אף אחד כרגע. שלח את הקישור לחברים: הם יופיעו כאן.','Appuie encore pour relancer : tu perds le duel et ta mise':'לחץ שוב כדי להפעיל מחדש: תפסיד את הדו־קרב ואת ההימור','Relancer le jeu':'הפעל מחדש את המשחק','Pas de réponse à ton défi':'אין תשובה להזמנה שלך','Pas de réponse à ta proposition d\'échange':'אין תשובה להצעת ההחלפה שלך','Tu as quitté le duel trop longtemps : mise perdue':'יצאת מהדו־קרב יותר מדי זמן: ההימור אבד','Le serveur refuse pour l\'instant la liste des joueurs en ligne. Recharge la page dans quelques secondes.':'השרת לא מאפשר כרגע לראות את השחקנים המחוברים. טען מחדש את הדף בעוד כמה שניות.','Tu n\'as pas assez de points pour cette mise':'אין לך מספיק נקודות להימור הזה','Ce joueur n\'a pas assez de points pour cette mise':'לשחקן הזה אין מספיק נקודות להימור הזה','Défi annulé':'ההזמנה בוטלה','Défi refusé':'ההזמנה נדחתה',
+ 'Ce joueur est parti':'השחקן הזה עזב','💃 Boutique de danses':'💃 חנות ריקודים','aucune danse':'אין ריקוד','Ne plus danser':'להפסיק לרקוד','Coucou':'שלום','Sautillement':'קפיצות','La Toupie':'הסביבון','Le Balancier':'המטוטלת','Le Dab':'הדאב','MDR':'צוחק','Le Clown':'הליצן','Le L sur le front':'ה-L על המצח','Le Thé':'התה','🎃 Halloween':'🎃 ליל כל הקדושים','👻 Affronter Spectrouille':'👻 להילחם בספקטרוי','Spectrouille':'ספקטרוי','Fantôme citrouille':'רוח הדלעת','Pluie de citrouilles':'גשם דלעות','Rejouer':'שחק שוב','🎡 Roue de la fortune':'🎡 גלגל המזל','Tourner la roue':'סובב את הגלגל','Reviens demain pour un nouveau tour':'חזור מחר לסיבוב חדש','La roue tourne…':'הגלגל מסתובב…','1 tour gratuit':'סיבוב חינם','demain':'מחר','🎨 Thèmes du jeu':'🎨 ערכות צבע','Change les couleurs de tout le jeu.':'משנה את הצבעים של כל המשחק.','Choisir':'בחר','Actif ✓':'פעיל ✓','Nuit':'לילה','Océan':'אוקיינוס','Forêt':'יער','Lave':'לבה','Or royal':'זהב מלכותי','Secret trouvé !':'מצאת סוד!','Le logo magique':'הלוגו הקסום','Décrocher la lune':'להוריד את הירח','Intouchable':'בלתי ניתן לפגיעה','⏱️ Mes records de vitesse':'⏱️ שיאי המהירות שלי','Ses stats':'הסטטיסטיקות שלו','Ses meilleurs héros':'הגיבורים הטובים שלו','← Joueurs':'← שחקנים','Ronceroc':'רונסרוק','Venomira':'ונומירה','Glacior':'גלסיור','Solkar':'סולקר','Spectrelune':'ספקטרלון','Abyssor':'אביסור','Golem de ronces':'גולם קוצים','Reine des serpents':'מלכת הנחשים','Wyverne de glace':'וייברן הקרח','Gardien du soleil':'שומר השמש','Faucheuse lunaire':'קוצרת הירח','Kraken des abysses':'קרקן התהומות','Niveau max (20)':'רמה מקסימלית (20)','VAGUE':'גל','Donjon infini':'מבוך אינסופי','🏰 Donjon infini':'🏰 מבוך אינסופי','Classement de la semaine':'דירוג השבוע','Fin de la course':'סוף הריצה','Recommencer':'התחל מחדש','Choisis un bonus pour la suite :':'בחר בונוס להמשך:','Cœur de titan':'לב של טיטאן','Potion':'שיקוי','Rage':'זעם','Tirs lourds':'יריות כבדות','Batterie':'סוללה','Bottes de vent':'מגפי רוח','Bouclier renforcé':'מגן משופר','Munitions':'תחמושת','🏆 <b>Nouveau record personnel !</b>':'🏆 שיא אישי חדש!','change dans':'מתחלף בעוד','Recette du moment':'המתכון של הרגע','Fusion suprême':'מיזוג עליון','Évolutions':'התפתחויות','Lamebrume':'למברום','Nyxara':'ניקסרה','Aurelion':'אורליון','Chronarque':'כרונרק','Omnirex':'אומניירקס','Duelliste des brumes':'דוקרן הערפל','Sorcière de l\'éclipse':'מכשפת הליקוי','Dragon d\'or céleste':'דרקון הזהב השמימי','Maître du temps':'אדון הזמן','Empereur de la forge':'קיסר הנפחייה','Lame fantôme':'להב רפאים','Éclipse':'ליקוי','Souffle d\'or':'נשימת זהב','Pluie d\'étoiles':'גשם כוכבים','Jugement suprême':'שיפוט עליון','Forge 5 %':'נפחייה 5%','Il te manque des exclusifs de forge':'חסרים לך בלעדיי נפחייה','Dash':'זינוק','ANNULÉ':'בוטל','Duel annulé':'הדו־קרב בוטל','La connexion entre vous a été perdue : chacun récupère sa mise.':'החיבור ביניכם אבד: כל אחד מקבל בחזרה את ההימור.','Réglages':'הגדרות','Son activé':'צליל פעיל','Son coupé':'צליל כבוי','Fermer':'סגור','Mon profil →':'הפרופיל שלי →','Voir tous les joueurs →':'לכל השחקנים →','Personne d\'autre n\'est en ligne pour le moment.':'אין עוד אף אחד מחובר כרגע.','Commandes':'שליטה','aucune arme équipée':'אין נשק מצויד','Crée ton énigme piège':'צור חידת מלכודת משלך','Ton énigme a rapporté':'החידה שלך הרוויחה','Mes énigmes':'החידות שלי','Envoyer à l\'admin':'שלח למנהל','⏳ En attente de l\'admin':'⏳ ממתין למנהל','✅ Acceptée':'✅ אושרה','❌ Refusée':'❌ נדחתה','Énigme envoyée à l\'admin !':'החידה נשלחה למנהל!','Écris une vraie question':'כתוב שאלה אמיתית','Remplis les 4 réponses':'מלא את 4 התשובות','Les 4 réponses doivent être différentes':'4 התשובות חייבות להיות שונות','Explication (montrée après la réponse)':'הסבר (מוצג אחרי התשובה)','Armurerie':'נשקייה','Pistolet laser':'אקדח לייזר','Fusil à pompe':'רובה ציד','Canon de givre':'תותח קרח','Mitraillette':'מקלע','Bazooka':'בזוקה','Équiper':'צייד','Équipée ✓':'מצויד ✓','Combattre sans arme':'להילחם בלי נשק','Tir rapide et précis.':'ירי מהיר ומדויק.','5 plombs en éventail : terrible de près.':'5 כדורים במניפה: נורא מקרוב.','Ralentit l\'adversaire touché pendant 2 secondes.':'מאט את היריב לשתי שניות.','Une rafale de balles sans s\'arrêter.':'צרור כדורים בלי הפסקה.','Une roquette énorme qui explose.':'רקטה ענקית שמתפוצצת.','Pas assez de points':'אין מספיק נקודות','Aventure':'הרפתקה','Fusion des 5 éléments':'מיזוג 5 היסודות','Question piège':'שאלת מלכודת','← Carte':'← מפה','Retour à la carte':'חזרה למפה','Niveau suivant':'השלב הבא','Réessayer':'נסה שוב','Aller à la forge':'לך לנפחייה','Ultime':'אולטימטיבי','Victoire !':'ניצחון!','Défaite…':'הפסד…','Terre':'אדמה','Feu':'אש','Eau':'מים','Air':'אוויר','Foudre':'ברק','Vallée des Monolithes':'עמק המונוליתים','Volcan des Braises':'הר הגעש של הגחלים','Abysses de Cristal':'תהומות הבדולח','Cimes des Vents':'פסגות הרוחות','Citadelle de l\'Orage':'מצודת הסערה','Gaïarok':'גאיארוק','Ignivor':'איגניבור','Maréa':'מראה','Zéphyra':'זפירה','Voltarix':'וולטריקס','Primordius':'פרימורדיוס','Colosse de la Terre':'ענק האדמה','Dragon du Feu':'דרקון האש','Reine de l\'Eau':'מלכת המים','Esprit de l\'Air':'רוח האוויר','Dragon de la Foudre':'דרקון הברק','Avatar des cinq éléments':'התגלמות חמשת היסודות','Séisme':'רעידת אדמה','Pluie de lave':'גשם לבה','Raz-de-marée':'צונאמי','Tornade':'טורנדו','Éclair foudroyant':'ברק מהמם','Cataclysme élémentaire':'אסון היסודות','✓ Région terminée':'✓ האזור הושלם','Fusion ultime':'מיזוג אולטימטיבי','Traverse les 5 régions des éléments. Chaque région a ses combats, ses questions pièges et un boss qui garde un héros exclusif. Finis toutes les énigmes d\'une difficulté pour ouvrir la région suivante. Avec les 5 héros des éléments, forge le héros ultime !':'עבור את 5 אזורי היסודות. בכל אזור יש קרבות, שאלות מלכודת ובוס ששומר על גיבור בלעדי. סיים את כל החידות של רמת קושי כדי לפתוח את האזור הבא. עם 5 גיבורי היסודות, צור בנפחייה את הגיבור האולטימטיבי!','Réunis les 5 héros des éléments pour forger le héros ultime.':'אסוף את 5 גיבורי היסודות כדי ליצור את הגיבור האולטימטיבי.','Raté ! Ce n\'est pas ça… Réfléchis bien et réessaie.':'טעות! זה לא זה… חשוב טוב ונסה שוב.','Primordius est déjà à toi !':'פרימורדיוס כבר שלך!','Nouvelle version du jeu disponible':'גרסה חדשה של המשחק זמינה','Mettre à jour':'עדכן','Cadeau du jour':'מתנת היום','Joueurs':'שחקנים','pas encore venu':'עוד לא נכנס','Connecte-toi chaque jour : si tu rates un jour, tu recommences au jour 1. Le 7e jour, un coffre runique gratuit !':'התחבר כל יום: אם תפספס יום, תתחיל מחדש מיום 1. ביום השביעי – תיבת רונות בחינם!','Récupérer le coffre runique':'קבל את תיבת הרונות','Personne d\'autre pour le moment. Envoie le lien du jeu à tes potes : ils apparaîtront ici.':'אין עוד אף אחד כרגע. שלח את הקישור לחברים: הם יופיעו כאן.','Appuie encore pour relancer : tu perds le duel et ta mise':'לחץ שוב כדי להפעיל מחדש: תפסיד את הדו־קרב ואת ההימור','Relancer le jeu':'הפעל מחדש את המשחק','Pas de réponse à ton défi':'אין תשובה להזמנה שלך','Pas de réponse à ta proposition d\'échange':'אין תשובה להצעת ההחלפה שלך','Tu as quitté le duel trop longtemps : mise perdue':'יצאת מהדו־קרב יותר מדי זמן: ההימור אבד','Le serveur refuse pour l\'instant la liste des joueurs en ligne. Recharge la page dans quelques secondes.':'השרת לא מאפשר כרגע לראות את השחקנים המחוברים. טען מחדש את הדף בעוד כמה שניות.','Tu n\'as pas assez de points pour cette mise':'אין לך מספיק נקודות להימור הזה','Ce joueur n\'a pas assez de points pour cette mise':'לשחקן הזה אין מספיק נקודות להימור הזה','Défi annulé':'ההזמנה בוטלה','Défi refusé':'ההזמנה נדחתה',
  // héros, coffres
  'volant':'מעופף','Vie':'חיים','Attaque':'התקפה','Vitesse':'מהירות','Énergie':'אנרגיה','Spéciale :':'מתקפה מיוחדת:','(quand l\'énergie est pleine)':'(כשהאנרגיה מלאה)','Pas encore débloqué.':'עדיין לא נפתח.',
  'Héros actif':'הגיבור הפעיל','Choisir ce héros':'בחר בגיבור הזה','Niveau +1':'רמה +1','S\'obtient dans les coffres ou à la forge.':'משיגים אותו בתיבות או בנפחייה.',
@@ -688,7 +704,7 @@ function human(g,c,t,o,st){
   for(let i=0;i<(c.horns||0);i++){const s=i%2?1:-1;g.beginPath();g.moveTo(s*8,-106);g.quadraticCurveTo(s*18,-116,s*13,-126-st*2);g.stroke()}
   if(c.crown){g.fillStyle=c.glow;g.beginPath();g.moveTo(-11,-107);g.lineTo(-11,-118);g.lineTo(-5,-112);g.lineTo(0,-121);g.lineTo(5,-112);g.lineTo(11,-118);g.lineTo(11,-107);g.closePath();g.fill()}
   if(c.halo){g.save();glowOn(g,c.glow,16);g.strokeStyle=c.glow;g.lineWidth=3;g.beginPath();g.ellipse(0,-128,15,5,0,0,7);g.stroke();g.restore()}
-  g.save();g.translate(15,-74);g.rotate(a?-2.8+a*2.2:-.25+sw*.06);g.fillStyle=c.c2;rr(g,-4,0,8,26,4);
+  g.save();g.translate(15,-74);g.rotate(a?-2.8+a*2.2:o.arm!=null?o.arm:-.25+sw*.06);g.fillStyle=c.c2;rr(g,-4,0,8,26,4);
   if(c.blade){g.translate(0,24);g.rotate(-1.75);glowOn(g,c.glow,14);g.strokeStyle=c.glow;g.lineWidth=5;g.beginPath();g.moveTo(0,0);g.lineTo(0,46+st*5);g.stroke();g.strokeStyle='#fff';g.lineWidth=1.5;g.beginPath();g.moveTo(0,4);g.lineTo(0,42+st*5);g.stroke();g.shadowBlur=0;g.fillStyle=c.c3;g.fillRect(-7,-2,14,4)}
   else{glowOn(g,c.glow,12);g.fillStyle=c.glow;g.beginPath();g.arc(0,27,7,0,7);g.fill()}
   g.restore();
@@ -717,9 +733,11 @@ function drawHero(g,c,x,y,sc,t,o={}){
   g.save();g.translate(x,y);
   {const al=o.alt||0,sh=1/(1+al/160);g.fillStyle='rgba(0,0,0,'+(.4*sh)+')';g.beginPath();g.ellipse(0,al,28*k*sh,6*k*sh,0,0,7);g.fill()}
   g.scale((o.face||1)*k,k);g.translate(0,(c.fly?-18+Math.sin(t*2.2+c.seed)*5:Math.sin(t*3+c.seed)*1.2));
+  const dz=o.dance&&DNB[o.dance.id]?DNB[o.dance.id].f(o.dance.t):null;if(dz){g.translate(dz.dx||0,dz.dy||0);if(dz.rot)g.rotate(dz.rot);if(dz.sx!=null)g.scale(dz.sx,1);if(dz.arm!=null)o={...o,arm:dz.arm}}
   if(st>1||o.charge){const R=58+st*12+(o.charge?10*Math.sin(t*20):0),gr=g.createRadialGradient(0,-50,6,0,-50,R);gr.addColorStop(0,c.glow+'88');gr.addColorStop(1,c.glow+'00');g.fillStyle=gr;g.beginPath();g.arc(0,-50,R,0,7);g.fill()}
   if(c.cx){g.save();glowOn(g,c.glow,12);g.strokeStyle=c.glow;g.lineWidth=2.5;g.setLineDash([8,6]);g.lineDashOffset=-t*30;g.beginPath();g.ellipse(0,c.fly?18:0,40,10,0,0,7);g.stroke();g.setLineDash([]);g.globalAlpha=.6;g.beginPath();g.ellipse(0,c.fly?18:0,30,7,0,0,7);g.stroke();g.restore()}
   (c.rig==='dragon'?dragon:human)(g,c,t,o,st);
+  if(dz&&dz.fx)dz.fx(g,c,o.dance.t,o.face||1);
   if(c.prism){g.save();for(let i=0;i<5;i++){const a=t*1.6+i*1.2566,x=Math.cos(a)*60,y=-60+Math.sin(a)*22;const oc=(c.orbs||ELC)[i];glowOn(g,oc,16);g.fillStyle=oc;g.beginPath();g.arc(x,y,6+Math.sin(t*4+i)*1.5,0,7);g.fill()}g.restore()}
   if(o.hit>0){g.globalCompositeOperation='lighter';g.globalAlpha=Math.min(1,o.hit*4);g.fillStyle='#fff';g.beginPath();g.ellipse(0,-55,30,52,0,0,7);g.fill()}
   g.restore();
@@ -728,7 +746,7 @@ function drawHero(g,c,x,y,sc,t,o={}){
 function pt(id,st,cls=''){return `<canvas class="pt ${cls}" data-h="${id}" data-st="${st||1}" width="270" height="285"></canvas>`}
 function drawPortraits(t){
   document.querySelectorAll('canvas.pt').forEach(cv=>{const c=HB[cv.dataset.h];if(!c)return;const g=cv.getContext('2d');g.clearRect(0,0,270,285);
-    const big=c.rig==='dragon'?1.75:(c.wings?1.8:2.1);drawHero(g,c,c.rig==='dragon'?168:(c.wings?150:128),272,big/Math.max(1,c.bulk*.95),t,{st:+cv.dataset.st})});
+    const big=c.rig==='dragon'?1.75:(c.wings?1.8:2.1);drawHero(g,c,c.rig==='dragon'?168:(c.wings?150:128),272,big/Math.max(1,c.bulk*.95)*(cv.dataset.dn?.78:1),t,{st:+cv.dataset.st,dance:cv.dataset.dn?{id:cv.dataset.dn,t}:null})});
 }
 
 /* ================== COMBAT ================== */
@@ -738,7 +756,7 @@ const SHV=300,MELEE=.45,DASHC=15;
 const shotGrow=s=>Math.min(1.25,(s.dist||0)/420),shotMul=s=>s.fix?1:.55+Math.min(1.65,(s.dist||0)/330);
 let bgCache={};
 function arenaBg(k){
-  if(bgCache[k])return bgCache[k];
+  const hk=k+(isHal()?'h':'');if(bgCache[hk])return bgCache[hk];
   const PAL=[['#1a1446','#51236b','#ff8a3d'],['#06223a','#14506b','#5ee6ff'],['#2a0d1c','#6b1f2f','#ffd166'],
     ['#1f160a','#5c4022','#9be36b'],['#2a0606','#7a1d0a','#ff7b2e'],['#041a33','#0b4a6b','#4fc3ff'],['#1b2a4a','#6d8fb8','#e8fbff'],['#120a2a','#3a2068','#fff35e']],pal=k>=10?PAL[3+(k-10)%5]:PAL[k%3];
   const cv=document.createElement('canvas');cv.width=W;cv.height=HH;const g=cv.getContext('2d'),r=rng(k+5);
@@ -751,22 +769,33 @@ function arenaBg(k){
   gr=g.createLinearGradient(0,GY-6,0,HH);gr.addColorStop(0,'#2b2d55');gr.addColorStop(1,'#0a0b18');g.fillStyle=gr;g.fillRect(0,GY-6,W,HH-GY+6);
   g.strokeStyle=pal[2];g.lineWidth=2;g.globalAlpha=.7;for(let i=0;i<9;i++){let x=r()*W,y=GY+4;g.beginPath();g.moveTo(x,y);for(let j=0;j<4;j++){x+=(r()-.5)*70;y+=10+r()*8;g.lineTo(x,y)}g.stroke()}
   g.globalAlpha=1;g.fillStyle=pal[2];g.fillRect(0,GY-7,W,2);
-  return bgCache[k]=cv;
+  if(isHal()){for(const px of[60,180,330,470,640,760]){const y=GY+18+r()*14,s=10+r()*8;g.fillStyle='#ff7a00';g.beginPath();g.ellipse(px,y,s*1.3,s,0,0,7);g.fill();g.fillStyle='#2d5a1a';g.fillRect(px-2,y-s-6,4,7);g.fillStyle='#ffe066';g.beginPath();g.moveTo(px-s*.6,y-2);g.lineTo(px-s*.3,y-s*.4);g.lineTo(px,y-2);g.fill();g.beginPath();g.moveTo(px+s*.6,y-2);g.lineTo(px+s*.3,y-s*.4);g.lineTo(px,y-2);g.fill();g.fillRect(px-s*.5,y+s*.25,s,3)}
+    g.fillStyle='#0a0510';for(let i=0;i<7;i++){const bx=80+r()*640,by=40+r()*150,bs=6+r()*6;g.beginPath();g.moveTo(bx,by);g.quadraticCurveTo(bx-bs,by-bs,bx-bs*2.2,by);g.quadraticCurveTo(bx-bs,by-bs*.3,bx,by+bs*.4);g.quadraticCurveTo(bx+bs,by-bs*.3,bx+bs*2.2,by);g.quadraticCurveTo(bx+bs,by-bs,bx,by);g.fill()}}
+  return bgCache[hk]=cv;
 }
 function mkFighter(c,lvl,st,x,face,k=1){
   return {c,lvl,st,x,y:GY,vx:0,vy:0,face,mhp:stat(c,lvl,st,'hp')*k,hp:0,men:c.en,en:c.en*.5,atk:stat(c,lvl,st,'atk')*k,spd:c.spd,
     atkT:0,atkCd:0,shCd:0,spCd:0,sg:2.5,lock:0,hitT:0,spA:null,spOk:lvl>=3,shield:0,charge:0,ai:{t:0,o:{}}};
 }
+// Arène spéciale au hasard (1 combat sur 2) : vent, sol glacé, brouillard, pluie de météores. En duel, la même pour les deux (tirée du code du duel)
+const MODS=[{k:'vent',n:'🌬️ Vent',d:'Le vent pousse les tirs'},{k:'glace',n:'🧊 Sol glacé',d:'Ça glisse !'},{k:'brume',n:'🌫️ Brouillard',d:'On voit mal de loin'},{k:'meteo',n:'☄️ Pluie de météores',d:'Attention à la tête'}];
+function arenaMod(seed){const r=rng(seed*13+7);F.mod=r()<.5?null:MODS[Math.floor(r()*MODS.length)];F.wind=(r()<.5?-1:1)*(70+r()*60);F.mrng=rng(seed+99);F.mt=2}
+function isHal(){const d=new Date(),m=d.getMonth(),j=d.getDate();return (m===9&&j>=20)||(m===10&&j<=2)}
+function halPanel(){if(!isHal())return '';const has=!!S.chars.spectrouille,me=S.chars[S.sel];
+  return `<div class="panel" style="border-color:#ff8a00;background:linear-gradient(180deg,rgba(80,30,5,.95),rgba(25,10,30,.95))"><div class="row"><h2 class="grow">🎃 Halloween</h2><span class="chip">jusqu'au 2 novembre</span></div>
+   <div class="row"><div style="width:90px;flex:none" class="${has?'':'card lock'}">${pt('spectrouille',1)}</div><div class="grow"><b>Spectrouille, le fantôme citrouille</b><p class="small mute">${has?'Il est à toi ! Tu peux encore l\'affronter pour des points.':'Bats-le pour qu\'il te rejoigne : héros exclusif d\'Halloween, disponible seulement jusqu\'au 2 novembre !'}</p></div></div>
+   <button class="btn" data-a="fight" data-m="hal">👻 Affronter Spectrouille</button></div>`}
 function startFight(mode,adv){
   const me=S.chars[S.sel], mc=HB[S.sel]; let ec,el,es,k=.72,stage=boss()&&admStage?admStage:S.arena,skill=0;
-  if(mode==='adv'){const R=REG[adv.r],lv=R.lv[adv.l];
+  if(mode==='hal'){ec=HB.spectrouille;el=Math.max(6,Math.min(20,me.lvl+2));es=2;k=.95;skill=.6}
+  else if(mode==='adv'){const R=REG[adv.r],lv=R.lv[adv.l];
     if(lv==='b'){ec=HB[R.hero];el=R.base+5;es=2;k=.95;skill=.5+.08*adv.r}
     else{const n=R.lv.slice(0,adv.l).filter(x=>x==='f').length;ec=HB[R.foes[n%R.foes.length]];el=R.base+n*2;es=1+(adv.r>=3?1:0);k=.72+.05*adv.r;skill=.3+.07*adv.r+.03*n}}
   else if(mode==='boss'){const e=ev();ec=HB[e?.out]||HB.kaelthar;el=Math.max(5,me.lvl+2);es=2;k=.9}
   else{const order=['sylvar','braskar','givrelame','tonnerok','ombrax','pyralis','drakonir','aethon','neantis','kaelthar'];ec=HB[order[(stage-1)%10]];el=stage;es=1+Math.min(2,Math.floor((stage-1)/10))}
-  F={mode,stage,adv,p:mkFighter(mc,me.lvl,me.st,200,1),e:mkFighter(ec,el,es,600,-1,k),shots:[],parts:[],nums:[],shake:0,t:0,over:0,intro:1.6,bg:arenaBg(mode==='adv'?10+adv.r:mode==='boss'?2:Math.floor((stage-1)/3))};
+  F={mode,stage,adv,p:mkFighter(mc,me.lvl,me.st,200,1),e:mkFighter(ec,el,es,600,-1,k),shots:[],parts:[],nums:[],shake:0,t:0,over:0,intro:1.6,bg:arenaBg(mode==='adv'?10+adv.r:mode==='boss'||mode==='hal'?2:Math.floor((stage-1)/3))};
   F.p.hp=F.p.mhp;F.e.hp=F.e.mhp;F.e.skill=Math.min(.85,skill||.2+.04*(mode==='boss'?12:stage));
-  if(mc.fly)F.p.y=GY-80; if(ec.fly)F.e.y=GY-80;armGun(F.p);
+  if(mc.fly)F.p.y=GY-80; if(ec.fly)F.e.y=GY-80;armGun(F.p);F.p.dn=S.dn;F.e.dn=DANCES[Math.floor(Math.random()*DANCES.length)].id;arenaMod(Math.floor(Math.random()*1e9));
   view='fight';render();
 }
 const cy=e=>e.y-60*e.c.bulk-(e.c.fly?22:0);
@@ -802,7 +831,7 @@ function step(e,i,dt,foe){
   }
   const still=sh||e.charge||(e.spA&&e.spA.type!=='meteor');
   if(!still){
-    const sp=e.spd*.55*(e.slowT>0?.5:1);e.vx=(i.x||0)*sp;e.vy=(i.y||0)*sp;
+    const sp=e.spd*.55*(e.slowT>0?.5:1);if(F.mod&&F.mod.k==='glace'){const q=Math.min(1,dt*2.2);e.vx+=((i.x||0)*sp*1.15-e.vx)*q;e.vy+=((i.y||0)*sp-e.vy)*q}else{e.vx=(i.x||0)*sp;e.vy=(i.y||0)*sp}
     if(i.gun&&e.gun&&e.gunCd<=0&&e.ammo>0)fireGun(e,foe);
     if(!i.y&&!e.c.fly&&e.y<GY)e.vy=60;
     if(i.atk&&e.atkCd<=0&&e.atkT<=0){e.atkT=1;e.atkCd=.4}
@@ -833,15 +862,17 @@ function fightTick(dt,t){
     if(F.intro>0){if(F.rx)F.intro-=dt;if(!F.rx&&performance.now()-F.rxT>15000){F.over=.01;F.voided=1}}
     else if(!F.over){step(F.p,inp,dt,F.e);duelMine();F.left-=dt;if(F.left<=0){F.left=0;F.over=.01;F.timeout=1}
       if(performance.now()-F.rxT>10000&&!document.hidden){F.over=.01;F.voided=1}}
-    else{F.over+=dt;if(F.over>1.6&&!F.done){F.done=1;duelEnd();return}}
+    else{F.over+=dt;if(F.over>3&&!F.done){F.done=1;duelEnd();return}}
     oppStep(dt);duelTx();
   }
   else if(F.intro>0)F.intro-=dt;
   else if(!F.over){F.ft=(F.ft||0)+dt;step(F.p,inp,dt,F.e);step(F.e,aiInput(F.e,F.p,dt),dt,F.p)}
-  else{F.over+=dt;if(F.over>1.6&&!F.done){F.done=1;endFight()}}
-  for(const s of F.shots){s.x+=s.vx*dt;s.y+=s.vy*dt;s.l-=dt;s.dist=(s.dist||0)+Math.hypot(s.vx,s.vy)*dt;s.R=s.r*(1+(s.fix?0:shotGrow(s)));const tg=s.own===F.p?F.e:F.p;
+  else{F.over+=dt;if(F.over>2.4&&!F.done){F.done=1;endFight()}}
+  if(F.mod&&!F.over&&F.intro<=0){if(F.mod.k==='vent')for(const s of F.shots)if(!s.fix)s.vx+=F.wind*dt;
+    if(F.mod.k==='meteo'){F.mt-=dt;if(F.mt<=0){F.mt=1.1+F.mrng()*1.2;const mx=60+F.mrng()*680;F.shots.push({x:mx,y:-20,vx:0,vy:430,own:null,dmg:Math.max(F.p.atk,F.e.atk)*.6,col:'#ff9a3d',r:13,l:3,fix:1,met:1})}}}
+  for(const s of F.shots){s.x+=s.vx*dt;s.y+=s.vy*dt;s.l-=dt;s.dist=(s.dist||0)+Math.hypot(s.vx,s.vy)*dt;s.R=s.r*(1+(s.fix?0:shotGrow(s)));const tg=s.met?(Math.abs(s.x-F.p.x)<Math.abs(s.x-F.e.x)?F.p:F.e):s.own===F.p?F.e:F.p;
     if(Math.random()<.6)F.parts.push({x:s.x,y:s.y,vx:0,vy:0,l:.25,col:s.col,r:s.R*.6});
-    if((!F.over||F.duel)&&Math.hypot(s.x-tg.x,s.y-cy(tg))<34*tg.c.bulk+s.R*.6){if(tg.dashT>0)continue;if(!F.over){const w=WB[s.w];if(w&&w.slow&&!tg.shield)tg.slowT=2;if(w&&w.boom){burst(s.x,s.y,w.col,60,460);burst(s.x,s.y,'#fff',20,300);F.shake=Math.max(F.shake,16)}hurt(tg,s.dmg*shotMul(s),s.own)}s.l=0}
+    if((!F.over||F.duel)&&Math.hypot(s.x-tg.x,s.y-cy(tg))<34*tg.c.bulk+s.R*.6){if(tg.dashT>0)continue;if(!F.over){const w=WB[s.w];if(w&&w.slow&&!tg.shield)tg.slowT=2;if(w&&w.boom){burst(s.x,s.y,w.col,60,460);burst(s.x,s.y,'#fff',20,300);F.shake=Math.max(F.shake,16)}hurt(tg,s.dmg*shotMul(s),s.own||{c:{glow:'#ff9a3d'}})}s.l=0}
     if(s.y>GY+6){s.l=0;burst(s.x,GY,s.col,8)}}
   F.shots=F.shots.filter(s=>s.l>0&&s.x>-40&&s.x<W+40);
   for(const p of F.parts){p.x+=p.vx*dt;p.y+=p.vy*dt;p.l-=dt}F.parts=F.parts.filter(p=>p.l>0);if(F.parts.length>500)F.parts.splice(0,F.parts.length-500);
@@ -860,7 +891,8 @@ function fightTick(dt,t){
         if(a.type==='beam'){const x0=e.x+a.face*30,x1=a.face>0?W:0;const gr=g.createLinearGradient(0,a.y-46,0,a.y+46);gr.addColorStop(0,e.c.glow+'00');gr.addColorStop(.5,'#fff');gr.addColorStop(1,e.c.glow+'00');g.fillStyle=gr;g.fillRect(Math.min(x0,x1),a.y-46*k,Math.abs(x1-x0),92*k);g.fillStyle=e.c.glow;g.fillRect(Math.min(x0,x1),a.y-18*k,Math.abs(x1-x0),36*k)}
         else{const R=190*(1-k*.6);g.strokeStyle=e.c.glow;g.lineWidth=26*k;g.beginPath();g.arc(e.x,cy(e),R,0,7);g.stroke();g.strokeStyle='#fff';g.lineWidth=6*k;g.stroke()}}
       g.restore()}
-    drawHero(g,e.c,e.x,e.y,1.25,t,{st:e.st,face:e.face,atk:e.atkT>0?1-e.atkT:0,hit:e.hitT,shield:e.shield,charge:e.charge,alt:GY-e.y});
+    const wn=F.over>.4&&(F.duel?(()=>{const r=duelRes();return r==='win'||r==='forf'?F.p:r==='lose'?F.e:null})():F.win?F.p:F.e);
+    drawHero(g,e.c,e.x,e.y,1.25,t,{st:e.st,face:e.face,atk:e.atkT>0?1-e.atkT:0,hit:e.hitT,shield:e.shield,charge:e.charge,alt:GY-e.y,dance:wn===e&&e.hp>0&&e.dn?{id:e.dn,t:F.over}:null});
   }
   g.globalCompositeOperation='lighter';
   for(const p of F.parts){g.globalAlpha=Math.min(1,p.l*2.5);g.fillStyle=p.col;g.beginPath();g.arc(p.x,p.y,p.r,0,7);g.fill()}
@@ -870,6 +902,8 @@ function fightTick(dt,t){
   g.textAlign='center';
   for(const n of F.nums){g.globalAlpha=Math.min(1,n.l*2);g.font=(typeof n.v==='number'?'24px':'18px')+' "Russo One",sans-serif';g.lineWidth=4;g.strokeStyle='#000';g.strokeText(n.v,n.x,n.y);g.fillStyle=n.col;g.fillText(n.v,n.x,n.y)}
   g.globalAlpha=1;g.restore();
+  if(F.mod&&F.mod.k==='brume'){const fg=g.createRadialGradient(F.p.x,cy(F.p),70,F.p.x,cy(F.p),330);fg.addColorStop(0,'rgba(200,210,230,0)');fg.addColorStop(1,'rgba(200,210,230,.86)');g.fillStyle=fg;g.fillRect(0,0,W,HH)}
+  if(F.mod){g.font='18px "Russo One",sans-serif';g.textAlign='left';g.lineWidth=4;g.strokeStyle='#000';g.strokeText(F.mod.n,12,26);g.fillStyle='#fff';g.fillText(F.mod.n,12,26);g.textAlign='center';if(F.mod.k==='vent'){g.fillStyle='rgba(255,255,255,.35)';for(let i=0;i<8;i++){const x=((t*F.wind*2+i*137)%W+W)%W;g.fillRect(x,60+i*40,40,2)}}}
   if(F.intro>0||F.over){g.font='54px "Russo One",sans-serif';g.lineWidth=8;g.strokeStyle='#000';let win=F.win;if(F.duel&&F.over){const r=duelRes();win=r==='win'||r==='forf'?1:r==='draw'||r==='void'?2:0}
     const m=L(F.over?(F.duel&&F.voided&&!F.quitWin?'ANNULÉ':win===2?'ÉGALITÉ':win?'VICTOIRE':'DÉFAITE'):F.duel&&!F.rx?'EN ATTENTE…':(F.intro>.5?'PRÊT ?':'COMBAT !'));g.strokeText(m,W/2,HH/2-40);g.fillStyle=F.over&&!win?'#ff5d73':'#ffd166';g.fillText(m,W/2,HH/2-40)}
   if(F.mode==='dj'){g.font='26px "Russo One",sans-serif';g.lineWidth=6;g.strokeStyle='#000';g.textAlign='center';const tx=L('VAGUE')+' '+F.dj.w+(F.dj.w%5===0?' · BOSS':'');g.strokeText(tx,W/2,38);g.fillStyle=F.dj.w%5===0?'#ff5d73':'#ffd166';g.fillText(tx,W/2,38)}
@@ -882,6 +916,9 @@ function addXp(id,x){if(id===heroDay())x*=2;const h=S.chars[id];let up=0;h.xp+=x
 function endFight(){if(F.win&&!F.duel&&F.p.hp>=F.p.mhp-.5)setTimeout(()=>secret('flaw'),1200);
   if(F.mode==='adv')return advEnd();if(F.mode==='dj')return djEnd();
   const m=mult();let pts,xp,txt='';
+  if(F.mode==='hal'){const had=!!S.chars.spectrouille;pts=gain(F.win?(had?60:150):3);xp=F.win?60:8;const up=addXp(S.sel,xp);save();sfx(F.win?'win':'lose');
+    F.result=`<div class="panel" style="text-align:center;align-items:center;border-color:#ff8a00"><h2 style="color:${F.win?'#ffb347':'var(--bad)'}">${F.win?'🎃 Spectrouille est vaincu !':'Défaite… 👻'}</h2><p>+${pts} points · +${xp} XP</p><div class="row" style="justify-content:center"><button class="btn" data-a="fight" data-m="hal">${F.win?'Rejouer':'Revanche'}</button><button data-a="go" data-v="fprep">Retour</button></div></div>`;
+    const r=$('#fres');if(r)r.innerHTML=F.result;if(F.win&&!had){give('spectrouille');save();setTimeout(()=>reward('spectrouille',1,'🎃 Héros exclusif d\'Halloween !'),900)}return}
   if(F.win){if(F.mode==='boss'){const e=ev();pts=gain(e?.reward||150);S.boss=e?.end||1;xp=80}else{pts=gain((15+6*F.stage)*m);xp=25+5*F.stage;if(F.stage>=S.arena)S.arena=F.stage+1;S.spd=S.spd||{};const old=S.spd[F.stage];if(F.ft&&(!old||F.ft<old)){S.spd[F.stage]=F.ft;txt=' · ⏱️ <b style="color:var(--gold)">'+fmtS(F.ft)+(old?' : nouveau record !':'')+'</b>'}else if(F.ft)txt=' · ⏱️ '+fmtS(F.ft)+' (record '+fmtS(old)+')';S.wins++;bump('win')}}
   else{pts=gain(3);xp=8}
   const up=addXp(S.sel,xp);save();sfx(F.win?'win':'lose');if(up)setTimeout(()=>sfx('lvl'),700);
@@ -1020,7 +1057,7 @@ function djFight(){const f=djFoe(DJ.w),me=S.chars[S.sel],mc=HB[S.sel],b=DJ.b;
   F={mode:'dj',dj:DJ,stage:DJ.w,p:mkFighter(mc,me.lvl,me.st,200,1),e:mkFighter(f.c,f.l,f.st,600,-1,f.k),shots:[],parts:[],nums:[],shake:0,t:0,over:0,intro:1.4,bg:arenaBg(Math.floor((DJ.w-1)/3)%3)};
   const p=F.p;p.mhp*=Math.pow(1.25,b.hp||0);p.atk*=Math.pow(1.15,b.atk||0);p.shm=Math.pow(1.25,b.shot||0);p.men*=Math.pow(1.25,b.en||0);p.dashC=Math.max(0,DASHC-5*(b.dash||0));if(b.shield)p.shf=.3;
   p.hp=DJ.hp==null?p.mhp:Math.min(p.mhp,DJ.hp);if(b.en)p.en=p.men;
-  F.e.hp=F.e.mhp;F.e.skill=f.skill;if(mc.fly)p.y=GY-80;if(f.c.fly)F.e.y=GY-80;armGun(p);if(p.gun&&b.ammo)p.ammo=Math.round(p.ammo*Math.pow(1.5,b.ammo));
+  F.e.hp=F.e.mhp;F.e.skill=f.skill;if(mc.fly)p.y=GY-80;if(f.c.fly)F.e.y=GY-80;armGun(p);p.dn=S.dn;F.e.dn=DANCES[DJ.w%DANCES.length].id;arenaMod(DJ.seed+DJ.w);if(p.gun&&b.ammo)p.ammo=Math.round(p.ammo*Math.pow(1.5,b.ammo));
   view='fight';sub={};render()}
 function djEnd(){const w=DJ.w;let html;
   if(F.win){const pts=gain((8+6*w)*mult());DJ.pts+=pts;DJ.hp=F.p.hp;const up=addXp(S.sel,10+2*w);djRec(w);save();sfx('win');if(up)setTimeout(()=>sfx('lvl'),700);
@@ -1078,6 +1115,13 @@ function palView(){const p=PLAYERS.find(x=>x.id===sub.u);if(!p)return '<div clas
   return `<div class="panel" style="border-color:var(--arc);text-align:center;align-items:center"><div class="row" style="width:100%"><button data-a="go" data-v="fprep">← Joueurs</button></div><div style="width:130px">${pt(sel[0],+sel[2]||1)}</div><h2>${esc(cleanN(p.nick)||'Joueur')}</h2><p class="mute small">${HB[sel[0]].n} niv. ${+sel[1]||1} · ${ago(p.at)}</p></div>
    <div class="panel"><h2>Ses stats</h2><div class="grid">${st((p.total||0).toLocaleString('fr-FR'),'points gagnés au total')}${st('Étage '+(p.arena||1),'dans l\'arène')}${st((p.dw||0)+' / '+((p.dw||0)+(p.dl||0)),'duels gagnés')}${st('Vague '+(p.djr||0),'record du donjon')}${st((p.heroes||0)+' / '+H.length,'héros')}${st(p.solved||0,'énigmes réussies')}${st((p.sec||0)+' / '+SECRETS.length,'secrets trouvés')}</div></div>
    ${best.length?`<div class="panel"><h2>Ses meilleurs héros</h2><div class="grid coll">${best.map(([id,o])=>`<div class="card" style="--rc:${RAR[HB[id].r].c}">${pt(id,o.st)}<div class="nm">${HB[id].n}</div><div class="small">${stars(o.st)} niv. ${o.lvl}</div></div>`).join('')}</div></div>`:''}`}
+function dancePanel(){const own=S.dns||{};
+  return `<details class="panel" style="border-color:#ff6ad5" ${sub.dp?'open':''}><summary style="cursor:pointer" data-a="dpopen"><b>💃 Boutique de danses</b> <span class="mute small">· ${S.dn?DNB[S.dn].ic+' '+DNB[S.dn].n:'aucune danse'}</span></summary>
+   <p class="small mute">Ton héros fait sa danse quand il gagne un combat. En duel, ton adversaire la voit ! Plus elle fait rager, plus elle coûte cher. Touche une danse pour la voir.</p>
+   ${sub.dv?`<div style="display:flex;justify-content:center"><div style="width:170px;border:1px solid #ff6ad5;border-radius:12px;background:var(--deep)"><canvas class="pt" data-h="${S.sel}" data-st="${S.chars[S.sel].st}" data-dn="${sub.dv}" width="270" height="285"></canvas></div></div><p style="text-align:center"><b>${DNB[sub.dv].ic} ${DNB[sub.dv].n}</b></p>`:''}
+   ${DANCES.map(d=>{const has=own[d.id],eq=S.dn===d.id;return `<div class="row" style="border-top:1px solid var(--line);padding-top:8px"><span style="font-size:24px;cursor:pointer" data-a="dview" data-id="${d.id}">${d.ic}</span><div class="grow" style="min-width:150px;cursor:pointer" data-a="dview" data-id="${d.id}"><b>${d.n}</b> <span class="small" style="color:#ff6ad5">${'🔥'.repeat(Math.ceil((DANCES.indexOf(d)+1)/2))}</span><div class="small mute">${d.d}</div></div>
+    ${eq?'<button disabled>Équipée ✓</button>':has?`<button class="btn2" data-a="deq" data-id="${d.id}">Équiper</button>`:`<button class="btn" data-a="dbuy" data-id="${d.id}" ${S.pts<d.p?'disabled':''}>${d.p} pts</button>`}</div>`}).join('')}
+   ${S.dn?'<div><button data-a="deq" data-id="">Ne plus danser</button></div>':''}</details>`}
 function advDone(r){return (S.adv||{})[r]||0}
 // Une région reste ouverte une fois débloquée, même si de nouvelles énigmes sont ajoutées ensuite
 function advOpen(r){if(r===0||boss()||(S.advU||{})[r])return true;if(ordered(r-1).length&&ordered(r-1).every(x=>fin(x.id))){S.advU=S.advU||{};S.advU[r]=1;return true}return false}
@@ -1154,7 +1198,7 @@ const V={
  home(){
   const c=HB[S.sel],o=S.chars[S.sel],all=allR(),done=all.filter(r=>S.solved[r.id]).length,e=ev(),d=dailyR();
   const top=PLAYERS.filter(p=>!p.adm).sort((a,b)=>(b.total||0)-(a.total||0)).slice(0,5);
-  return `${loginDay().got?'':loginPanel()}<div class="split">
+  return `${loginDay().got?'':loginPanel()}${halPanel()}<div class="split">
    <div class="panel" style="align-items:center;text-align:center;cursor:pointer" data-a="go" data-v="profile"><div style="width:120px">${pt(c.id,o.st)}</div><h2>${c.n} ${stars(o.st)}</h2><p class="mute small">${c.ti} · niveau ${o.lvl}</p><span class="small" style="color:var(--arc)">Mon profil →</span></div>
    <div class="panel"><h2>À toi de jouer</h2>
     <button class="btn" data-a="daily">Énigme du jour ${S.daily===today()?'(déjà jouée)':'· points ×3'}</button>
@@ -1212,7 +1256,7 @@ const V={
     <details><summary style="cursor:pointer"><b>Commandes</b></summary><p class="small mute">Téléphone : joystick à gauche, boutons à droite. Pousse le joystick vers le haut pour voler.</p>
     <p class="small mute">Clavier : flèches ou ZQSD pour bouger et voler, J frapper, K tirer (12 d'énergie), Maj dash (15 d'énergie), L bouclier (dégâts −50 %, 2,5 s max), U recharger l'énergie, I attaque spéciale.</p>
     <p class="small mute">Les tirs sont lents : esquive-les avec le dash (tu es intouchable pendant le bond). Un tir grossit en volant et fait jusqu'à 2 fois plus de dégâts de loin. Frapper au corps à corps fait peu de dégâts.</p>
-    <p class="small mute">L'attaque spéciale se lance seulement quand ta barre d'énergie est pleine, et elle la vide d'un coup. Bouclier et recharge t'immobilisent. Un bouclier vidé met 3 s à revenir.</p></details></div></div>${djPanel()}${duelPanel()}${armory()}`;
+    <p class="small mute">L'attaque spéciale se lance seulement quand ta barre d'énergie est pleine, et elle la vide d'un coup. Bouclier et recharge t'immobilisent. Un bouclier vidé met 3 s à revenir.</p></details></div></div>${halPanel()}${djPanel()}${duelPanel()}${armory()}${dancePanel()}`;
  },
  fight(){
   const p=F.p,e=F.e;
@@ -1255,11 +1299,11 @@ const V={
    <p class="small">Spéciale : <b>${c.spn}</b> <span class="mute">(quand l'énergie est pleine)</span></p>
    ${o?`<div class="small mute">Niveau ${o.lvl}${o.lvl<20?` · XP ${o.xp} / ${40*o.lvl}`:' (max)'} · ${o.n} exemplaire(s)</div><div class="bar xp"><i style="width:${o.lvl<20?o.xp/(40*o.lvl)*100:100}%"></i></div>`:'<p class="mute small">Pas encore débloqué.</p>'}
    <div class="row">${o?`<button class="btn" data-a="pick" data-id="${id}" ${S.sel===id?'disabled':''}>${S.sel===id?'Héros actif':'Choisir ce héros'}</button>${o.lvl>=20?'<button disabled>Niveau max (20)</button>':`<button data-a="up" data-id="${id}" ${S.pts<cost?'disabled':''}>Niveau +1 · ${cost} pts</button>`}${o.st<3?`<button data-a="go" data-v="forge">${'★'.repeat(o.st+1)} à la forge</button>`:''}`:''}
-    <span class="mute small">${id==='primordius'?'S\'obtient en fusionnant les 5 héros des éléments à la forge.':id==='omnirex'?'S\'obtient avec la fusion suprême des '+CXL.length+' exclusifs de forge.':c.cx?(()=>{const q=POOL.find(x=>x[4]===id);return 'Exclusif de forge : 5 % de chance sur la recette '+(q?HB[q[0]].n+' + '+HB[q[1]].n+' → '+HB[q[2]].n:'')+' (quand elle passe à la forge).'})():c.ex?'Exclusif : boss de la région '+REG[c.el].n+' dans l\'Aventure.':'S\'obtient dans les coffres ou à la forge.'}</span></div></div></div></div>`;
+    <span class="mute small">${id==='spectrouille'?'Exclusif d\'Halloween : bats Spectrouille entre le 20 octobre et le 2 novembre.':id==='primordius'?'S\'obtient en fusionnant les 5 héros des éléments à la forge.':id==='omnirex'?'S\'obtient avec la fusion suprême des '+CXL.length+' exclusifs de forge.':c.cx?(()=>{const q=POOL.find(x=>x[4]===id);return 'Exclusif de forge : 5 % de chance sur la recette '+(q?HB[q[0]].n+' + '+HB[q[1]].n+' → '+HB[q[2]].n:'')+' (quand elle passe à la forge).'})():c.ex?'Exclusif : boss de la région '+REG[c.el].n+' dans l\'Aventure.':'S\'obtient dans les coffres ou à la forge.'}</span></div></div></div></div>`;
   const boxes=`<div class="panel"><h2>Coffres</h2><p class="mute small">Un coffre donne un héros au hasard. Plus la rareté est haute, plus la chance est faible. Un héros déjà possédé devient un double pour la forge.</p><div class="split">${BOX.map((b,i)=>`<div class="panel" style="border-color:${b.col};text-align:center;align-items:center"><svg viewBox="0 0 64 52" width="64" aria-hidden="true"><rect x="4" y="20" width="56" height="28" rx="4" fill="${b.col}"/><path d="M4 22a28 18 0 0 1 56 0z" fill="${b.col}" opacity=".75"/><rect x="4" y="20" width="56" height="5" fill="#0e1024" opacity=".55"/><rect x="26" y="16" width="12" height="16" rx="3" fill="#ffd166"/><circle cx="32" cy="24" r="2.5" fill="#0e1024"/></svg><h3>${b.n}</h3>
    <p class="small">${b.o.map((v,r)=>v?`<span style="color:${RAR[r].c};white-space:nowrap">${RAR[r].n} ${String(v).replace('.',',')} %</span>`:'').filter(Boolean).join(' · ')}</p>
    <button class="btn" data-a="box" data-i="${i}" ${S.pts<b.p?'disabled':''}>Ouvrir · ${b.p} pts</button></div>`).join('')}</div></div>`;
-  return det+`<div class="panel"><h2>Collection · ${Object.keys(S.chars).length} / ${H.length}</h2><div class="grid coll">${H.map(x=>card(x,S.chars[x.id]?`<div class="small">${stars(S.chars[x.id].st)} niv. ${S.chars[x.id].lvl}</div>`:`<div class="small mute">${x.id==='primordius'||x.id==='omnirex'?'Fusion ultime':x.cx?'Forge 5 %':x.ex?'Aventure':'Coffre'}</div>`,(x.id===id?'sel':''))).join('')}</div></div>`+boxes+tradePanel();
+  return det+`<div class="panel"><h2>Collection · ${Object.keys(S.chars).length} / ${H.length}</h2><div class="grid coll">${H.map(x=>card(x,S.chars[x.id]?`<div class="small">${stars(S.chars[x.id].st)} niv. ${S.chars[x.id].lvl}</div>`:`<div class="small mute">${x.hal?'Halloween':x.id==='primordius'||x.id==='omnirex'?'Fusion ultime':x.cx?'Forge 5 %':x.ex?'Aventure':'Coffre'}</div>`,(x.id===id?'sel':''))).join('')}</div></div>`+boxes+tradePanel();
  },
  forge(){
   const cr=S.craft,now=Date.now(),rec=recipes();
@@ -1498,6 +1542,10 @@ const A={
   S.fus++;bump('forge');if(c.evo){o.st=c.st;save();render();reward(c.out,o.st,'Évolution réussie : +25 % de puissance')}
   else{if(o)o.n++;else o=S.chars[c.out]={n:1,lvl:1,xp:0,st:1};save();render();reward(c.out,o.st,o.n>1?'Un exemplaire de plus !':'Nouveau héros forgé !')}},
  djgo(){djStart()},
+ dpopen(){sub.dp=!sub.dp},
+ dview(d){if(!DNB[d.id])return;sub.dp=1;sub.dv=d.id;render();setTimeout(()=>document.querySelector('canvas[data-dn]')?.scrollIntoView({block:'center'}),50)},
+ dbuy(d){const x=DNB[d.id];if(!x||(S.dns||{})[x.id])return;if(S.pts<x.p)return toast('Pas assez de points');S.pts-=x.p;S.dns={...(S.dns||{}),[x.id]:1};S.dn=x.id;sub.dp=1;sub.dv=x.id;save();render();sfx('chest');toast(x.ic+' '+x.n+' achetée !')},
+ deq(d){if(d.id&&!(S.dns||{})[d.id])return;S.dn=d.id||'';sub.dp=1;save();render()},
  spin(){if(S.wh===today()||sub.spin)return;let x=Math.random()*100,i=0;while(i<WHEEL.length-1&&x>=WHEEL[i].p){x-=WHEEL[i].p;i++}
   S.wh=today();save();sub.spin=1;const rot=(sub.wr||0)+360*5+(360-i*45)%360-((sub.wr||0)%360);sub.wr=rot;render();const sv=$('#wsvg');if(sv){sv.style.transform='rotate('+((rot-1800))+'deg)';void sv.getBoundingClientRect();sv.style.transform='rotate('+rot+'deg)'}sfx('sp');
   setTimeout(()=>{sub.spin=0;wheelWin(WHEEL[i])},3300)},
@@ -1511,7 +1559,7 @@ const A={
  advq(d){const r=sub.r,l=sub.l,R=REG[r];if(sub.qr==='ok')return;const qi=R.lv.slice(0,l).filter(x=>x==='q').length,Q=R.q[qi%R.q.length];
   if(+d.i!==Q.a){sub.qr='ko';sfx('ko');render();return}
   const first=l>=advDone(r);sub.qr='ok';sub.qp=gain(ADVP.q(r)*(first?1:.3));if(first)S.adv={...(S.adv||{}),[r]:l+1};sfx('ok');save();render()},
- fight(d){if(d.m==='boss'&&!ev())return;if(inDuel())return toast('Termine d\'abord ton duel');startFight(d.m)},
+ fight(d){if(d.m==='boss'&&!ev())return;if(d.m==='hal'&&!isHal())return toast('Halloween est fini !');if(inDuel())return toast('Termine d\'abord ton duel');startFight(d.m)},
  dinv(d){dropDone();if(DU||!ME||!room)return;const p=PEERS.find(x=>x.peer===d.p);if(!p)return toast('Ce joueur est parti');const bet=Math.max(0,Math.floor(+val('bet')||0));
   if(S.pts<bet)return toast('Tu n\'as pas assez de points pour cette mise');if((+p.presence.pts||0)<bet)return toast('Ce joueur n\'a pas assez de points pour cette mise');
   DU={to:p.peer,on:pname(p),bet,sd:Math.floor(Math.random()*1e9),mv:'',om:'',h:myH(),s:'wait',me:ME.peer,n:0,t0:Date.now()};S.pts-=bet;S.esc={bet,st:'wait'};save();pubD();view='duel';sub={};render()},
@@ -1588,13 +1636,13 @@ function startDuel(){
     evq:[],evi:0,lastEv:0,rx:0,rxT:performance.now(),left:90,txT:0,qc:0};
   F.p.hp=F.p.mhp;F.e.hp=F.e.mhp;if(m.c.fly)F.p.y=GY-80;if(o.c.fly)F.e.y=GY-80;armGun(F.p);
   const e=F.e;e.tx=e.x;e.ty=e.y;e.tvx=0;e.tvy=0;
-  view='fight';sub={};render();duelTx(true);
+  F.p.dn=S.dn;arenaMod(DU.sd);view='fight';sub={};render();duelTx(true);
 }
 function duelEv(o){o.i=++F.evi;o.at=Date.now();F.evq.push(o);if(F.evq.length>14)F.evq.shift()}
 function duelTx(force){
   if(!F||!F.duel||!room||!DU)return;const n=performance.now();if(!force&&n-F.txT<66)return;F.txT=n;
   const p=F.p,cut=Date.now()-2000;F.evq=F.evq.filter(v=>v.at>cut);
-  const f={sd:DU.sd,x:Math.round(p.x),y:Math.round(p.y),vx:Math.round(p.vx),vy:Math.round(p.vy),fc:p.face,hp:Math.max(0,Math.round(p.hp)),mhp:Math.round(p.mhp),en:Math.round(p.en),
+  const f={dn:S.dn||'',sd:DU.sd,x:Math.round(p.x),y:Math.round(p.y),vx:Math.round(p.vx),vy:Math.round(p.vy),fc:p.face,hp:Math.max(0,Math.round(p.hp)),mhp:Math.round(p.mhp),en:Math.round(p.en),
     sh:p.shield?1:0,ch:p.charge?1:0,ko:F.myKo?1:0,go:F.intro<=0?1:0,ev:F.evq.map(({at,...v})=>v),n:F.txn=(F.txn||0)+1};
   if(F.quit)f.q=1;
   try{room.live(f).catch(()=>{})}catch(e){}
@@ -1604,7 +1652,7 @@ function duelRx(f){
   // La liste en ligne est renvoyée à chaque changement de n'importe quel joueur : on ignore une image déjà reçue
   if(f.n&&f.n===F.rxN)return;F.rxN=f.n;DU.seen=Date.now();
   F.rxT=performance.now();if(!F.rx){F.rx=1;e.x=e.tx=+f.x||e.x;e.y=e.ty=+f.y||e.y}
-  e.tx=+f.x||0;e.ty=+f.y||GY;e.tvx=+f.vx||0;e.tvy=+f.vy||0;e.face=f.fc<0?-1:1;e.shield=!!f.sh;e.charge=!!f.ch;e.en=+f.en||0;
+  e.dn=DNB[f.dn]?f.dn:'';e.tx=+f.x||0;e.ty=+f.y||GY;e.tvx=+f.vx||0;e.tvy=+f.vy||0;e.face=f.fc<0?-1:1;e.shield=!!f.sh;e.charge=!!f.ch;e.en=+f.en||0;
   if(f.mhp>0)e.mhp=+f.mhp;
   const hp=Math.max(0,+f.hp||0);
   if(hp<e.hp-.5){const d=Math.round(e.hp-hp);e.hitT=.25;F.nums.push({x:e.x,y:cy(e)-40,v:d,l:.9,col:e.shield?'#5ee6ff':'#fff'});burst(e.x,cy(e),e.shield?'#5ee6ff':F.p.c.glow,12);F.shake=Math.min(14,F.shake+d/6);sfx('hit')}
@@ -1833,7 +1881,7 @@ async function boot(){
   }
   if(isAdmin){H.forEach(c=>{if(!S.chars[c.id])S.chars[c.id]={n:1,lvl:1,xp:0,st:1}});save();if(view!=='fight'&&view!=='duel')render()}
   if(PEND&&PEND.v&&gated())A.code({v:PEND.v});
-  applyTheme();
+  applyTheme();if(isHal())$('#hhal').hidden=false;
   try{const w=sessionStorage.getItem('lpwelcome');if(w){sessionStorage.removeItem('lpwelcome');toast('Bienvenue, '+w+' !')}}catch(e){}
 }
 boot();
