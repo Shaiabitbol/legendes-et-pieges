@@ -957,7 +957,11 @@ function fightTick(dt,t){
   if(F.mod&&F.mod.k==='brume'){const fg=g.createRadialGradient(F.p.x,cy(F.p),70,F.p.x,cy(F.p),330);fg.addColorStop(0,'rgba(200,210,230,0)');fg.addColorStop(1,'rgba(200,210,230,.86)');g.fillStyle=fg;const vt=F.vt||{sc:1,ox:0,oy:0};g.fillRect(-vt.ox/vt.sc,-vt.oy/vt.sc,cv.width/vt.sc,cv.height/vt.sc)}
   if(F.mod){g.font='18px "Russo One",sans-serif';g.textAlign='left';g.lineWidth=4;g.strokeStyle='#000';g.strokeText(F.mod.n,12,26);g.fillStyle='#fff';g.fillText(F.mod.n,12,26);g.textAlign='center';if(F.mod.k==='vent'){g.fillStyle='rgba(255,255,255,.35)';for(let i=0;i<8;i++){const x=((t*F.wind*2+i*137)%W+W)%W;g.fillRect(x,60+i*40,40,2)}}}
   if(F.intro>0||F.over){g.font='54px "Russo One",sans-serif';g.lineWidth=8;g.strokeStyle='#000';let win=F.win;if(F.duel&&F.over){const r=duelRes();win=r==='win'||r==='forf'?1:r==='draw'||r==='void'?2:0}
-    if(F.duel&&!F.rx&&performance.now()-F.rxT>4000){g.font='18px "Russo One",sans-serif';g.lineWidth=4;g.strokeStyle='#000';const tx=L('Connexion avec')+' '+(DU?.on||'')+'…';g.strokeText(tx,W/2,HH/2+10);g.fillStyle='#fff';g.fillText(tx,W/2,HH/2+10)}
+    if(F.duel&&!F.rx&&performance.now()-F.rxT>4000){g.font='18px "Russo One",sans-serif';g.lineWidth=4;g.strokeStyle='#000';const tx=L('Connexion avec')+' '+(DU?.on||'')+'…';g.strokeText(tx,W/2,HH/2+10);g.fillStyle='#fff';g.fillText(tx,W/2,HH/2+10);
+      // Diagnostic (à envoyer en capture d'écran si le duel reste bloqué)
+      const q=F.dg||{},o=x=>x?'oui':'NON',ln=['Diagnostic : mises à jour '+(q.t||0)+' · joueurs '+(q.n||0)+' · moi '+o(q.me),'adversaire '+o(q.op)+' (direct '+o(q.raw)+') · défi '+o(q.d)+' · pour moi '+o(q.to)+' · même duel '+o(q.sd),'images '+o(q.f)+' · bonnes images '+o(q.fsd)+' · reçues '+(F.rxN||0)+' · réseau '+(room&&room.up()?'ok':'COUPÉ'),LASTERR?'Erreur : '+LASTERR:''];
+      const dx=$('#dgx');if(dx){const h=ln.filter(Boolean).join('\n');if(dx.textContent!==h)dx.textContent=h;dx.hidden=false}}
+    else{const dx=$('#dgx');if(dx&&!dx.hidden)dx.hidden=true}
     const m=L(F.over?(F.duel&&F.voided&&!F.quitWin?'ANNULÉ':win===2?'ÉGALITÉ':win?'VICTOIRE':'DÉFAITE'):F.duel&&!F.rx?'EN ATTENTE…':(F.intro>.5?'PRÊT ?':'COMBAT !'));g.strokeText(m,W/2,HH/2-40);g.fillStyle=F.over&&!win?'#ff5d73':'#ffd166';g.fillText(m,W/2,HH/2-40)}
   if(F.mode==='dj'){g.font='26px "Russo One",sans-serif';g.lineWidth=6;g.strokeStyle='#000';g.textAlign='center';const tx=L('VAGUE')+' '+F.dj.w+(F.dj.w%5===0?' · BOSS':'');g.strokeText(tx,W/2,38);g.fillStyle=F.dj.w%5===0?'#ff5d73':'#ffd166';g.fillText(tx,W/2,38)}
   if(F.duel&&F.intro<=0){g.font='30px "Russo One",sans-serif';g.lineWidth=6;g.strokeStyle='#000';const tm=String(Math.ceil(F.left));g.strokeText(tm,W/2,40);g.fillStyle=F.left<10?'#ff5d73':'#fff';g.fillText(tm,W/2,40)}
@@ -1397,6 +1401,7 @@ const V={
    <button data-a="fs" id="bfs" style="min-height:0;padding:6px 8px;font-size:12px">${fsOn?'Réduire':'Plein écran'}</button>
    <div class="r"><b>${F.duel?esc(DU?.on||'')+' · ':''}${e.c.n} · niv. ${e.lvl}</b><div class="bar"><i id="ehp" style="background:var(--bad)"></i></div><div class="bar en"><i id="een"></i></div></div></div>
   <canvas id="arena" width="1280" height="720"></canvas>
+  <div id="dgx" hidden style="white-space:pre-line;font:14px/1.5 var(--body);color:var(--gold);background:rgba(0,0,0,.6);border:1px solid var(--gold);border-radius:10px;padding:8px 10px;position:relative;z-index:4"></div>
   <div id="fres"></div>
   <div class="pad"><div id="joy"><div id="knob"></div></div>
    <div class="acts"><button class="a3" data-k="shield">Bouclier<kbd>L</kbd></button><button class="a4" data-k="charge">Recharge<kbd>U</kbd></button><button class="a5" data-k="sp" id="bsp">Spécial<kbd>I</kbd></button>
@@ -1866,6 +1871,7 @@ function roomTick(){
   PEERS=room.peers().filter(p=>p.kind==='viewer');ME=PEERS.find(p=>p.sameTab)||null;
   // Pendant un duel, on lit l'adversaire directement (même si sa présence paraît vieille ou si la nôtre manque un instant)
   if(DU){const rw=room.raw?room.raw()[DU.to]:null,op=PEERS.find(p=>p.peer===DU.to)||(rw?{peer:DU.to,presence:rw}:null),od=op?.presence?.d,linked=!!od&&od.to===DU.me&&od.sd===DU.sd;
+    if(F&&F.duel){const fr=op?.presence?.f;F.dg={t:(F.dg?.t||0)+1,n:PEERS.length,me:!!ME,op:!!op,raw:!!rw,d:!!od,to:!!od&&od.to===DU.me,sd:!!od&&od.sd===DU.sd,f:!!fr,fsd:!!fr&&fr.sd===DU.sd}}
     if(DU.s==='wait'){if(!op)endInvite('Ce joueur est parti');else if(linked){if(od.x)endInvite('Défi refusé');else{DU.s='play';DU.oh=od.h;DU.seen=Date.now();S.esc={bet:DU.bet,st:'play'};save();startDuel()}}
       // Les deux joueurs se sont défiés en même temps : celui qui a le plus grand identifiant retire son défi et voit celui de l'autre
       else if(od&&od.to===DU.me&&!od.x&&od.mv===''&&DU.me>DU.to)endInvite('')}
@@ -2024,6 +2030,7 @@ async function watchCode(){if(!db||!S.code)return;try{const id=await codeId(S.co
   codeUnsub=db.doc('codes/'+id).onSnapshot(s=>{if(s.metadata&&s.metadata.fromCache)return;
     if(!s.exists){S.code='';S.joined=0;save();try{room&&room.presence({nick:null,h:null,d:null,tr:null,c:null})}catch(e){};view='home';sub={};render();drawInv();toast('Ton code a été désactivé.')}
     else{const n=cleanN(s.data().name);if(n&&n!==S.nick){S.nick=n;save()}}},()=>{})}catch(e){}}
+let LASTERR='';addEventListener('error',e=>{LASTERR=String(e.message||e.error||'').slice(0,90)});{const ce=console.error.bind(console);console.error=(...a)=>{try{LASTERR=a.map(x=>x&&x.message||String(x)).join(' ').slice(0,90)}catch(_){}ce(...a)}}
 let logoN=0,logoT=0;
 async function boot(){
   $('#hlogo').onclick=()=>{if(!ready||gated())return;const t=Date.now();if(t-logoT>6000)logoN=0;logoT=t;if(++logoN>=10){logoN=0;secret('logo')}};
