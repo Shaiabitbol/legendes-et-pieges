@@ -138,6 +138,8 @@ canvas.pt{width:100%;max-width:160px;aspect-ratio:18/19;display:block;margin:0 a
 .acts .a3{background:#5a4712;border-color:var(--gold)}.acts .a4{background:#1d4a3c;border-color:var(--ok)}.acts .a5{background:#4b1e66;border-color:#c77dff}
 .acts .a6{background:#5a1f2a;border-color:#ff5d73;gap:0}
 .acts .aq{grid-column:1/-1;aspect-ratio:auto;border-radius:12px;min-height:30px}
+.acts .aq2{grid-column:span 2;aspect-ratio:auto;border-radius:12px;align-self:center;min-height:30px}
+.acts .a7{background:#1b3a5e;border-color:#7fb8ff}
 .acts button.dn{filter:brightness(1.6)}
 .reg{display:flex;flex-direction:row;align-items:center;gap:12px;border-color:var(--ec);background:linear-gradient(90deg,color-mix(in srgb,var(--ec) 18%,#161938),#161938);cursor:pointer;text-align:left;width:100%}
 .reg.lock{filter:grayscale(.85);opacity:.6}
@@ -147,6 +149,7 @@ canvas.pt{width:100%;max-width:160px;aspect-ratio:18/19;display:block;margin:0 a
 .advp button.cur{border-color:var(--ec);box-shadow:0 0 14px color-mix(in srgb,var(--ec) 55%,transparent)}
 .advp button.done{opacity:.7}
 .advp button.boss{border-width:2px}
+.cxl{display:flex;align-items:center;gap:10px;border:1px dashed var(--gold);border-radius:10px;padding:6px 10px;background:rgba(255,209,102,.06)}
 .recipe{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:center;gap:4px;text-align:center;font:20px var(--display)}
 .recipe canvas{max-width:92px}
 .mach{background:radial-gradient(circle at 50% 30%,#3a2a6e,#151734);border:2px solid #7c5cff;box-shadow:inset 0 0 40px rgba(124,92,255,.35)}
@@ -197,10 +200,18 @@ const H=[
  {id:'marea',n:'Maréa',ti:'Reine de l\'Eau',r:3,ex:1,el:2,rig:'human',fly:1,cape:1,crown:1,blade:1,c1:'#2f8fd8',c2:'#123d6b',c3:'#0a2240',glow:'#7fe7ff',hp:380,atk:26,spd:250,en:125,sp:'beam',spn:'Raz-de-marée'},
  {id:'zephyra',n:'Zéphyra',ti:'Esprit de l\'Air',r:3,ex:1,el:3,rig:'human',fly:1,wings:1,halo:1,cape:1,c1:'#dff6ff',c2:'#7fa6c8',c3:'#3d5f80',glow:'#ffffff',hp:350,atk:26,spd:300,en:125,sp:'dash',spn:'Tornade'},
  {id:'voltarix',n:'Voltarix',ti:'Dragon de la Foudre',r:3,ex:1,el:4,rig:'dragon',fly:1,wings:1,beak:1,horns:2,c1:'#ffd23f',c2:'#5b2a9e',c3:'#2a0f5c',glow:'#fff35e',hp:375,atk:28,spd:270,en:120,sp:'beam',spn:'Éclair foudroyant'},
+ // Exclusifs de forge (cx) : 5 % de chance sur une recette de leur rareté ; plus forts que les héros normaux de cette rareté
+ {id:'lamebrume',n:'Lamebrume',ti:'Duelliste des brumes',r:1,ex:1,cx:1,rig:'human',blade:1,cape:1,horns:1,c1:'#5f8f9e',c2:'#253f4a',c3:'#132229',glow:'#9ff3ff',hp:300,atk:20,spd:265,en:110,sp:'dash',spn:'Lame fantôme'},
+ {id:'nyxara',n:'Nyxara',ti:'Sorcière de l\'éclipse',r:2,ex:1,cx:1,rig:'human',fly:1,cape:1,crown:1,halo:1,c1:'#3b1f5e',c2:'#1a0d2e',c3:'#0a0514',glow:'#d18cff',hp:335,atk:24,spd:275,en:120,sp:'nova',spn:'Éclipse'},
+ {id:'aurelion',n:'Aurelion',ti:'Dragon d\'or céleste',r:3,ex:1,cx:1,rig:'dragon',fly:1,wings:1,horns:3,halo:1,bulk:1.2,c1:'#ffcf4a',c2:'#a86b12',c3:'#fff1a8',glow:'#fff7c2',hp:415,atk:28,spd:255,en:120,sp:'beam',spn:'Souffle d\'or'},
+ {id:'chronarque',n:'Chronarque',ti:'Maître du temps',r:4,ex:1,cx:1,rig:'human',bulk:1.2,fly:1,wings:1,crown:1,halo:1,armor:1,blade:1,cape:1,c1:'#c9d6e8',c2:'#3d5a80',c3:'#13233d',glow:'#7dd3ff',hp:470,atk:32,spd:265,en:135,sp:'meteor',spn:'Pluie d\'étoiles'},
+ {id:'omnirex',n:'Omnirex',ti:'Empereur de la forge',r:5,ex:1,prism:1,orbs:['#4fb6ff','#c77dff','#ffb238','#ff4d6d','#ffffff'],rig:'human',bulk:1.35,fly:1,wings:1,crown:1,halo:1,armor:1,blade:1,cape:1,horns:3,c1:'#2b2b33',c2:'#8a6a1a',c3:'#ffd166',glow:'#ffe9a8',hp:600,atk:38,spd:280,en:145,sp:'beam',spn:'Jugement suprême'},
  {id:'primordius',n:'Primordius',ti:'Avatar des cinq éléments',r:5,ex:1,prism:1,rig:'human',bulk:1.25,fly:1,wings:1,crown:1,halo:1,cape:1,armor:1,blade:1,horns:2,c1:'#f4f1ff',c2:'#5a4a9e',c3:'#1a1238',glow:'#ffffff',hp:540,atk:35,spd:275,en:140,sp:'nova',spn:'Cataclysme élémentaire'}
 ];
 H.forEach((c,i)=>{c.seed=i*1.7;c.bulk=c.bulk||1});
 const ELC=['#9be36b','#ff7b2e','#4fc3ff','#e8fbff','#fff35e'];
+// Exclusif de forge selon la rareté du héros fabriqué (Rare, Épique, Légendaire, Mythique)
+const CXR={1:'lamebrume',2:'nyxara',3:'aurelion',4:'chronarque'},CXL=Object.values(CXR),CXP=.05;
 const HB=Object.fromEntries(H.map(c=>[c.id,c]));
 // Coffres : prix en points et chances (en %) par rareté, de Commun à Mythique
 const BOX=[{n:'Coffre de bronze',p:100,col:'#c98a4b',o:[62,27,8.5,2.2,.3]},{n:'Coffre runique',p:350,col:'#c77dff',o:[0,55,32,11,2]}];
@@ -409,15 +420,17 @@ function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeou
 function stat(c,lvl,st,k){return Math.round(c[k]*(1+.08*(lvl-1))*(1+.25*(st-1)))}
 function fmt(ms){const s=Math.max(0,Math.ceil(ms/1000));return (s>=3600?Math.floor(s/3600)+' h ':'')+String(Math.floor(s%3600/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
 function rng(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+// Une seule recette à la fois, qui change toutes les 5 minutes (réglable par l'admin), plus celle d'un événement
+const rotMs=()=>(CFG.rotm||5)*60000;
 function recipes(){
   let out=[]; const e=ev();
   if(e&&HB[e.a]&&HB[e.b]&&HB[e.out])out.push({a:e.a,b:e.b,out:e.out,ev:1});
-  if(CFG.recipes?.length)return out.concat(CFG.recipes.filter(r=>HB[r.a]&&HB[r.b]&&HB[r.out]));
-  const per=Math.floor(Date.now()/((CFG.rot||60)*60000)), r=rng(per*7919+13);
-  const pool=POOL.filter(p=>!p[3]||r()<.25).map(p=>[r(),p]).sort((x,y)=>x[0]-y[0]).slice(0,3);
-  return out.concat(pool.map(([,p])=>({a:p[0],b:p[1],out:p[2]})));
+  const per=Math.floor(Date.now()/rotMs()),r=rng(per*7919+13);
+  const L2=CFG.recipes?.length?CFG.recipes.filter(x=>HB[x.a]&&HB[x.b]&&HB[x.out]):POOL.filter(x=>!x[3]||r()<.3).map(x=>({a:x[0],b:x[1],out:x[2]}));
+  if(L2.length)out.push(L2[Math.floor(r()*L2.length)%L2.length]);
+  return out;
 }
-function nextRot(){const m=(CFG.rot||60)*60000;return m-Date.now()%m}
+function nextRot(){const m=rotMs();return m-Date.now()%m}
 // Coffres : prix et chances (en %) par rareté [Commun, Rare, Épique, Légendaire, Mythique]
 const BOXES=[{id:'b1',n:'Coffre de bronze',p:100,o:[70,22,7,1,0]},{id:'b2',n:'Coffre runique',p:400,o:[30,40,22,7,1]}];
 function grant(id){const o=S.chars[id];if(o){o.n++;return false}S.chars[id]={n:1,lvl:1,xp:0,st:1};return true}
@@ -471,7 +484,7 @@ const HE={'ÉGALITÉ':'תיקו','EN ATTENTE…':'ממתין…','Duel en cours'
  'Victoire par abandon':'ניצחון טכני','Égalité':'תיקו','Chacun récupère sa mise.':'כל אחד מקבל את ההימור שלו בחזרה.','Fermer':'סגור',
  'Gratuit':'חינם','Dégâts ×1,4':'נזק ×1.4','Dégâts reçus −50 %':'חצי מהנזק שסופגים','pas 2 fois de suite':'לא פעמיים ברצף','+20 % de dégâts reçus':'סופגים 20% יותר נזק','Dégâts ×3,2':'נזק ×3.2','énergie pleine':'אנרגיה מלאה',
  'Choisis ton action':'בחר פעולה','Adversaire absent : réclamer la victoire':'היריב לא מגיב: דרוש ניצחון','Confirmer l\'abandon (mise perdue)':'אשר כניעה (ההימור אבוד)','Abandonner':'כניעה',
- 'Ce joueur est parti':'השחקן הזה עזב','ANNULÉ':'בוטל','Duel annulé':'הדו־קרב בוטל','La connexion entre vous a été perdue : chacun récupère sa mise.':'החיבור ביניכם אבד: כל אחד מקבל בחזרה את ההימור.','Réglages':'הגדרות','Son activé':'צליל פעיל','Son coupé':'צליל כבוי','Fermer':'סגור','Mon profil →':'הפרופיל שלי →','Voir tous les joueurs →':'לכל השחקנים →','Personne d\'autre n\'est en ligne pour le moment.':'אין עוד אף אחד מחובר כרגע.','Commandes':'שליטה','aucune arme équipée':'אין נשק מצויד','Crée ton énigme piège':'צור חידת מלכודת משלך','Ton énigme a rapporté':'החידה שלך הרוויחה','Mes énigmes':'החידות שלי','Envoyer à l\'admin':'שלח למנהל','⏳ En attente de l\'admin':'⏳ ממתין למנהל','✅ Acceptée':'✅ אושרה','❌ Refusée':'❌ נדחתה','Énigme envoyée à l\'admin !':'החידה נשלחה למנהל!','Écris une vraie question':'כתוב שאלה אמיתית','Remplis les 4 réponses':'מלא את 4 התשובות','Les 4 réponses doivent être différentes':'4 התשובות חייבות להיות שונות','Explication (montrée après la réponse)':'הסבר (מוצג אחרי התשובה)','Armurerie':'נשקייה','Pistolet laser':'אקדח לייזר','Fusil à pompe':'רובה ציד','Canon de givre':'תותח קרח','Mitraillette':'מקלע','Bazooka':'בזוקה','Équiper':'צייד','Équipée ✓':'מצויד ✓','Combattre sans arme':'להילחם בלי נשק','Tir rapide et précis.':'ירי מהיר ומדויק.','5 plombs en éventail : terrible de près.':'5 כדורים במניפה: נורא מקרוב.','Ralentit l\'adversaire touché pendant 2 secondes.':'מאט את היריב לשתי שניות.','Une rafale de balles sans s\'arrêter.':'צרור כדורים בלי הפסקה.','Une roquette énorme qui explose.':'רקטה ענקית שמתפוצצת.','Pas assez de points':'אין מספיק נקודות','Aventure':'הרפתקה','Fusion des 5 éléments':'מיזוג 5 היסודות','Question piège':'שאלת מלכודת','← Carte':'← מפה','Retour à la carte':'חזרה למפה','Niveau suivant':'השלב הבא','Réessayer':'נסה שוב','Aller à la forge':'לך לנפחייה','Ultime':'אולטימטיבי','Victoire !':'ניצחון!','Défaite…':'הפסד…','Terre':'אדמה','Feu':'אש','Eau':'מים','Air':'אוויר','Foudre':'ברק','Vallée des Monolithes':'עמק המונוליתים','Volcan des Braises':'הר הגעש של הגחלים','Abysses de Cristal':'תהומות הבדולח','Cimes des Vents':'פסגות הרוחות','Citadelle de l\'Orage':'מצודת הסערה','Gaïarok':'גאיארוק','Ignivor':'איגניבור','Maréa':'מראה','Zéphyra':'זפירה','Voltarix':'וולטריקס','Primordius':'פרימורדיוס','Colosse de la Terre':'ענק האדמה','Dragon du Feu':'דרקון האש','Reine de l\'Eau':'מלכת המים','Esprit de l\'Air':'רוח האוויר','Dragon de la Foudre':'דרקון הברק','Avatar des cinq éléments':'התגלמות חמשת היסודות','Séisme':'רעידת אדמה','Pluie de lave':'גשם לבה','Raz-de-marée':'צונאמי','Tornade':'טורנדו','Éclair foudroyant':'ברק מהמם','Cataclysme élémentaire':'אסון היסודות','✓ Région terminée':'✓ האזור הושלם','Fusion ultime':'מיזוג אולטימטיבי','Traverse les 5 régions des éléments. Chaque région a ses combats, ses questions pièges et un boss qui garde un héros exclusif. Finis toutes les énigmes d\'une difficulté pour ouvrir la région suivante. Avec les 5 héros des éléments, forge le héros ultime !':'עבור את 5 אזורי היסודות. בכל אזור יש קרבות, שאלות מלכודת ובוס ששומר על גיבור בלעדי. סיים את כל החידות של רמת קושי כדי לפתוח את האזור הבא. עם 5 גיבורי היסודות, צור בנפחייה את הגיבור האולטימטיבי!','Réunis les 5 héros des éléments pour forger le héros ultime.':'אסוף את 5 גיבורי היסודות כדי ליצור את הגיבור האולטימטיבי.','Raté ! Ce n\'est pas ça… Réfléchis bien et réessaie.':'טעות! זה לא זה… חשוב טוב ונסה שוב.','Primordius est déjà à toi !':'פרימורדיוס כבר שלך!','Nouvelle version du jeu disponible':'גרסה חדשה של המשחק זמינה','Mettre à jour':'עדכן','Cadeau du jour':'מתנת היום','Joueurs':'שחקנים','pas encore venu':'עוד לא נכנס','Connecte-toi chaque jour : si tu rates un jour, tu recommences au jour 1. Le 7e jour, un coffre runique gratuit !':'התחבר כל יום: אם תפספס יום, תתחיל מחדש מיום 1. ביום השביעי – תיבת רונות בחינם!','Récupérer le coffre runique':'קבל את תיבת הרונות','Personne d\'autre pour le moment. Envoie le lien du jeu à tes potes : ils apparaîtront ici.':'אין עוד אף אחד כרגע. שלח את הקישור לחברים: הם יופיעו כאן.','Appuie encore pour relancer : tu perds le duel et ta mise':'לחץ שוב כדי להפעיל מחדש: תפסיד את הדו־קרב ואת ההימור','Relancer le jeu':'הפעל מחדש את המשחק','Pas de réponse à ton défi':'אין תשובה להזמנה שלך','Pas de réponse à ta proposition d\'échange':'אין תשובה להצעת ההחלפה שלך','Tu as quitté le duel trop longtemps : mise perdue':'יצאת מהדו־קרב יותר מדי זמן: ההימור אבד','Le serveur refuse pour l\'instant la liste des joueurs en ligne. Recharge la page dans quelques secondes.':'השרת לא מאפשר כרגע לראות את השחקנים המחוברים. טען מחדש את הדף בעוד כמה שניות.','Tu n\'as pas assez de points pour cette mise':'אין לך מספיק נקודות להימור הזה','Ce joueur n\'a pas assez de points pour cette mise':'לשחקן הזה אין מספיק נקודות להימור הזה','Défi annulé':'ההזמנה בוטלה','Défi refusé':'ההזמנה נדחתה',
+ 'Ce joueur est parti':'השחקן הזה עזב','change dans':'מתחלף בעוד','Recette du moment':'המתכון של הרגע','Fusion suprême':'מיזוג עליון','Évolutions':'התפתחויות','Lamebrume':'למברום','Nyxara':'ניקסרה','Aurelion':'אורליון','Chronarque':'כרונרק','Omnirex':'אומניירקס','Duelliste des brumes':'דוקרן הערפל','Sorcière de l\'éclipse':'מכשפת הליקוי','Dragon d\'or céleste':'דרקון הזהב השמימי','Maître du temps':'אדון הזמן','Empereur de la forge':'קיסר הנפחייה','Lame fantôme':'להב רפאים','Éclipse':'ליקוי','Souffle d\'or':'נשימת זהב','Pluie d\'étoiles':'גשם כוכבים','Jugement suprême':'שיפוט עליון','Forge 5 %':'נפחייה 5%','Il te manque des exclusifs de forge':'חסרים לך בלעדיי נפחייה','Dash':'זינוק','ANNULÉ':'בוטל','Duel annulé':'הדו־קרב בוטל','La connexion entre vous a été perdue : chacun récupère sa mise.':'החיבור ביניכם אבד: כל אחד מקבל בחזרה את ההימור.','Réglages':'הגדרות','Son activé':'צליל פעיל','Son coupé':'צליל כבוי','Fermer':'סגור','Mon profil →':'הפרופיל שלי →','Voir tous les joueurs →':'לכל השחקנים →','Personne d\'autre n\'est en ligne pour le moment.':'אין עוד אף אחד מחובר כרגע.','Commandes':'שליטה','aucune arme équipée':'אין נשק מצויד','Crée ton énigme piège':'צור חידת מלכודת משלך','Ton énigme a rapporté':'החידה שלך הרוויחה','Mes énigmes':'החידות שלי','Envoyer à l\'admin':'שלח למנהל','⏳ En attente de l\'admin':'⏳ ממתין למנהל','✅ Acceptée':'✅ אושרה','❌ Refusée':'❌ נדחתה','Énigme envoyée à l\'admin !':'החידה נשלחה למנהל!','Écris une vraie question':'כתוב שאלה אמיתית','Remplis les 4 réponses':'מלא את 4 התשובות','Les 4 réponses doivent être différentes':'4 התשובות חייבות להיות שונות','Explication (montrée après la réponse)':'הסבר (מוצג אחרי התשובה)','Armurerie':'נשקייה','Pistolet laser':'אקדח לייזר','Fusil à pompe':'רובה ציד','Canon de givre':'תותח קרח','Mitraillette':'מקלע','Bazooka':'בזוקה','Équiper':'צייד','Équipée ✓':'מצויד ✓','Combattre sans arme':'להילחם בלי נשק','Tir rapide et précis.':'ירי מהיר ומדויק.','5 plombs en éventail : terrible de près.':'5 כדורים במניפה: נורא מקרוב.','Ralentit l\'adversaire touché pendant 2 secondes.':'מאט את היריב לשתי שניות.','Une rafale de balles sans s\'arrêter.':'צרור כדורים בלי הפסקה.','Une roquette énorme qui explose.':'רקטה ענקית שמתפוצצת.','Pas assez de points':'אין מספיק נקודות','Aventure':'הרפתקה','Fusion des 5 éléments':'מיזוג 5 היסודות','Question piège':'שאלת מלכודת','← Carte':'← מפה','Retour à la carte':'חזרה למפה','Niveau suivant':'השלב הבא','Réessayer':'נסה שוב','Aller à la forge':'לך לנפחייה','Ultime':'אולטימטיבי','Victoire !':'ניצחון!','Défaite…':'הפסד…','Terre':'אדמה','Feu':'אש','Eau':'מים','Air':'אוויר','Foudre':'ברק','Vallée des Monolithes':'עמק המונוליתים','Volcan des Braises':'הר הגעש של הגחלים','Abysses de Cristal':'תהומות הבדולח','Cimes des Vents':'פסגות הרוחות','Citadelle de l\'Orage':'מצודת הסערה','Gaïarok':'גאיארוק','Ignivor':'איגניבור','Maréa':'מראה','Zéphyra':'זפירה','Voltarix':'וולטריקס','Primordius':'פרימורדיוס','Colosse de la Terre':'ענק האדמה','Dragon du Feu':'דרקון האש','Reine de l\'Eau':'מלכת המים','Esprit de l\'Air':'רוח האוויר','Dragon de la Foudre':'דרקון הברק','Avatar des cinq éléments':'התגלמות חמשת היסודות','Séisme':'רעידת אדמה','Pluie de lave':'גשם לבה','Raz-de-marée':'צונאמי','Tornade':'טורנדו','Éclair foudroyant':'ברק מהמם','Cataclysme élémentaire':'אסון היסודות','✓ Région terminée':'✓ האזור הושלם','Fusion ultime':'מיזוג אולטימטיבי','Traverse les 5 régions des éléments. Chaque région a ses combats, ses questions pièges et un boss qui garde un héros exclusif. Finis toutes les énigmes d\'une difficulté pour ouvrir la région suivante. Avec les 5 héros des éléments, forge le héros ultime !':'עבור את 5 אזורי היסודות. בכל אזור יש קרבות, שאלות מלכודת ובוס ששומר על גיבור בלעדי. סיים את כל החידות של רמת קושי כדי לפתוח את האזור הבא. עם 5 גיבורי היסודות, צור בנפחייה את הגיבור האולטימטיבי!','Réunis les 5 héros des éléments pour forger le héros ultime.':'אסוף את 5 גיבורי היסודות כדי ליצור את הגיבור האולטימטיבי.','Raté ! Ce n\'est pas ça… Réfléchis bien et réessaie.':'טעות! זה לא זה… חשוב טוב ונסה שוב.','Primordius est déjà à toi !':'פרימורדיוס כבר שלך!','Nouvelle version du jeu disponible':'גרסה חדשה של המשחק זמינה','Mettre à jour':'עדכן','Cadeau du jour':'מתנת היום','Joueurs':'שחקנים','pas encore venu':'עוד לא נכנס','Connecte-toi chaque jour : si tu rates un jour, tu recommences au jour 1. Le 7e jour, un coffre runique gratuit !':'התחבר כל יום: אם תפספס יום, תתחיל מחדש מיום 1. ביום השביעי – תיבת רונות בחינם!','Récupérer le coffre runique':'קבל את תיבת הרונות','Personne d\'autre pour le moment. Envoie le lien du jeu à tes potes : ils apparaîtront ici.':'אין עוד אף אחד כרגע. שלח את הקישור לחברים: הם יופיעו כאן.','Appuie encore pour relancer : tu perds le duel et ta mise':'לחץ שוב כדי להפעיל מחדש: תפסיד את הדו־קרב ואת ההימור','Relancer le jeu':'הפעל מחדש את המשחק','Pas de réponse à ton défi':'אין תשובה להזמנה שלך','Pas de réponse à ta proposition d\'échange':'אין תשובה להצעת ההחלפה שלך','Tu as quitté le duel trop longtemps : mise perdue':'יצאת מהדו־קרב יותר מדי זמן: ההימור אבד','Le serveur refuse pour l\'instant la liste des joueurs en ligne. Recharge la page dans quelques secondes.':'השרת לא מאפשר כרגע לראות את השחקנים המחוברים. טען מחדש את הדף בעוד כמה שניות.','Tu n\'as pas assez de points pour cette mise':'אין לך מספיק נקודות להימור הזה','Ce joueur n\'a pas assez de points pour cette mise':'לשחקן הזה אין מספיק נקודות להימור הזה','Défi annulé':'ההזמנה בוטלה','Défi refusé':'ההזמנה נדחתה',
  // héros, coffres
  'volant':'מעופף','Vie':'חיים','Attaque':'התקפה','Vitesse':'מהירות','Énergie':'אנרגיה','Spéciale :':'מתקפה מיוחדת:','(quand l\'énergie est pleine)':'(כשהאנרגיה מלאה)','Pas encore débloqué.':'עדיין לא נפתח.',
  'Héros actif':'הגיבור הפעיל','Choisir ce héros':'בחר בגיבור הזה','Niveau +1':'רמה +1','S\'obtient dans les coffres ou à la forge.':'משיגים אותו בתיבות או בנפחייה.',
@@ -522,7 +535,7 @@ const HHE={"r1": "חשוב על מה שמחמם את כל החוף.", "r2": "ג�
 RIDDLES.forEach(r=>{if(r.h&&HHE[r.id])HE[r.h]=HHE[r.id];if(r.he){HE[r.q]=r.he.q;HE[r.sol]=r.he.sol;HE[r.h]=r.he.h}});
 RIDDLES.forEach(r=>{const h=RHE[r.id];if(!h)return;if(h.q)HE[r.q]=h.q;if(h.ex)HE[r.ex]=h.ex;(h.o||[]).forEach((x,i)=>HE[r.o[i]]=x)});
 const N=x=>HE[x]||x;
-const HP=[[/^Progression (\d+) \/ (\d+)$/,m=>'התקדמות '+m[1]+' / '+m[2]],[/^🔒 Finis toutes les énigmes « (.+) » pour ouvrir$/,m=>'🔒 סיים את כל החידות « '+N(m[1])+' » כדי לפתוח'],[/^(\d+) en ligne$/,m=>m[1]+' מחוברים'],[/^Collection · (\d+) \/ (\d+)$/,m=>'אוסף · '+m[1]+' / '+m[2]],[/^Région (.+) terminée !$/,m=>'אזור '+N(m[1])+' הושלם!'],[/^Héros exclusif de la région (.+) !$/,m=>'גיבור בלעדי של אזור '+N(m[1])+'!'],[/^Aventure · terminée$/,m=>'הרפתקה · הושלמה'],[/^(.+) achetée et équipée !$/,m=>N(m[1])+' נקנה וצויד!'],
+const HP=[[/^🎁 Cadeau de l'admin : \+(\d+) points !$/,m=>'🎁 מתנה מהמנהל: +'+m[1]+' נקודות!'],[/^5 % de chance : (.+)$/,m=>'סיכוי 5%: '+N(m[1])],[/^Progression (\d+) \/ (\d+)$/,m=>'התקדמות '+m[1]+' / '+m[2]],[/^🔒 Finis toutes les énigmes « (.+) » pour ouvrir$/,m=>'🔒 סיים את כל החידות « '+N(m[1])+' » כדי לפתוח'],[/^(\d+) en ligne$/,m=>m[1]+' מחוברים'],[/^Collection · (\d+) \/ (\d+)$/,m=>'אוסף · '+m[1]+' / '+m[2]],[/^Région (.+) terminée !$/,m=>'אזור '+N(m[1])+' הושלם!'],[/^Héros exclusif de la région (.+) !$/,m=>'גיבור בלעדי של אזור '+N(m[1])+'!'],[/^Aventure · terminée$/,m=>'הרפתקה · הושלמה'],[/^(.+) achetée et équipée !$/,m=>N(m[1])+' נקנה וצויד!'],
  [/^Duel contre (.+)$/,m=>'דו־קרב נגד '+m[1]],
  [/^[Nn]iv\. (\d+)$/,m=>'רמה '+m[1]],[/^[Nn]iveau (\d+)$/,m=>'רמה '+m[1]],[/^Niveau (\d+) \(max\)$/,m=>'רמה '+m[1]+' (מקסימום)'],[/^Niveau (\d+) !$/,m=>'רמה '+m[1]+'!'],
  [/^Série (\d+)$/,m=>'רצף '+m[1]],[/^[ÉEé]tage (\d+)$/,m=>'קומה '+m[1]],[/^Événement : (.*)$/,m=>'אירוע: '+m[1]],[/^[Pp]oints ×(\d+)$/,m=>'נקודות ×'+m[1]],[/^[Ff]in dans (.+)$/,m=>'נגמר בעוד '+m[1]],
@@ -676,7 +689,7 @@ function drawHero(g,c,x,y,sc,t,o={}){
   g.scale((o.face||1)*k,k);g.translate(0,(c.fly?-18+Math.sin(t*2.2+c.seed)*5:Math.sin(t*3+c.seed)*1.2));
   if(st>1||o.charge){const R=58+st*12+(o.charge?10*Math.sin(t*20):0),gr=g.createRadialGradient(0,-50,6,0,-50,R);gr.addColorStop(0,c.glow+'88');gr.addColorStop(1,c.glow+'00');g.fillStyle=gr;g.beginPath();g.arc(0,-50,R,0,7);g.fill()}
   (c.rig==='dragon'?dragon:human)(g,c,t,o,st);
-  if(c.prism){g.save();for(let i=0;i<5;i++){const a=t*1.6+i*1.2566,x=Math.cos(a)*60,y=-60+Math.sin(a)*22;glowOn(g,ELC[i],16);g.fillStyle=ELC[i];g.beginPath();g.arc(x,y,6+Math.sin(t*4+i)*1.5,0,7);g.fill()}g.restore()}
+  if(c.prism){g.save();for(let i=0;i<5;i++){const a=t*1.6+i*1.2566,x=Math.cos(a)*60,y=-60+Math.sin(a)*22;const oc=(c.orbs||ELC)[i];glowOn(g,oc,16);g.fillStyle=oc;g.beginPath();g.arc(x,y,6+Math.sin(t*4+i)*1.5,0,7);g.fill()}g.restore()}
   if(o.hit>0){g.globalCompositeOperation='lighter';g.globalAlpha=Math.min(1,o.hit*4);g.fillStyle='#fff';g.beginPath();g.ellipse(0,-55,30,52,0,0,7);g.fill()}
   g.restore();
   if(o.shield){g.save();g.translate(x,y-50*k-(c.fly?18*k:0));const R=68*k;const gr=g.createRadialGradient(0,0,R*.5,0,0,R);gr.addColorStop(0,'rgba(94,230,255,0)');gr.addColorStop(1,'rgba(94,230,255,.45)');g.fillStyle=gr;g.beginPath();g.arc(0,0,R,0,7);g.fill();g.strokeStyle='#bff6ff';g.lineWidth=2;g.setLineDash([10,8]);g.lineDashOffset=-t*40;g.stroke();g.restore()}
@@ -688,7 +701,10 @@ function drawPortraits(t){
 }
 
 /* ================== COMBAT ================== */
-const W=800,HH=450,GY=392, inp={x:0,y:0,atk:0,shoot:0,shield:0,charge:0,sp:0,gun:0};
+const W=800,HH=450,GY=392, inp={x:0,y:0,atk:0,shoot:0,shield:0,charge:0,sp:0,gun:0,dash:0};
+// Tirs : plus lents pour pouvoir esquiver ; ils grossissent en volant et font plus de dégâts de loin. La frappe au corps à corps fait peu de dégâts.
+const SHV=300,MELEE=.45,DASHC=15;
+const shotGrow=s=>Math.min(1.25,(s.dist||0)/420),shotMul=s=>s.fix?1:.55+Math.min(1.65,(s.dist||0)/330);
 let bgCache={};
 function arenaBg(k){
   if(bgCache[k])return bgCache[k];
@@ -734,11 +750,13 @@ function armGun(e){const w=WB[S.weq];if(w&&S.wp&&S.wp[w.id]){e.gun=w;e.ammo=w.am
 function fireGun(e,foe){const w=e.gun;e.ammo--;e.gunCd=w.cd;sfx('shoot');
   const ox=e.x+e.face*34,oy=cy(e)-8,a0=Math.atan2(cy(foe)-oy,foe.x-ox),n=w.pel||1;
   for(let k=0;k<n;k++){const a=a0+(n>1?(k/(n-1)-.5)*w.spread:0)+(w.jit?(Math.random()-.5)*w.jit:0);
-    F.shots.push({x:ox,y:oy,vx:Math.cos(a)*w.spd,vy:Math.sin(a)*w.spd,own:e,dmg:e.atk*w.dmg,col:w.col,r:w.r,l:2.2,w:w.id})}
+    F.shots.push({x:ox,y:oy,vx:Math.cos(a)*w.spd*.62,vy:Math.sin(a)*w.spd*.62,own:e,dmg:e.atk*w.dmg,col:w.col,r:w.r,l:3.6,w:w.id})}
   burst(ox,oy,w.col,6);const b=$('#gammo');if(b&&e===F.p)b.textContent=e.ammo}
 function step(e,i,dt,foe){
-  e.atkCd-=dt;e.shCd-=dt;e.spCd-=dt;e.hitT-=dt;e.lock-=dt;e.gunCd=(e.gunCd||0)-dt;e.slowT=(e.slowT||0)-dt;e.face=foe.x>=e.x?1:-1;
-  if(e.atkT>0){const p=e.atkT;e.atkT-=dt/.26;if(p>.5&&e.atkT<=.5&&Math.abs(foe.x-e.x)<82*e.c.bulk&&Math.abs(cy(foe)-cy(e))<72)hurt(foe,e.atk,e)}
+  e.atkCd-=dt;e.shCd-=dt;e.spCd-=dt;e.hitT-=dt;e.lock-=dt;e.gunCd=(e.gunCd||0)-dt;e.slowT=(e.slowT||0)-dt;e.dashCd=(e.dashCd||0)-dt;e.face=foe.x>=e.x?1:-1;
+  if(e.dashT>0){e.dashT-=dt;e.x=Math.max(40,Math.min(W-40,e.x+e.dvx*dt));e.y=Math.max(135,Math.min(GY,e.y+e.dvy*dt));if(Math.random()<.8)F.parts.push({x:e.x,y:cy(e),vx:0,vy:0,l:.25,col:e.c.glow,r:10});return}
+  if(i.dash&&e.dashCd<=0&&e.en>=DASHC&&!e.spA){let dx=i.x||0,dy=i.y||0;if(!dx&&!dy)dx=-e.face;const n=Math.hypot(dx,dy);e.en-=DASHC;e.dashCd=.7;e.dashT=.17;e.dvx=dx/n*1050;e.dvy=dy/n*(e.c.fly?1050:0);e.shield=0;e.charge=0;sfx('shoot');return}
+  if(e.atkT>0){const p=e.atkT;e.atkT-=dt/.26;if(p>.5&&e.atkT<=.5&&Math.abs(foe.x-e.x)<82*e.c.bulk&&Math.abs(cy(foe)-cy(e))<72&&!(foe.dashT>0))hurt(foe,e.atk*MELEE,e)}
   const sh=!!i.shield&&e.lock<=0&&e.sg>0&&!e.spA;
   if(sh){e.sg-=dt;if(e.sg<=0)e.lock=3}else e.sg=Math.min(2.5,e.sg+dt*.55);
   e.shield=sh;e.charge=!!i.charge&&!e.spA;
@@ -757,9 +775,9 @@ function step(e,i,dt,foe){
     if(i.gun&&e.gun&&e.gunCd<=0&&e.ammo>0)fireGun(e,foe);
     if(!i.y&&!e.c.fly&&e.y<GY)e.vy=60;
     if(i.atk&&e.atkCd<=0&&e.atkT<=0){e.atkT=1;e.atkCd=.4}
-    if(i.shoot&&e.shCd<=0&&e.en>=12){e.en-=12;e.shCd=.42;if(e===F.p)sfx('shoot');const ox=e.x+e.face*34,oy=cy(e)-8,dx=foe.x-ox,dy=cy(foe)-oy,d=Math.hypot(dx,dy)||1;F.shots.push({x:ox,y:oy,vx:dx/d*470,vy:dy/d*470,own:e,dmg:e.atk*.8,col:e.c.glow,r:9,l:2.2})}
+    if(i.shoot&&e.shCd<=0&&e.en>=12){e.en-=12;e.shCd=.42;if(e===F.p)sfx('shoot');const ox=e.x+e.face*34,oy=cy(e)-8,dx=foe.x-ox,dy=cy(foe)-oy,d=Math.hypot(dx,dy)||1;F.shots.push({x:ox,y:oy,vx:dx/d*SHV,vy:dy/d*SHV,own:e,dmg:e.atk*.8,col:e.c.glow,r:8,l:3.6})}
     if(i.sp&&e.spCd<=0&&e.en>=e.men-.5){e.en=0;e.spCd=2;sfx('sp');e.spA={type:e.c.sp,t:0,face:e.face,y:cy(e)};F.nums.push({x:e.x,y:cy(e)-70,v:L(e.c.spn),l:1.2,col:e.c.glow});
-      if(e.c.sp==='meteor')for(let n=0;n<6;n++)F.shots.push({x:foe.x+(Math.random()-.5)*190,y:-30-n*70,vx:(Math.random()-.5)*60,vy:520,own:e,dmg:e.atk*.85,col:e.c.glow,r:12,l:3})}
+      if(e.c.sp==='meteor')for(let n=0;n<6;n++)F.shots.push({x:foe.x+(Math.random()-.5)*190,y:-30-n*70,vx:(Math.random()-.5)*60,vy:520,own:e,dmg:e.atk*.85,col:e.c.glow,r:12,l:3,fix:1})}
   }else{e.vx=0;e.vy=0}
   e.x=Math.max(40,Math.min(W-40,e.x+e.vx*dt));e.y+=e.vy*dt;
   if(e.y>GY){e.y=GY;e.vy=0} if(e.y<135)e.y=135;
@@ -768,11 +786,12 @@ function aiInput(e,foe,dt){
   const i=e.ai;i.t-=dt;if(i.t>0)return i.o;
   const dx=foe.x-e.x,d=Math.abs(dx),dy=foe.y-e.y,k=e.skill,o=i.o={x:0,y:0};i.t=.16+Math.random()*.22;
   const inc=F.shots.some(p=>p.own!==e&&Math.hypot(p.x-e.x,p.y-cy(e))<150);
+  if(inc&&e.en>=DASHC+12&&e.dashCd<=0&&Math.random()<k*.45){o.dash=1;o.y=Math.random()<.5?-1:1;o.x=Math.random()<.5?-1:1;i.t=.2;return o}
   if((inc||(foe.spA&&d<240))&&e.lock<=0&&e.sg>.7&&Math.random()<k){o.shield=1;i.t=.45}
   else if((e.en<14&&d>190)||(e.en<e.men-.5&&d>300&&Math.random()<.5)){o.charge=1;i.t=.7}
   else if(e.en>=e.men-.5&&e.spCd<=0&&Math.random()<.12+.25*k&&(e.c.sp!=='nova'||d<170)&&(e.c.sp!=='beam'||Math.abs(cy(foe)-cy(e))<50))o.sp=1;
-  else if(d<76*e.c.bulk&&Math.abs(dy)<60){o.atk=1;if(Math.random()<.18)o.x=-Math.sign(dx)}
-  else{o.x=Math.sign(dx);if(d>170&&e.en>=12&&Math.random()<.3+.3*k)o.shoot=1}
+  else if(d<76*e.c.bulk&&Math.abs(dy)<60&&Math.random()<.35){o.atk=1;o.x=-Math.sign(dx)}
+  else{o.x=d<260?-Math.sign(dx):d>460?Math.sign(dx):(Math.random()<.5?1:-1)*.5;if(e.en>=12&&Math.random()<.35+.35*k)o.shoot=1}
   o.y=Math.abs(dy)>18?Math.sign(dy):0;
   return o;
 }
@@ -789,9 +808,9 @@ function fightTick(dt,t){
   else if(F.intro>0)F.intro-=dt;
   else if(!F.over){step(F.p,inp,dt,F.e);step(F.e,aiInput(F.e,F.p,dt),dt,F.p)}
   else{F.over+=dt;if(F.over>1.6&&!F.done){F.done=1;endFight()}}
-  for(const s of F.shots){s.x+=s.vx*dt;s.y+=s.vy*dt;s.l-=dt;const tg=s.own===F.p?F.e:F.p;
-    if(Math.random()<.6)F.parts.push({x:s.x,y:s.y,vx:0,vy:0,l:.25,col:s.col,r:s.r*.6});
-    if((!F.over||F.duel)&&Math.hypot(s.x-tg.x,s.y-cy(tg))<36*tg.c.bulk){if(!F.over){const w=WB[s.w];if(w&&w.slow&&!tg.shield)tg.slowT=2;if(w&&w.boom){burst(s.x,s.y,w.col,60,460);burst(s.x,s.y,'#fff',20,300);F.shake=Math.max(F.shake,16)}hurt(tg,s.dmg,s.own)}s.l=0}
+  for(const s of F.shots){s.x+=s.vx*dt;s.y+=s.vy*dt;s.l-=dt;s.dist=(s.dist||0)+Math.hypot(s.vx,s.vy)*dt;s.R=s.r*(1+(s.fix?0:shotGrow(s)));const tg=s.own===F.p?F.e:F.p;
+    if(Math.random()<.6)F.parts.push({x:s.x,y:s.y,vx:0,vy:0,l:.25,col:s.col,r:s.R*.6});
+    if((!F.over||F.duel)&&Math.hypot(s.x-tg.x,s.y-cy(tg))<34*tg.c.bulk+s.R*.6){if(tg.dashT>0)continue;if(!F.over){const w=WB[s.w];if(w&&w.slow&&!tg.shield)tg.slowT=2;if(w&&w.boom){burst(s.x,s.y,w.col,60,460);burst(s.x,s.y,'#fff',20,300);F.shake=Math.max(F.shake,16)}hurt(tg,s.dmg*shotMul(s),s.own)}s.l=0}
     if(s.y>GY+6){s.l=0;burst(s.x,GY,s.col,8)}}
   F.shots=F.shots.filter(s=>s.l>0&&s.x>-40&&s.x<W+40);
   for(const p of F.parts){p.x+=p.vx*dt;p.y+=p.vy*dt;p.l-=dt}F.parts=F.parts.filter(p=>p.l>0);if(F.parts.length>500)F.parts.splice(0,F.parts.length-500);
@@ -815,7 +834,7 @@ function fightTick(dt,t){
   g.globalCompositeOperation='lighter';
   for(const p of F.parts){g.globalAlpha=Math.min(1,p.l*2.5);g.fillStyle=p.col;g.beginPath();g.arc(p.x,p.y,p.r,0,7);g.fill()}
   g.globalAlpha=1;
-  for(const s of F.shots){const gr=g.createRadialGradient(s.x,s.y,1,s.x,s.y,s.r*2.4);gr.addColorStop(0,'#fff');gr.addColorStop(.35,s.col);gr.addColorStop(1,s.col+'00');g.fillStyle=gr;g.beginPath();g.arc(s.x,s.y,s.r*2.4,0,7);g.fill()}
+  for(const s of F.shots){const R=(s.R||s.r)*2.4,gr=g.createRadialGradient(s.x,s.y,1,s.x,s.y,R);gr.addColorStop(0,'#fff');gr.addColorStop(.35,s.col);gr.addColorStop(1,s.col+'00');g.fillStyle=gr;g.beginPath();g.arc(s.x,s.y,R,0,7);g.fill()}
   g.globalCompositeOperation='source-over';
   g.textAlign='center';
   for(const n of F.nums){g.globalAlpha=Math.min(1,n.l*2);g.font=(typeof n.v==='number'?'24px':'18px')+' "Russo One",sans-serif';g.lineWidth=4;g.strokeStyle='#000';g.strokeText(n.v,n.x,n.y);g.fillStyle=n.col;g.fillText(n.v,n.x,n.y)}
@@ -1075,7 +1094,8 @@ const V={
     ${boss()?`<label style="max-width:220px">Étage à jouer (réservé à toi)<select id="stg">${Array.from({length:40},(_,i)=>`<option value="${i+1}" ${(admStage||S.arena)===i+1?'selected':''}>Étage ${i+1}</option>`).join('')}</select></label>`:''}
     <button class="btn" data-a="fight" data-m="arena">Combattre</button>
     <details><summary style="cursor:pointer"><b>Commandes</b></summary><p class="small mute">Téléphone : joystick à gauche, boutons à droite. Pousse le joystick vers le haut pour voler.</p>
-    <p class="small mute">Clavier : flèches ou ZQSD pour bouger et voler, J frapper, K tirer (12 d'énergie), L bouclier (dégâts −50 %, 2,5 s max), U recharger l'énergie, I attaque spéciale.</p>
+    <p class="small mute">Clavier : flèches ou ZQSD pour bouger et voler, J frapper, K tirer (12 d'énergie), Maj dash (15 d'énergie), L bouclier (dégâts −50 %, 2,5 s max), U recharger l'énergie, I attaque spéciale.</p>
+    <p class="small mute">Les tirs sont lents : esquive-les avec le dash (tu es intouchable pendant le bond). Un tir grossit en volant et fait jusqu'à 2 fois plus de dégâts de loin. Frapper au corps à corps fait peu de dégâts.</p>
     <p class="small mute">L'attaque spéciale se lance seulement quand ta barre d'énergie est pleine, et elle la vide d'un coup. Bouclier et recharge t'immobilisent. Un bouclier vidé met 3 s à revenir.</p></details></div></div>${duelPanel()}${armory()}`;
  },
  fight(){
@@ -1087,7 +1107,7 @@ const V={
   <div id="fres"></div>
   <div class="pad"><div id="joy"><div id="knob"></div></div>
    <div class="acts"><button class="a3" data-k="shield">Bouclier<kbd>L</kbd></button><button class="a4" data-k="charge">Recharge<kbd>U</kbd></button><button class="a5" data-k="sp" id="bsp">Spécial<kbd>I</kbd></button>
-   <button class="a1" data-k="atk">Frapper<kbd>J</kbd></button><button class="a2" data-k="shoot">Tirer<kbd>K</kbd></button>${p.gun?`<button class="a6" data-k="gun"><span style="font-size:20px">${p.gun.ic}</span><span id="gammo">${p.ammo}</span><kbd>O</kbd></button>`:''}<button data-a="quit" class="${p.gun?'aq':''}" style="font-size:11px">${F.duel?'Abandonner':'Quitter'}</button></div></div></div>`;
+   <button class="a1" data-k="atk">Frapper<kbd>J</kbd></button><button class="a2" data-k="shoot">Tirer<kbd>K</kbd></button><button class="a7" data-k="dash">Dash<kbd>Maj</kbd></button>${p.gun?`<button class="a6" data-k="gun"><span style="font-size:20px">${p.gun.ic}</span><span id="gammo">${p.ammo}</span><kbd>O</kbd></button>`:''}<button data-a="quit" class="${p.gun?'aq2':'aq'}" style="font-size:11px">${F.duel?'Abandonner':'Quitter'}</button></div></div></div>`;
  },
  duel(){
   if(!DU){view='fprep';return V.fprep()}
@@ -1119,18 +1139,19 @@ const V={
    <p class="small">Spéciale : <b>${c.spn}</b> <span class="mute">(quand l'énergie est pleine)</span></p>
    ${o?`<div class="small mute">Niveau ${o.lvl}${o.lvl<20?` · XP ${o.xp} / ${40*o.lvl}`:' (max)'} · ${o.n} exemplaire(s)</div><div class="bar xp"><i style="width:${o.lvl<20?o.xp/(40*o.lvl)*100:100}%"></i></div>`:'<p class="mute small">Pas encore débloqué.</p>'}
    <div class="row">${o?`<button class="btn" data-a="pick" data-id="${id}" ${S.sel===id?'disabled':''}>${S.sel===id?'Héros actif':'Choisir ce héros'}</button><button data-a="up" data-id="${id}" ${o.lvl>=20||S.pts<cost?'disabled':''}>Niveau +1 · ${cost} pts</button>`:''}
-    <span class="mute small">${id==='primordius'?'S\'obtient en fusionnant les 5 héros des éléments à la forge.':c.ex?'Exclusif : boss de la région '+REG[c.el].n+' dans l\'Aventure.':'S\'obtient dans les coffres ou à la forge.'}</span></div></div></div></div>`;
+    <span class="mute small">${id==='primordius'?'S\'obtient en fusionnant les 5 héros des éléments à la forge.':id==='omnirex'?'S\'obtient avec la fusion suprême des 4 exclusifs de forge.':c.cx?'Exclusif de forge : 5 % de chance sur une recette de rareté '+RAR[c.r].n.toLowerCase()+'.':c.ex?'Exclusif : boss de la région '+REG[c.el].n+' dans l\'Aventure.':'S\'obtient dans les coffres ou à la forge.'}</span></div></div></div></div>`;
   const boxes=`<div class="panel"><h2>Coffres</h2><p class="mute small">Un coffre donne un héros au hasard. Plus la rareté est haute, plus la chance est faible. Un héros déjà possédé devient un double pour la forge.</p><div class="split">${BOX.map((b,i)=>`<div class="panel" style="border-color:${b.col};text-align:center;align-items:center"><svg viewBox="0 0 64 52" width="64" aria-hidden="true"><rect x="4" y="20" width="56" height="28" rx="4" fill="${b.col}"/><path d="M4 22a28 18 0 0 1 56 0z" fill="${b.col}" opacity=".75"/><rect x="4" y="20" width="56" height="5" fill="#0e1024" opacity=".55"/><rect x="26" y="16" width="12" height="16" rx="3" fill="#ffd166"/><circle cx="32" cy="24" r="2.5" fill="#0e1024"/></svg><h3>${b.n}</h3>
    <p class="small">${b.o.map((v,r)=>v?`<span style="color:${RAR[r].c};white-space:nowrap">${RAR[r].n} ${String(v).replace('.',',')} %</span>`:'').filter(Boolean).join(' · ')}</p>
    <button class="btn" data-a="box" data-i="${i}" ${S.pts<b.p?'disabled':''}>Ouvrir · ${b.p} pts</button></div>`).join('')}</div></div>`;
-  return det+`<div class="panel"><h2>Collection · ${Object.keys(S.chars).length} / ${H.length}</h2><div class="grid coll">${H.map(x=>card(x,S.chars[x.id]?`<div class="small">${stars(S.chars[x.id].st)} niv. ${S.chars[x.id].lvl}</div>`:`<div class="small mute">${x.id==='primordius'?'Fusion ultime':x.ex?'Aventure':'Coffre'}</div>`,(x.id===id?'sel':''))).join('')}</div></div>`+boxes+tradePanel();
+  return det+`<div class="panel"><h2>Collection · ${Object.keys(S.chars).length} / ${H.length}</h2><div class="grid coll">${H.map(x=>card(x,S.chars[x.id]?`<div class="small">${stars(S.chars[x.id].st)} niv. ${S.chars[x.id].lvl}</div>`:`<div class="small mute">${x.id==='primordius'||x.id==='omnirex'?'Fusion ultime':x.cx?'Forge 5 %':x.ex?'Aventure':'Coffre'}</div>`,(x.id===id?'sel':''))).join('')}</div></div>`+boxes+tradePanel();
  },
  forge(){
   const cr=S.craft,now=Date.now(),rec=recipes();
   const evo=H.filter(c=>S.chars[c.id]&&S.chars[c.id].st<3).map(c=>({a:c.id,b:c.id,out:c.id,evo:1}));
   const can=r=>{if(cr)return 'Machine occupée';const A=S.chars[r.a],B=S.chars[r.b];if(r.evo)return A.n>=2?'':'Il faut un double';if(!A||A.n<2)return 'Double de '+HB[r.a].n+' requis';if(!B||B.n<2)return 'Double de '+HB[r.b].n+' requis';return ''};
-  const row=r=>{const why=can(r),o=HB[r.out],st=r.evo?S.chars[r.a].st+1:(S.chars[r.out]?.st||1);
+  const row=r=>{const why=can(r),o=HB[r.out],st=r.evo?S.chars[r.a].st+1:(S.chars[r.out]?.st||1),x=!r.evo&&CXR[o.r];
    return `<div class="panel" style="${r.ev?'border-color:var(--ember)':''}"><div class="recipe"><div>${pt(r.a,S.chars[r.a]?.st)}<div class="small">${HB[r.a].n}</div></div>+<div>${pt(r.b,S.chars[r.b]?.st)}<div class="small">${HB[r.b].n}</div></div>→<div>${pt(r.out,st)}<div class="small" style="color:${RAR[o.r].c}">${o.n} ${r.evo?stars(st):''}</div></div></div>
+    ${x?`<div class="cxl"><div style="width:58px;flex:none" class="${S.chars[x]?'':'card lock'}">${pt(x,1)}</div><div class="grow small"><b style="color:${RAR[HB[x].r].c}">5 % de chance : ${HB[x].n}</b><br><span class="mute">Exclusif de forge ${RAR[HB[x].r].n.toLowerCase()}, plus fort que les autres. Il sort à la place de ${o.n}.</span></div></div>`:''}
     <div class="row"><button class="btn" data-a="craft" data-r='${JSON.stringify(r)}' ${why?'disabled':''}>Fusionner · ${fmt(RAR[o.r].t*1000)}</button><span class="mute small">${why||(r.ev?'Recette d\'événement':r.evo?'Évolution : plus fort, nouvelle aura':'Un double de chaque est consommé')}</span></div></div>`};
   return `<div class="panel mach ${cr&&cr.end>now?'run':''}" style="align-items:center;text-align:center"><h2>Machine de fusion</h2>
     ${cr?`<div style="width:150px">${pt(cr.out,cr.st)}</div><p><b>${HB[cr.out].n}</b> ${cr.end>now?'en fabrication…':'est prêt !'}</p><div class="bar xp" style="width:100%;max-width:320px"><i id="cbar" style="width:${Math.min(100,(1-(cr.end-now)/cr.dur)*100)}%"></i></div>
@@ -1141,9 +1162,14 @@ const V={
      <div style="display:flex;gap:4px;justify-content:center;flex-wrap:wrap;align-items:center">${REG.map(R=>`<div style="width:56px" class="${S.chars[R.hero]?'':'card lock'}">${pt(R.hero,1)}</div>`).join('<b>+</b>')}<b>→</b><div style="width:90px" class="${has?'':'card lock'}">${pt('primordius',1)}</div></div>
      <p class="small">${has?'Primordius est déjà à toi !':'Les 5 héros des éléments unissent leurs pouvoirs (tu les gardes) pour créer <b>Primordius</b>, l\'Avatar des cinq éléments, de rareté Ultime.'}</p>
      ${has?'':`<button class="btn" data-a="craft5" ${all&&!cr?'':'disabled'}>${cr?'Machine occupée':all?'Fusionner · '+fmt(RAR[5].t*1000):'Il manque des héros : continue l\'Aventure'}</button>`}</div>`})()}
-   <div class="row"><h2 class="grow">Recettes du moment</h2>${CFG.recipes?.length?'':`<span class="chip" id="rot">changent dans ${fmt(nextRot())}</span>`}</div>
-   <div class="split">${rec.map(row).join('')||'<p class="mute">Aucune recette pour le moment.</p>'}</div>
-   <h2>Évolutions</h2><div class="split">${evo.map(row).join('')||'<p class="mute">Tous tes héros sont au maximum.</p>'}</div>`;
+   <div class="row"><h2 class="grow">Recette du moment</h2><span class="chip" id="rot">${L('change dans')} ${fmt(nextRot())}</span></div>
+   ${rec.map(row).join('')||'<p class="mute">Aucune recette pour le moment.</p>'}
+   ${(()=>{const own=CXL.filter(x=>S.chars[x]).length,has=!!S.chars.omnirex,all=own===CXL.length;
+    return `<div class="panel" style="border-color:var(--gold);align-items:center;text-align:center"><h2>Fusion suprême</h2>
+     <div style="display:flex;gap:4px;justify-content:center;flex-wrap:wrap;align-items:center">${CXL.map(x=>`<div style="width:56px" class="${S.chars[x]?'':'card lock'}">${pt(x,1)}</div>`).join('<b>+</b>')}<b>→</b><div style="width:90px" class="${has?'':'card lock'}">${pt('omnirex',1)}</div></div>
+     <p class="small">${has?'Omnirex, l\'Empereur de la forge, est à toi !':`Réunis les 4 exclusifs de forge (${own} / 4) pour créer <b>Omnirex</b>, le héros le plus puissant du jeu. Tu gardes les 4. Cette fusion est toujours disponible.`}</p>
+     ${has?'':`<button class="btn" data-a="craftx" ${all&&!cr?'':'disabled'}>${cr&&all?'Machine occupée':all?'Fusionner · '+fmt(RAR[5].t*1000):'Il te manque des exclusifs de forge'}</button>`}</div>`})()}
+   <details class="panel"><summary style="cursor:pointer"><b>Évolutions</b> <span class="mute small">· ${evo.filter(r=>!can(r)).length} possible(s)</span></summary><div class="split">${evo.map(row).join('')||'<p class="mute">Tous tes héros sont au maximum.</p>'}</div></details>`;
  },
  admin(){
   if(!isAdmin)return '<div class="panel"><h2>Réservé au propriétaire</h2></div>';
@@ -1172,7 +1198,7 @@ const V={
    <div class="row"><select id="ea">${opt(e?.a||'drakonir')}</select>+<select id="eb">${opt(e?.b||'aethon')}</select>→<select id="eo">${opt(e?.out||'neantis')}</select></div>
    <div class="row"><button class="btn" data-a="evstart">${e?'Relancer':'Lancer l\'événement'}</button><button data-a="evstop" ${e?'':'disabled'}>Arrêter</button></div></div>
   <div class="panel"><h3>Recettes de la forge</h3>
-   <label>Rotation automatique toutes les (minutes)<input id="rot2" type="number" min="1" value="${CFG.rot||60}"></label><button data-a="rotsave">Enregistrer la durée</button>
+   <label>Changement de recette toutes les (minutes)<input id="rot2" type="number" min="1" value="${CFG.rotm||5}"></label><button data-a="rotsave">Enregistrer la durée</button>
    <p class="small mute">Recettes imposées (remplacent la rotation tant que la liste n'est pas vide) :</p>
    ${(CFG.recipes||[]).map((r,i)=>`<div class="row small"><span class="grow">${HB[r.a]?.n} + ${HB[r.b]?.n} → <b>${HB[r.out]?.n}</b></span><button data-a="rdel" data-i="${i}">Retirer</button></div>`).join('')||'<p class="small mute">Aucune : rotation automatique.</p>'}
    <div class="row"><select id="ra">${opt('braskar')}</select>+<select id="rb">${opt('sylvar')}</select>→<select id="ro">${opt('givrelame')}</select></div><button data-a="radd">Ajouter cette recette</button></div>
@@ -1186,7 +1212,7 @@ const V={
   <div class="panel"><h3>Tests</h3><div class="row"><button data-a="t1">+1 000 points</button><button data-a="t2">Tout débloquer</button><button data-a="t3">Héros actif niveau max</button><button data-a="t4">${sub.rst?'Confirmer la remise à zéro':'Remettre ma partie à zéro'}</button></div>
    <h3>Joueurs (${PLAYERS.length})</h3><div class="tw"><table><tr><th>Pseudo</th><th>Points</th><th>Total</th><th>Étage</th><th>Héros</th><th>Énigmes</th></tr>
    ${PLAYERS.map(p=>`<tr><td>${esc(p.nick||'Joueur')}</td><td>${p.pts>=INF?'∞':p.pts||0}</td><td>${p.total||0}</td><td>${p.arena||1}</td><td>${p.heroes||0}</td><td>${p.solved||0}</td></tr>`).join('')||'<tr><td colspan="6" class="mute">Aucun joueur enregistré pour l\'instant.</td></tr>'}</table></div>
-   <h3>Offrir un héros</h3>${giftList().length?`<div class="row"><label class="grow">Joueur<select id="gp">${giftList().map(p=>`<option value="${esc(p.id)}">${esc(p.nick||'Joueur')}${p.id===uid?' (toi)':''}${p.on?' · en ligne':''}</option>`).join('')}</select></label><label class="grow">Héros<select id="gh">${opt('drakonir')}</select></label></div><button class="btn" data-a="gift">Offrir ce héros</button><p class="small mute">Le joueur le reçoit dès qu'il ouvre le jeu.</p>`:'<p class="small mute">Aucun joueur pour l\'instant. Un joueur connecté au jeu apparaît ici.</p>'}</div></div></div>`;
+   <h3>Offrir un héros ou des points</h3>${giftList().length?`<div class="row"><label class="grow">Joueur<select id="gp">${giftList().map(p=>`<option value="${esc(p.id)}">${esc(p.nick||'Joueur')}${p.id===uid?' (toi)':''}${p.on?' · en ligne':''}</option>`).join('')}</select></label><label class="grow">Héros<select id="gh">${opt('drakonir')}</select></label></div><button class="btn" data-a="gift">Offrir ce héros</button><div class="row"><label class="grow">Points à offrir<input id="gpts" type="number" min="1" value="100" inputmode="numeric"></label><button class="btn2" data-a="giftpts">Offrir ces points</button></div><p class="small mute">Le joueur le reçoit dès qu'il ouvre le jeu.</p>`:'<p class="small mute">Aucun joueur pour l\'instant. Un joueur connecté au jeu apparaît ici.</p>'}</div></div></div>`;
  }
 };
 function render(){
@@ -1293,6 +1319,8 @@ const A={
  up(d){const o=S.chars[d.id],c=25*o.lvl;if(S.pts<c||o.lvl>=20)return;S.pts-=c;o.lvl++;o.xp=0;save();render();toast(HB[d.id].n+' passe niveau '+o.lvl)},
  box(d){const b=BOX[+d.i];if(!b||(!d.free&&S.pts<b.p))return;if(!d.free){S.pts-=b.p;bump('box')}S.boxes++;let x=Math.random()*100,r=0;while(r<4&&x>=b.o[r]){x-=b.o[r];r++}
   const pool=H.filter(c=>c.r===r&&!c.ex),c=pool[Math.floor(Math.random()*pool.length)],had=give(c.id);save();render();reward(c.id,S.chars[c.id].st,had?'Double obtenu : utilise-le à la forge':'Nouveau héros débloqué !')},
+ async giftpts(){if(!db)return toast('Base indisponible ici');const p=val('gp'),v=Math.floor(+val('gpts')||0);if(!p)return;if(v<=0)return toast('Écris un nombre de points');
+  try{await sendCmd(p,{op:'pts',v});toast(v+' points offerts à '+((giftList().find(x=>x.id===p)||{}).nick||'Joueur'))}catch(e){toast('Don refusé : '+(e.code||'erreur'))}},
  async gift(){if(!db)return toast('Base indisponible ici');const p=val('gp'),h=val('gh');if(!p||!HB[h])return;
   try{await sendCmd(p,{h});toast(HB[h].n+' offert à '+((giftList().find(x=>x.id===p)||{}).nick||'Joueur'))}catch(e){toast('Don refusé : '+(e.code||'erreur'))}},
  pview(d){sub.pv=d.id;render();scrollTo(0,0)},
@@ -1314,7 +1342,7 @@ const A={
   S.trd[t.sd]=1;give(t.g);save();TINV=null;drawInv();setT({to:p.peer,sd:t.sd,ok:1});setTimeout(()=>{if(!TR)setT(null)},6000);if(view!=='fight'&&view!=='duel')render();reward(t.g,S.chars[t.g].st,'Échange réussi !')},
  tref(){const p=TINV,t=p?.presence?.tr;if(!p||!t)return;refused['t'+p.peer+t.sd]=1;TINV=null;drawInv();setT({to:p.peer,sd:t.sd,x:1});setTimeout(()=>{if(!TR)setT(null)},4000)},
  craft(d){const r=JSON.parse(d.r);if(S.craft)return;const a=S.chars[r.a],b=S.chars[r.b];
-  if(r.evo){if(a.n<2||a.st>=3)return;a.n--;S.craft={out:r.out,evo:1,st:a.st+1}}else{if(!a||!b||a.n<2||b.n<2)return;a.n--;b.n--;S.craft={out:r.out,st:S.chars[r.out]?.st||1}}
+  if(r.evo){if(a.n<2||a.st>=3)return;a.n--;S.craft={out:r.out,evo:1,st:a.st+1}}else{if(!a||!b||a.n<2||b.n<2)return;a.n--;b.n--;S.craft={out:r.out,st:S.chars[r.out]?.st||1};const x=CXR[HB[r.out].r];if(x&&Math.random()<CXP)S.craft.x=x}
   S.craft.dur=RAR[HB[r.out].r].t*1000;S.craft.end=Date.now()+S.craft.dur;save();render();scrollTo(0,0)},
  aropen(){sub.ar=!sub.ar},
  wbuy(d){const w=WB[d.id];if(!w||(S.wp||{})[w.id])return;if(S.pts<w.p)return toast('Pas assez de points');S.pts-=w.p;S.wp={...(S.wp||{}),[w.id]:1};S.weq=w.id;sub.ar=1;save();render();sfx('chest');toast(w.n+' achetée et équipée !')},
@@ -1329,8 +1357,11 @@ const A={
   CFG.riddles=(CFG.riddles||[]).filter(r=>r.id!==x.id).concat({id:x.id,q:x.q,o:x.o,a:+x.a,d:Math.max(0,Math.min(3,+x.d||0)),ex:x.ex||'',h:'',by:x.u,au:cleanN(x.nick)||'Joueur'});
   try{await db.doc('subs/'+x.u+'/'+x.id).set({...x,u:null,f:null,k:null,st:'ok'});await saveCfg('Énigme de '+(x.nick||'Joueur')+' publiée')}catch(e){toast('Refusé : '+(e.code||'erreur'))}},
  async sno(d){const x=ALLSUBS.find(y=>y.u===d.u&&y.id===d.id);if(!x||!db)return;try{await db.doc('subs/'+x.u+'/'+x.id).set({...x,u:null,st:'no'});toast('Énigme refusée')}catch(e){toast('Refusé : '+(e.code||'erreur'))}},
+ craftx(){if(S.craft||S.chars.omnirex||!CXL.every(x=>S.chars[x]))return;S.craft={out:'omnirex',st:1,dur:RAR[5].t*1000};S.craft.end=Date.now()+S.craft.dur;save();render();scrollTo(0,0)},
  craft5(){if(S.craft||S.chars.primordius||!REG.every(R=>S.chars[R.hero]))return;S.craft={out:'primordius',st:1,dur:RAR[5].t*1000};S.craft.end=Date.now()+S.craft.dur;save();render();scrollTo(0,0)},
- claim(){const c=S.craft;if(!c||c.end>Date.now())return;S.craft=null;let o=S.chars[c.out];
+ claim(){const c=S.craft;if(!c||c.end>Date.now())return;S.craft=null;
+  if(c.x&&HB[c.x]){S.fus++;bump('forge');const had=give(c.x);save();render();sfx('lvl');reward(c.x,S.chars[c.x].st,had?'Exclusif de forge (5 %) : un exemplaire de plus !':'✨ EXCLUSIF DE FORGE ! Tu as eu la chance des 5 % !');return}
+  let o=S.chars[c.out];
   S.fus++;bump('forge');if(c.evo){o.st=c.st;save();render();reward(c.out,o.st,'Évolution réussie : +25 % de puissance')}
   else{if(o)o.n++;else o=S.chars[c.out]={n:1,lvl:1,xp:0,st:1};save();render();reward(c.out,o.st,o.n>1?'Un exemplaire de plus !':'Nouveau héros forgé !')}},
  advmap(d){view='adv';sub=d&&d.r!=null&&d.r!==''?{r:+d.r}:{};render();scrollTo(0,0)},
@@ -1366,7 +1397,7 @@ const A={
   try{localStorage.setItem('lp1',JSON.stringify(S))}catch(e){}location.reload()},
  evstart(){const dur=Math.max(1,+val('ed')||60);CFG.event={name:val('en').trim()||'Événement',mult:+val('em')||2,end:Date.now()+dur*60000,a:val('ea'),b:val('eb'),out:val('eo'),reward:Math.max(0,+val('er')||0)};saveCfg('Événement lancé pour '+dur+' min')},
  evstop(){CFG.event=null;saveCfg('Événement arrêté')},
- rotsave(){CFG.rot=Math.max(1,+val('rot2')||60);saveCfg('Rotation réglée sur '+CFG.rot+' min')},
+ rotsave(){CFG.rotm=Math.max(1,+val('rot2')||5);saveCfg('Recette changée toutes les '+CFG.rotm+' min')},
  radd(){CFG.recipes=(CFG.recipes||[]).concat({a:val('ra'),b:val('rb'),out:val('ro')});saveCfg('Recette ajoutée')},
  rdel(d){CFG.recipes.splice(+d.i,1);saveCfg('Recette retirée')},
  qadd(){const q=val('qq').trim(),o=[0,1,2,3].map(i=>val('qo'+i).trim());if(!q||o.some(x=>!x))return toast('Remplis la question et les 4 réponses');
@@ -1380,7 +1411,7 @@ const A={
 document.addEventListener('click',e=>{const el=e.target.closest('[data-a]');if(el&&(!ready||gated())&&!['code','lang','reload'].includes(el.dataset.a))return;if(el&&!el.disabled&&A[el.dataset.a])A[el.dataset.a](el.dataset)});
 document.addEventListener('change',e=>{if(e.target.id==='bet')betSel=+e.target.value;if(e.target.id==='stg')admStage=+e.target.value;});
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='num')A.num();if(e.key==='Enter'&&e.target.id==='code')A.code()});
-const KEYS={j:'atk',k:'shoot',l:'shield',u:'charge',i:'sp',o:'gun'},kd={};
+const KEYS={j:'atk',k:'shoot',l:'shield',u:'charge',i:'sp',o:'gun',shift:'dash'},kd={};
 function keyMove(){inp.x=(kd.arrowright||kd.d?1:0)-(kd.arrowleft||kd.q||kd.a?1:0);inp.y=(kd.arrowdown||kd.s?1:0)-(kd.arrowup||kd.z||kd.w?1:0)}
 addEventListener('keydown',e=>{if(view!=='fight')return;const k=e.key.toLowerCase();if(KEYS[k])inp[KEYS[k]]=1;else if(k.startsWith('arrow')||'zqsdaw'.includes(k)){kd[k]=1;keyMove()}else return;e.preventDefault()});
 addEventListener('keyup',e=>{const k=e.key.toLowerCase();if(KEYS[k])inp[KEYS[k]]=0;else{kd[k]=0;if(view==='fight')keyMove()}});
@@ -1436,7 +1467,7 @@ function duelRx(f){
   if(f.q&&!F.over){F.quitWin=1;F.over=.01}
   for(const v of asArr(f.ev)){if(!(v.i>F.lastEv))continue;F.lastEv=v.i;if(F.over)continue;
     if(v.k==='a'){e.atkT=1}
-    else if(v.k==='s'){const w=WB[v.w];F.shots.push({x:+v.x,y:+v.y,vx:+v.vx,vy:+v.vy,own:e,dmg:Math.min(e.atk*(w?w.dmg*1.05:1.2),+v.d||0),col:w?w.col:e.c.glow,r:Math.min(16,+v.r||9),l:Math.min(3.2,+v.l||2.2),w:w?w.id:undefined})}
+    else if(v.k==='s'){const w=WB[v.w];F.shots.push({x:+v.x,y:+v.y,vx:+v.vx,vy:+v.vy,own:e,dmg:Math.min(e.atk*(w?w.dmg*1.05:1.2),+v.d||0),col:w?w.col:e.c.glow,r:Math.min(16,+v.r||9),l:Math.min(3.8,+v.l||2.2),w:w?w.id:undefined,fix:v.fx?1:0})}
     else if(v.k==='p'&&['dash','beam','nova','meteor'].includes(v.ty)){e.spA={type:v.ty,t:0,face:v.f<0?-1:1,y:+v.y||cy(e)};F.nums.push({x:e.x,y:cy(e)-70,v:L(e.c.spn),l:1.2,col:e.c.glow});sfx('sp')}
   }
 }
@@ -1444,7 +1475,7 @@ function oppStep(dt){
   const e=F.e,me=F.p;e.hitT-=dt;
   const k=Math.min(1,dt*14),ag=Math.min(.12,(performance.now()-F.rxT)/1000);
   e.x+=(e.tx+e.tvx*ag-e.x)*k;e.y+=(e.ty+e.tvy*ag-e.y)*k;
-  if(e.atkT>0){const p=e.atkT;e.atkT-=dt/.26;if(!F.over&&p>.5&&e.atkT<=.5&&Math.abs(me.x-e.x)<82*e.c.bulk&&Math.abs(cy(me)-cy(e))<72)hurt(me,e.atk,e)}
+  if(e.atkT>0){const p=e.atkT;e.atkT-=dt/.26;if(!F.over&&p>.5&&e.atkT<=.5&&Math.abs(me.x-e.x)<82*e.c.bulk&&Math.abs(cy(me)-cy(e))<72&&!(me.dashT>0))hurt(me,e.atk*MELEE,e)}
   if(e.charge&&Math.random()<.5)F.parts.push({x:e.x+(Math.random()-.5)*70,y:cy(e)+40,vx:0,vy:-140,l:.5,col:e.c.glow,r:2.5});
   const a=e.spA;if(!a)return;a.t+=dt;
   if(a.type==='dash'){F.parts.push({x:e.x,y:cy(e),vx:0,vy:0,l:.3,col:e.c.glow,r:9});if(!a.done&&!F.over&&Math.abs(e.x-me.x)<70&&Math.abs(cy(e)-cy(me))<85){a.done=1;hurt(me,e.atk*2.6,e)}if(a.t>.45)e.spA=null}
@@ -1458,7 +1489,7 @@ function duelMine(){
   const p=F.p;
   if(p.atkT===1)duelEv({k:'a'});
   if(p.spA&&!p.spA.sent){p.spA.sent=1;duelEv({k:'p',ty:p.spA.type,f:p.face,y:Math.round(p.spA.y)})}
-  for(const s of F.shots)if(s.own===p&&!s.sent){s.sent=1;const o={k:'s',x:Math.round(s.x),y:Math.round(s.y),vx:Math.round(s.vx),vy:Math.round(s.vy),d:Math.round(s.dmg),r:s.r,l:s.l};if(s.w)o.w=s.w;duelEv(o)}
+  for(const s of F.shots)if(s.own===p&&!s.sent){s.sent=1;const o={k:'s',x:Math.round(s.x),y:Math.round(s.y),vx:Math.round(s.vx),vy:Math.round(s.vy),d:Math.round(s.dmg),r:s.r,l:s.l};if(s.w)o.w=s.w;if(s.fix)o.fx=1;duelEv(o)}
 }
 function duelRes(){
   if(F.quitWin)return 'forf';if(F.voided)return 'void';
@@ -1540,18 +1571,18 @@ function plPanel(){
 }
 async function sendCmd(pid,item){const ref=db.doc('gifts/'+pid),s=await ref.get(),items=(s.exists?s.data().items||[]:[]).slice(-40).concat({...item,k:Date.now().toString(36)+Math.random().toString(36).slice(2,6)});await ref.set({items})}
 function applyCmds(items){
-  S.gifted=S.gifted||{};let lastH=null,n=0,mod=0;
+  S.gifted=S.gifted||{};let lastH=null,n=0,mod=0,gp=0;
   for(const it of items||[]){if(!it||!it.k||S.gifted[it.k])continue;
     if(!it.op){if(!HB[it.h])continue;S.gifted[it.k]=1;give(it.h);lastH=it.h;n++;continue}
     S.gifted[it.k]=1;mod=1;const v=Math.floor(+it.v||0),o=it.h&&S.chars[it.h];
-    if(it.op==='pts'){S.pts=Math.max(0,S.pts+v);if(v>0)S.total+=v}
+    if(it.op==='pts'){S.pts=Math.max(0,S.pts+v);if(v>0){S.total+=v;gp+=v}}
     else if(it.op==='arena')S.arena=Math.max(1,Math.min(999,v||1));
     else if(it.op==='rid'){S.solved={};S.failed={};S.hint={};S.streak=0;S.daily=''}
     else if(it.op==='hlvl'&&o){o.lvl=Math.max(1,Math.min(20,o.lvl+v));o.xp=0}
     else if(it.op==='rmchar'&&o){if(Object.keys(S.chars).length>1){delete S.chars[it.h];if(S.sel===it.h)S.sel=Object.keys(S.chars)[0];if(S.craft&&S.craft.out===it.h&&S.craft.evo)S.craft=null}else{o.n=1;o.lvl=1;o.st=1;o.xp=0}}
   }
   if(n||mod){save();if(view!=='fight'&&view!=='duel')render()}
-  if(n)reward(lastH,S.chars[lastH].st,n>1?n+' cadeaux de l\'admin reçus !':'Cadeau de l\'admin !');else if(mod)toast('L\'admin a modifié ton compte');
+  if(n)reward(lastH,S.chars[lastH].st,n>1?n+' cadeaux de l\'admin reçus !':'Cadeau de l\'admin !');else if(gp)toast('🎁 Cadeau de l\'admin : +'+gp+' points !');else if(mod)toast('L\'admin a modifié ton compte');
 }
 /* ---- Tous les joueurs qui ont un code (liste « roster » tenue à jour par l'admin), en ligne ou non ---- */
 let ROSTER={},rosterOk=false;
@@ -1616,7 +1647,7 @@ let last=0;
 function loop(ts){const t=ts/1000,dt=Math.min(.033,t-last||.016);last=t;try{if(F&&view==='fight')fightTick(dt,t);drawPortraits(t)}catch(e){console.error(e)}requestAnimationFrame(loop)}
 let wasEv=false;
 let lastMin=0;setInterval(()=>{hud();duelClock();seenSync();if(!document.hidden)syncPlayer();const mn=Math.floor(Date.now()/60000);if(mn!==lastMin){lastMin=mn;if(view==='home'&&ready&&!gated()&&!typing())render()}const e=!!ev();if(e!==wasEv){wasEv=e;if(view==='home'||view==='forge')render()}
-  if(view==='forge'){const c=S.craft,b=$('#cbtn');if(c&&b){const left=c.end-Date.now();if(left<=0){if(b.disabled)render()}else{b.textContent=fmt(left);$('#cbar').style.width=(1-left/c.dur)*100+'%'}}const r=$('#rot');if(r){const n=nextRot();r.textContent='changent dans '+fmt(n);if(n>(CFG.rot||60)*60000-1500&&!S.craft)render()}}
+  if(view==='forge'){const c=S.craft,b=$('#cbtn');if(c&&b){const left=c.end-Date.now();if(left<=0){if(b.disabled)render()}else{b.textContent=fmt(left);$('#cbar').style.width=(1-left/c.dur)*100+'%'}}const r=$('#rot');if(r){const n=nextRot();r.textContent=L('change dans')+' '+fmt(n);if(n>rotMs()-1500&&!S.craft)render()}}
 },1000);
 async function syncPlayer(){
   if(!db||!uid||syncDead||syncing||!ready||gated())return;
