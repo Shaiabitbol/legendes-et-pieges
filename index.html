@@ -149,6 +149,9 @@ canvas.pt{width:100%;max-width:160px;aspect-ratio:18/19;display:block;margin:0 a
 .advp button.cur{border-color:var(--ec);box-shadow:0 0 14px color-mix(in srgb,var(--ec) 55%,transparent)}
 .advp button.done{opacity:.7}
 .advp button.boss{border-width:2px}
+.atabs{display:flex;flex-wrap:wrap;gap:6px}
+.atabs button{min-height:0;padding:8px 12px;font-size:14px}
+.atabs button.on{border-color:var(--gold);color:var(--gold);background:var(--deep)}
 .cxl{display:flex;align-items:center;gap:10px;border:1px dashed var(--gold);border-radius:10px;padding:6px 10px;background:rgba(255,209,102,.06)}
 .recipe{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:center;gap:4px;text-align:center;font:20px var(--display)}
 .recipe canvas{max-width:92px}
@@ -1173,47 +1176,63 @@ const V={
  },
  admin(){
   if(!isAdmin)return '<div class="panel"><h2>Réservé au propriétaire</h2></div>';
-  const e=ev(),opt=v=>H.map(c=>`<option value="${c.id}" ${c.id===v?'selected':''}>${c.n}</option>`).join('');
-  return `<div data-nt style="display:flex;flex-direction:column;gap:12px"><div class="panel" style="border-color:var(--gold)"><h2>Panneau admin</h2><p class="mute small">Visible uniquement par toi. ${db?'Tes réglages s\'appliquent en direct chez tous les joueurs.':'Serveur injoignable : les réglages ne seront pas enregistrés.'}</p></div>
-  ${plPanel()}
-  ${adminSubs()}
-  <div class="split">
-  <div class="panel" style="border-color:var(--arc)"><h3>Codes d'accès (${CODES.length})</h3><p class="small mute">Chaque joueur entre son code pour jouer. Le nom que tu écris ici devient son pseudo. Si tu supprimes un code, ce joueur ne peut plus entrer. Ton code admin à toi (shai24) n'est pas dans la liste : il te donne ce panneau sur n'importe quel téléphone.</p>
-   <div class="row"><label class="grow">Nom du joueur<input id="cn" maxlength="16" autocomplete="off"></label><label class="grow">Code (vide = au hasard)<input id="cc" maxlength="12" autocomplete="off" autocapitalize="none"></label></div>
-   <button class="btn" data-a="cadd">Créer le code</button>
-   ${CODES.map(c=>`<div class="row"><span class="grow">${esc(c.name)}</span><span class="code">${esc(c.code)}</span><button class="btn2" data-a="pview" data-id="${esc(c.id)}">Voir${plRecs(c.id).some(x=>x.on)?' · en ligne':''}</button><button data-a="cdel" data-id="${esc(c.id)}">${sub.cd===c.id?'Confirmer':'Supprimer'}</button></div>`).join('')||'<p class="small mute">Aucun code pour l\'instant.</p>'}</div>
-  <div class="panel" style="border-color:var(--gold)"><h3>Classement de la semaine</h3>
-   <p class="small mute">Choisis ce que gagne le 1er de la semaine (dimanche → samedi), puis donne-la quand tu veux. Tu n'apparais pas dans le classement.</p>
-   <div class="row"><label class="grow">Héros offert<select id="wh"><option value="">Aucun</option>${H.map(c=>`<option value="${c.id}" ${(CFG.weekly||{}).h===c.id?'selected':''}>${c.n}</option>`).join('')}</select></label>
-   <label class="grow">Points offerts<input id="wp" type="number" min="0" value="${(CFG.weekly||{}).pts||0}"></label></div>
-   <button data-a="wsave">Enregistrer la récompense</button>
-   <div class="row"><button data-a="wl">${sub.wl?'Voir cette semaine':'Voir la semaine dernière'}</button></div>
-   ${(()=>{const id=sub.wl?weekId(-1):weekId(),R=wkRank(id),paid=(CFG.weekly||{}).paid===id;return `<p class="small"><b>${sub.wl?'Semaine dernière':'Cette semaine'}</b>${paid?' · récompense déjà donnée':''}</p>
-    ${R.length?`<div class="tw"><table>${R.slice(0,5).map((p,i)=>`<tr><td>${i+1}</td><td>${esc(p.nick)}</td><td>${p.v} pts</td></tr>`).join('')}</table></div><button class="btn" data-a="wpay" ${paid?'disabled':''}>Donner la récompense à ${esc(R[0].nick)}</button>`:'<p class="small mute">Personne pour l\'instant.</p>'}`})()}</div>
-  <div class="panel"><h3>Événement spécial ${e?'· en cours':''}</h3>
-   <label>Nom<input id="en" maxlength="40" value="${esc(e?.name||'Éclipse des dragons')}"></label>
-   <div class="row"><label class="grow">Points<select id="em">${[2,3,5].map(m=>`<option value="${m}" ${e?.mult===m?'selected':''}>×${m}</option>`).join('')}</select></label>
-   <label class="grow">Durée (minutes)<input id="ed" type="number" min="1" value="60"></label><label class="grow">Prime du boss<input id="er" type="number" min="0" value="${e?.reward||150}"></label></div>
-   <p class="small mute">Recette spéciale (le résultat sert aussi de boss) :</p>
-   <div class="row"><select id="ea">${opt(e?.a||'drakonir')}</select>+<select id="eb">${opt(e?.b||'aethon')}</select>→<select id="eo">${opt(e?.out||'neantis')}</select></div>
-   <div class="row"><button class="btn" data-a="evstart">${e?'Relancer':'Lancer l\'événement'}</button><button data-a="evstop" ${e?'':'disabled'}>Arrêter</button></div></div>
-  <div class="panel"><h3>Recettes de la forge</h3>
-   <label>Changement de recette toutes les (minutes)<input id="rot2" type="number" min="1" value="${CFG.rotm||5}"></label><button data-a="rotsave">Enregistrer la durée</button>
-   <p class="small mute">Recettes imposées (remplacent la rotation tant que la liste n'est pas vide) :</p>
-   ${(CFG.recipes||[]).map((r,i)=>`<div class="row small"><span class="grow">${HB[r.a]?.n} + ${HB[r.b]?.n} → <b>${HB[r.out]?.n}</b></span><button data-a="rdel" data-i="${i}">Retirer</button></div>`).join('')||'<p class="small mute">Aucune : rotation automatique.</p>'}
-   <div class="row"><select id="ra">${opt('braskar')}</select>+<select id="rb">${opt('sylvar')}</select>→<select id="ro">${opt('givrelame')}</select></div><button data-a="radd">Ajouter cette recette</button></div>
-  <div class="panel"><h3>Ajouter une énigme</h3>
-   <label>Question<textarea id="qq" rows="2" maxlength="240"></textarea></label>
-   ${[0,1,2,3].map(i=>`<label>Réponse ${i+1}<input id="qo${i}" maxlength="80"></label>`).join('')}
-   <div class="row"><label class="grow">Bonne réponse<select id="qa"><option value="0">Réponse 1</option><option value="1">Réponse 2</option><option value="2">Réponse 3</option><option value="3">Réponse 4</option></select></label>
-   <label class="grow">Difficulté<select id="qd">${DIFF.map((d,i)=>`<option value="${i}">${d}</option>`).join('')}</select></label></div>
-   <label>Explication<input id="qe" maxlength="200"></label><label>Indice (facultatif)<input id="qh" maxlength="200"></label><button class="btn" data-a="qadd">Publier l'énigme</button>
-   ${(CFG.riddles||[]).map((r,i)=>`<div class="row small"><span class="grow">${esc(r.q)}</span><button data-a="qdel" data-i="${i}">Supprimer</button></div>`).join('')}</div>
-  <div class="panel"><h3>Tests</h3><div class="row"><button data-a="t1">+1 000 points</button><button data-a="t2">Tout débloquer</button><button data-a="t3">Héros actif niveau max</button><button data-a="t4">${sub.rst?'Confirmer la remise à zéro':'Remettre ma partie à zéro'}</button></div>
-   <h3>Joueurs (${PLAYERS.length})</h3><div class="tw"><table><tr><th>Pseudo</th><th>Points</th><th>Total</th><th>Étage</th><th>Héros</th><th>Énigmes</th></tr>
-   ${PLAYERS.map(p=>`<tr><td>${esc(p.nick||'Joueur')}</td><td>${p.pts>=INF?'∞':p.pts||0}</td><td>${p.total||0}</td><td>${p.arena||1}</td><td>${p.heroes||0}</td><td>${p.solved||0}</td></tr>`).join('')||'<tr><td colspan="6" class="mute">Aucun joueur enregistré pour l\'instant.</td></tr>'}</table></div>
-   <h3>Offrir un héros ou des points</h3>${giftList().length?`<div class="row"><label class="grow">Joueur<select id="gp">${giftList().map(p=>`<option value="${esc(p.id)}">${esc(p.nick||'Joueur')}${p.id===uid?' (toi)':''}${p.on?' · en ligne':''}</option>`).join('')}</select></label><label class="grow">Héros<select id="gh">${opt('drakonir')}</select></label></div><button class="btn" data-a="gift">Offrir ce héros</button><div class="row"><label class="grow">Points à offrir<input id="gpts" type="number" min="1" value="100" inputmode="numeric"></label><button class="btn2" data-a="giftpts">Offrir ces points</button></div><p class="small mute">Le joueur le reçoit dès qu'il ouvre le jeu.</p>`:'<p class="small mute">Aucun joueur pour l\'instant. Un joueur connecté au jeu apparaît ici.</p>'}</div></div></div>`;
+  const e=ev(),opt=v=>H.map(c=>`<option value="${c.id}" ${c.id===v?'selected':''}>${c.n}</option>`).join(''),t=sub.at||'joueurs',nsub=ALLSUBS.filter(x=>x.st==='wait').length;
+  const tabs=[['joueurs','👥 Joueurs'],['cadeaux','🎁 Cadeaux'],['enigmes','❓ Énigmes'+(nsub?' ('+nsub+')':'')],['jeu','⚙️ Réglages du jeu'],['tests','🧪 Mes tests']];
+  const seen=c=>{const r=plRecs(c.id);if(r.some(x=>x.on))return '<span style="color:var(--ok)">● en ligne</span>';const at=Math.max(0,...r.map(x=>x.at||0),...PLAYERS.filter(p=>p.cid===c.id).map(p=>p.at||0));return '<span class="mute">'+ago(at)+'</span>'};
+  const others=giftList().filter(p=>p.id!==uid);
+  const T={
+   joueurs:()=>sub.pv?plPanel():`<div class="panel" style="border-color:var(--arc)"><h3>Créer un code pour un nouveau joueur</h3>
+     <p class="small mute">Le prénom devient son pseudo. Donne-lui le code : il le tape pour entrer dans le jeu. Ton code admin n'est pas dans la liste.</p>
+     <div class="row"><label class="grow">Prénom du joueur<input id="cn" maxlength="16" autocomplete="off"></label><label class="grow">Code (vide = au hasard)<input id="cc" maxlength="12" autocomplete="off" autocapitalize="none"></label></div>
+     <button class="btn" data-a="cadd">Créer le code</button></div>
+    <div class="panel"><h3>Tous les joueurs (${CODES.length})</h3><p class="small mute">« Voir » ouvre sa fiche : ses points, ses héros, et des boutons pour modifier son compte.</p>
+     ${CODES.map(c=>`<div class="row" style="border-top:1px solid var(--line);padding-top:8px"><span class="grow"><b>${esc(c.name)}</b><br><span class="small">${seen(c)} · code <span class="code">${esc(c.code)}</span></span></span><button class="btn2" data-a="pview" data-id="${esc(c.id)}">Voir</button><button data-a="cdel" data-id="${esc(c.id)}">${sub.cd===c.id?'Confirmer ?':'Supprimer'}</button></div>`).join('')||'<p class="small mute">Aucun code pour l\'instant.</p>'}</div>
+    <details class="panel"><summary style="cursor:pointer"><b>Tableau des scores</b></summary><div class="tw"><table><tr><th>Pseudo</th><th>Points</th><th>Total</th><th>Étage</th><th>Héros</th><th>Énigmes</th></tr>
+     ${PLAYERS.filter(p=>!p.adm).map(p=>`<tr><td>${esc(p.nick||'Joueur')}</td><td>${p.pts||0}</td><td>${p.total||0}</td><td>${p.arena||1}</td><td>${p.heroes||0}</td><td>${p.solved||0}</td></tr>`).join('')||'<tr><td colspan="6" class="mute">Aucun joueur pour l\'instant.</td></tr>'}</table></div></details>`,
+   cadeaux:()=>`<div class="panel" style="border-color:var(--gold)"><h3>Offrir quelque chose à un joueur</h3>
+     ${others.length?`<label>1. Choisis le joueur<select id="gp">${others.map(p=>`<option value="${esc(p.id)}" ${sub.gp===p.id?'selected':''}>${esc(p.nick||'Joueur')}${p.on?' · en ligne':''}</option>`).join('')}</select></label>
+     <div class="split"><div class="panel"><h3>💰 Des points</h3><label>Combien ?<input id="gpts" type="number" min="1" value="100" inputmode="numeric"></label><button class="btn" data-a="giftpts">Offrir ces points</button></div>
+      <div class="panel"><h3>🦸 Un héros</h3><label>Lequel ?<select id="gh">${opt('drakonir')}</select></label><button class="btn" data-a="gift">Offrir ce héros</button></div></div>
+     <p class="small mute">Le joueur le reçoit tout de suite s'il est en ligne, sinon dès qu'il ouvre le jeu, avec un message « Cadeau de l'admin ». Un joueur apparaît ici après s'être connecté au moins une fois.</p>`
+     :'<p class="small mute">Aucun joueur pour l\'instant : un joueur apparaît ici après s\'être connecté au moins une fois.</p>'}</div>
+    <div class="panel" style="border-color:var(--gold)"><h3>🏆 Récompense du 1er de la semaine</h3>
+     <p class="small mute">Choisis ce que gagne le 1er du classement de la semaine (dimanche → samedi), puis donne-la quand tu veux.</p>
+     <div class="row"><label class="grow">Héros offert<select id="wh"><option value="">Aucun</option>${H.map(c=>`<option value="${c.id}" ${(CFG.weekly||{}).h===c.id?'selected':''}>${c.n}</option>`).join('')}</select></label>
+     <label class="grow">Points offerts<input id="wp" type="number" min="0" value="${(CFG.weekly||{}).pts||0}"></label></div>
+     <button data-a="wsave">Enregistrer la récompense</button>
+     <div class="row"><button data-a="wl">${sub.wl?'Voir cette semaine':'Voir la semaine dernière'}</button></div>
+     ${(()=>{const id=sub.wl?weekId(-1):weekId(),R=wkRank(id),paid=(CFG.weekly||{}).paid===id;return `<p class="small"><b>${sub.wl?'Semaine dernière':'Cette semaine'}</b>${paid?' · récompense déjà donnée':''}</p>
+      ${R.length?`<div class="tw"><table>${R.slice(0,5).map((p,i)=>`<tr><td>${i+1}</td><td>${esc(p.nick)}</td><td>${p.v} pts</td></tr>`).join('')}</table></div><button class="btn" data-a="wpay" ${paid?'disabled':''}>Donner la récompense à ${esc(R[0].nick)}</button>`:'<p class="small mute">Personne pour l\'instant.</p>'}`})()}</div>`,
+   enigmes:()=>`${adminSubs()}
+    <div class="panel"><h3>Ajouter ta propre énigme</h3>
+     <label>Question<textarea id="qq" rows="2" maxlength="240"></textarea></label>
+     ${[0,1,2,3].map(i=>`<label>Réponse ${i+1}<input id="qo${i}" maxlength="80"></label>`).join('')}
+     <div class="row"><label class="grow">Bonne réponse<select id="qa">${[0,1,2,3].map(i=>`<option value="${i}">Réponse ${i+1}</option>`).join('')}</select></label>
+     <label class="grow">Difficulté<select id="qd">${DIFF.map((d,i)=>`<option value="${i}">${d}</option>`).join('')}</select></label></div>
+     <label>Explication<input id="qe" maxlength="200"></label><label>Indice (facultatif)<input id="qh" maxlength="200"></label><button class="btn" data-a="qadd">Publier l'énigme</button></div>
+    <div class="panel"><h3>Énigmes ajoutées (${(CFG.riddles||[]).length})</h3>${(CFG.riddles||[]).map((r,i)=>`<div class="row small"><span class="grow">${esc(r.q)}${r.au?` <span class="mute">· par ${esc(r.au)}</span>`:''}</span><button data-a="qdel" data-i="${i}">Supprimer</button></div>`).join('')||'<p class="small mute">Aucune pour l\'instant.</p>'}</div>`,
+   jeu:()=>`<div class="panel" style="border-color:var(--ember)"><h3>Événement spécial ${e?'· en cours':''}</h3>
+     <p class="small mute">Pendant l'événement, tout le monde gagne plus de points, une recette spéciale apparaît à la forge et un boss peut être défié.</p>
+     <label>Nom<input id="en" maxlength="40" value="${esc(e?.name||'Éclipse des dragons')}"></label>
+     <div class="row"><label class="grow">Points<select id="em">${[2,3,5].map(m=>`<option value="${m}" ${e?.mult===m?'selected':''}>×${m}</option>`).join('')}</select></label>
+     <label class="grow">Durée (minutes)<input id="ed" type="number" min="1" value="60"></label><label class="grow">Prime du boss<input id="er" type="number" min="0" value="${e?.reward||150}"></label></div>
+     <p class="small mute">Recette spéciale (le résultat sert aussi de boss) :</p>
+     <div class="row"><select id="ea">${opt(e?.a||'drakonir')}</select>+<select id="eb">${opt(e?.b||'aethon')}</select>→<select id="eo">${opt(e?.out||'neantis')}</select></div>
+     <div class="row"><button class="btn" data-a="evstart">${e?'Relancer':'Lancer l\'événement'}</button><button data-a="evstop" ${e?'':'disabled'}>Arrêter</button></div></div>
+    <div class="panel"><h3>Forge</h3>
+     <label>La recette change toutes les (minutes)<input id="rot2" type="number" min="1" value="${CFG.rotm||5}"></label><button data-a="rotsave">Enregistrer</button>
+     <p class="small mute">Recettes imposées (si tu en ajoutes, seules elles tournent) :</p>
+     ${(CFG.recipes||[]).map((r,i)=>`<div class="row small"><span class="grow">${HB[r.a]?.n} + ${HB[r.b]?.n} → <b>${HB[r.out]?.n}</b></span><button data-a="rdel" data-i="${i}">Retirer</button></div>`).join('')||'<p class="small mute">Aucune : rotation automatique.</p>'}
+     <div class="row"><select id="ra">${opt('braskar')}</select>+<select id="rb">${opt('sylvar')}</select>→<select id="ro">${opt('givrelame')}</select></div><button data-a="radd">Ajouter cette recette</button></div>`,
+   tests:()=>`<div class="panel" style="border-color:var(--bad)"><h3>🧪 Boutons de test</h3>
+     <p class="small"><b>Ces boutons changent seulement TON compte à toi</b>, pour essayer le jeu. Ils ne donnent rien aux autres joueurs : pour offrir quelque chose à un joueur, va dans « 🎁 Cadeaux ».</p>
+     <div class="split"><button data-a="t2">Débloquer tous les héros pour moi</button><button data-a="t3">Mon héros actif au niveau max</button><button data-a="t4">${sub.rst?'Confirmer la remise à zéro ?':'Remettre ma partie à zéro'}</button></div></div>`
+  };
+  return `<div data-nt style="display:flex;flex-direction:column;gap:12px"><div class="panel" style="border-color:var(--gold)"><h2>Panneau admin</h2><p class="mute small">Visible uniquement par toi. ${db?'Tes changements s\'appliquent en direct chez tous les joueurs.':'Serveur injoignable : les changements ne seront pas enregistrés.'}</p>
+   <div class="atabs">${tabs.map(([k,l])=>`<button class="${k===t?'on':''}" data-a="atab" data-t="${k}">${l}</button>`).join('')}</div></div>
+  ${(T[t]||T.joueurs)()}</div>`;
  }
+
 };
 function render(){
   if(!ready||gated()){F=null;$('#nav').innerHTML='';hud();
@@ -1323,6 +1342,7 @@ const A={
   try{await sendCmd(p,{op:'pts',v});toast(v+' points offerts à '+((giftList().find(x=>x.id===p)||{}).nick||'Joueur'))}catch(e){toast('Don refusé : '+(e.code||'erreur'))}},
  async gift(){if(!db)return toast('Base indisponible ici');const p=val('gp'),h=val('gh');if(!p||!HB[h])return;
   try{await sendCmd(p,{h});toast(HB[h].n+' offert à '+((giftList().find(x=>x.id===p)||{}).nick||'Joueur'))}catch(e){toast('Don refusé : '+(e.code||'erreur'))}},
+ atab(d){sub={at:d.t};render()},
  pview(d){sub.pv=d.id;render();scrollTo(0,0)},
  pclose(){sub.pv=null;render()},
  async pcmd(d){if(!db)return toast('Base indisponible ici');const u=d.u;let it;
