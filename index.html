@@ -959,7 +959,7 @@ function fightTick(dt,t){
   if(F.intro>0||F.over){g.font='54px "Russo One",sans-serif';g.lineWidth=8;g.strokeStyle='#000';let win=F.win;if(F.duel&&F.over){const r=duelRes();win=r==='win'||r==='forf'?1:r==='draw'||r==='void'?2:0}
     if(F.duel&&!F.rx&&performance.now()-F.rxT>4000){g.font='18px "Russo One",sans-serif';g.lineWidth=4;g.strokeStyle='#000';const tx=L('Connexion avec')+' '+(DU?.on||'')+'…';g.strokeText(tx,W/2,HH/2+10);g.fillStyle='#fff';g.fillText(tx,W/2,HH/2+10);
       // Diagnostic (à envoyer en capture d'écran si le duel reste bloqué)
-      const q=F.dg||{},o=x=>x?'oui':'NON',ln=['Diagnostic : mises à jour '+(q.t||0)+' · joueurs '+(q.n||0)+' · moi '+o(q.me),'adversaire '+o(q.op)+' (direct '+o(q.raw)+') · défi '+o(q.d)+' · pour moi '+o(q.to)+' · même duel '+o(q.sd),'images '+o(q.f)+' · bonnes images '+o(q.fsd)+' · reçues '+(F.rxN||0)+' · réseau '+(room&&room.up()?'ok':'COUPÉ'),LASTERR?'Erreur : '+LASTERR:''];
+      const q=F.dg||{},o=x=>x?'oui':'NON',ln=['Diagnostic : mises à jour '+(q.t||0)+' · joueurs '+(q.n||0)+' · moi '+o(q.me),'adversaire '+o(q.op)+' (direct '+o(q.raw)+') · défi '+o(q.d)+' · pour moi '+o(q.to)+' · même duel '+o(q.sd),'images '+o(q.f)+' · bonnes images '+o(q.fsd)+' · reçues '+(F.rxC||0)+' · réseau '+(room&&room.up()?'ok':'COUPÉ'),'état '+(DU?DU.s:'-')+' · traitements '+(q.c||0)+(q.why?' · refus '+q.why:'')+' · v2',LASTERR?'Erreur : '+LASTERR:''];
       const dx=$('#dgx');if(dx){const h=ln.filter(Boolean).join('\n');if(dx.textContent!==h)dx.textContent=h;dx.hidden=false}}
     else{const dx=$('#dgx');if(dx&&!dx.hidden)dx.hidden=true}
     const m=L(F.over?(F.duel&&F.voided&&!F.quitWin?'ANNULÉ':win===2?'ÉGALITÉ':win?'VICTOIRE':'DÉFAITE'):F.duel&&!F.rx?'EN ATTENTE…':(F.intro>.5?'PRÊT ?':'COMBAT !'));g.strokeText(m,W/2,HH/2-40);g.fillStyle=F.over&&!win?'#ff5d73':'#ffd166';g.fillText(m,W/2,HH/2-40)}
@@ -1724,7 +1724,7 @@ const A={
   if(S.pts<bet)return toast('Tu n\'as pas assez de points pour cette mise');if((+p.presence.pts||0)<bet)return toast('Ce joueur n\'a pas assez de points pour cette mise');
   DU={to:p.peer,on:pname(p),bet,sd:Math.floor(Math.random()*1e9),mv:'',om:'',h:myH(),s:'wait',me:ME.peer,n:0,t0:Date.now()};S.pts-=bet;S.esc={bet,st:'wait'};save();pubD();view='duel';sub={};render()},
  dacc(){dropDone();const p=INV,d=p?.presence?.d;if(!p||!d||DU||!ME)return;const bet=Math.max(0,Math.min(1e6,Math.floor(+d.bet||0)));if(S.pts<bet)return toast('Tu n\'as pas assez de points pour cette mise');
-  DU={to:p.peer,on:pname(p),bet,sd:+d.sd||0,mv:'',om:'',h:myH(),oh:d.h,s:'play',me:ME.peer,n:0,rt:Date.now(),seen:Date.now()};S.pts-=bet;S.esc={bet,st:'play'};INV=null;save();pubD();drawInv();startDuel()},
+  DU={to:p.peer,on:pname(p),bet,sd:+d.sd||0,mv:'',om:'',h:myH(),oh:d.h,s:'play',me:ME.peer,n:0,rt:Date.now(),seen:Date.now()};S.pts-=bet;S.esc={bet,st:'play'};INV=null;startDuel();save();pubD();drawInv()},
  dref(){const p=INV,d=p?.presence?.d;if(!p||!d)return;refused[p.peer+d.sd]=1;INV=null;drawInv();setD({to:p.peer,sd:d.sd,x:1});setTimeout(()=>{if(!DU)setD(null)},4000)},
  dcancel(){if(DU&&DU.s==='wait')endInvite('Défi annulé')},
  dclose(){if(!DU)return;refused[DU.to+DU.sd]=1;DU=null;setD(null);view='fprep';sub={};render()},
@@ -1819,10 +1819,12 @@ function duelTx(force){
   try{room.live(f).catch(()=>{})}catch(e){}
 }
 function duelRx(f){
-  if(!F||!F.duel||!f||f.sd!==DU.sd)return;const e=F.e;
+  if(F&&F.dg)F.dg.c=(F.dg.c||0)+1;
+  if(!F||!F.duel||!f||String(f.sd)!==String(DU.sd)){if(F&&F.dg)F.dg.why='sd';return}const e=F.e;
+  if(!F.rx){F.rx=1;F.rxT=performance.now();e.x=e.tx=+f.x||e.x;e.y=e.ty=+f.y||e.y}
   // La liste en ligne est renvoyée à chaque changement de n'importe quel joueur : on ignore une image déjà reçue
-  if(f.n&&f.n===F.rxN)return;F.rxN=f.n;DU.seen=Date.now();
-  F.rxT=performance.now();if(!F.rx){F.rx=1;e.x=e.tx=+f.x||e.x;e.y=e.ty=+f.y||e.y}
+  if(f.n&&f.n===F.rxN)return;F.rxN=f.n;F.rxC=(F.rxC||0)+1;DU.seen=Date.now();
+  F.rxT=performance.now();
   e.dn=DNB[f.dn]?f.dn:'';{const q=asArr(f.pt);e.pet=q.length&&PETB[q[0]]?{id:q[0],lvl:Math.max(1,Math.min(10,+q[1]||1))}:null}e.tx=+f.x||0;e.ty=+f.y||GY;e.tvx=+f.vx||0;e.tvy=+f.vy||0;e.face=f.fc<0?-1:1;e.shield=!!f.sh;e.charge=!!f.ch;e.en=+f.en||0;
   if(f.mhp>0)e.mhp=+f.mhp;
   const hp=Math.max(0,+f.hp||0);
@@ -1871,13 +1873,14 @@ function roomTick(){
   PEERS=room.peers().filter(p=>p.kind==='viewer');ME=PEERS.find(p=>p.sameTab)||null;
   // Pendant un duel, on lit l'adversaire directement (même si sa présence paraît vieille ou si la nôtre manque un instant)
   if(DU){const rw=room.raw?room.raw()[DU.to]:null,op=PEERS.find(p=>p.peer===DU.to)||(rw?{peer:DU.to,presence:rw}:null),od=op?.presence?.d,linked=!!od&&od.to===DU.me&&od.sd===DU.sd;
-    if(F&&F.duel){const fr=op?.presence?.f;F.dg={t:(F.dg?.t||0)+1,n:PEERS.length,me:!!ME,op:!!op,raw:!!rw,d:!!od,to:!!od&&od.to===DU.me,sd:!!od&&od.sd===DU.sd,f:!!fr,fsd:!!fr&&fr.sd===DU.sd}}
-    if(DU.s==='wait'){if(!op)endInvite('Ce joueur est parti');else if(linked){if(od.x)endInvite('Défi refusé');else{DU.s='play';DU.oh=od.h;DU.seen=Date.now();S.esc={bet:DU.bet,st:'play'};save();startDuel()}}
+    if(F&&F.duel){const fr=op?.presence?.f;F.dg={c:F.dg?.c||0,why:F.dg?.why||'',t:(F.dg?.t||0)+1,n:PEERS.length,me:!!ME,op:!!op,raw:!!rw,d:!!od,to:!!od&&od.to===DU.me,sd:!!od&&od.sd===DU.sd,f:!!fr,fsd:!!fr&&fr.sd===DU.sd}}
+    if(DU.s==='wait'){if(!op)endInvite('Ce joueur est parti');else if(linked){if(od.x)endInvite('Défi refusé');else{DU.s='play';DU.oh=od.h;DU.seen=Date.now();S.esc={bet:DU.bet,st:'play'};startDuel();save()}}
       // Les deux joueurs se sont défiés en même temps : celui qui a le plus grand identifiant retire son défi et voit celui de l'autre
       else if(od&&od.to===DU.me&&!od.x&&od.mv===''&&DU.me>DU.to)endInvite('')}
-    else if(DU.s==='play'){
+    if(DU&&DU.s!=='done'&&linked&&F&&F.duel&&DU.s!=='play'){DU.s='play'}
+    if(DU&&DU.s==='play'){
       if(linked&&F&&F.duel){duelRx(op.presence.f);if(od.x===1&&!F.over){F.quitWin=1;F.over=.01}if(od.x===3&&!F.over){F.voided=1;F.over=.01}}
-      else if(!F||!F.duel)finishDuel('forf')}
+      else if((!F||!F.duel)&&Date.now()-(DU.rt||DU.seen||0)>8000)finishDuel('forf')}
   }
   if(!ME)return;
   {const k2=PEERS.map(p=>p.peer+JSON.stringify(Object.assign({},p.presence,{f:0}))).join('|');if(k2===rtSig)return;rtSig=k2}
