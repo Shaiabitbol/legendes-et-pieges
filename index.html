@@ -465,7 +465,16 @@ function gated(){return !isAdmin&&!S.joined}
 function boss(){return isAdmin}
 function unlockAll(){H.forEach(c=>{if(!S.chars[c.id])S.chars[c.id]={n:1,lvl:1,xp:0,st:1}})}
 const typing=()=>/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName||'');
-function save(){if(boss())S.pts=INF;try{localStorage.setItem('lp1',JSON.stringify(S))}catch(e){} hud(); syncPlayer(); pushPres()}
+function save(){if(boss())S.pts=INF;S.at=Date.now();try{localStorage.setItem('lp1',JSON.stringify(S))}catch(e){} hud(); syncPlayer(); pushPres(); cloudSave()}
+let cloudT=0,cloudTm=0,cloudOk=false;
+function cloudSave(now){if(!db||!myCid||!cloudOk||isAdmin||gated())return;clearTimeout(cloudTm);const go=()=>{cloudT=Date.now();try{db.doc('saves/'+myCid).set({s:JSON.stringify(S),total:S.total||0,at:Date.now()}).catch(()=>{})}catch(e){}};
+  if(now||Date.now()-cloudT>15000)go();else cloudTm=setTimeout(go,15000-(Date.now()-cloudT))}
+// Au démarrage : si le serveur a une partie plus avancée que ce téléphone, on la reprend
+async function cloudLoad(){if(!db||!myCid||isAdmin)return;try{const r=await db.doc('saves/'+myCid).get();if(r.exists){const c=r.data(),o=JSON.parse(c.s||'null');
+   if(o&&o.chars&&(c.total||0)>(S.total||0)){const lang=S.lang,snd=S.snd,code=S.code;S=Object.assign(JSON.parse(JSON.stringify(DEF)),o);S.lang=lang;S.snd=snd||S.snd;S.code=code;S.joined=1;S.esc=null;
+    try{localStorage.setItem('lp1',JSON.stringify(S))}catch(e){}cloudOk=true;if(view!=='fight')render();toast('☁️ Ta progression a été récupérée !');return}}
+  cloudOk=true;cloudSave(true)}catch(e){cloudOk=true}}
+addEventListener('visibilitychange',()=>{if(document.hidden)cloudSave(true)});
 if(S.esc){if(S.esc.st==='wait')S.pts+=S.esc.bet;S.esc=null}
 S.hint=S.hint||{};S.trd=S.trd||{};S.failed=S.failed||{};S.snd=S.snd||{fx:1,mu:1};S.wins=S.wins||0;S.dw=S.dw||0;S.dl=S.dl||0;S.boxes=S.boxes||0;S.fus=S.fus||0;S.since=S.since||Date.now();
 /* ---- Plusieurs comptes sur le même appareil ----
@@ -473,7 +482,7 @@ S.hint=S.hint||{};S.trd=S.trd||{};S.failed=S.failed||{};S.snd=S.snd||{fx:1,mu:1}
    (une instance Firebase par compte), pour que le classement et les cadeaux ne se mélangent pas. */
 function profKey(c){return 'lp1:'+c}
 function stashProfile(){if(!S.code)return;try{localStorage.setItem(profKey(S.code),JSON.stringify(S))}catch(e){}}
-function loadProfile(c){let o=null;try{o=JSON.parse(localStorage.getItem(profKey(c)))}catch(e){}const lang=S.lang,snd=S.snd;S=JSON.parse(JSON.stringify(DEF));if(o&&o.chars)Object.assign(S,o);S.lang=lang;S.snd=snd||{fx:1,mu:1};
+function loadProfile(c){let o=null;try{o=JSON.parse(localStorage.getItem(profKey(c)))}catch(e){}if(!o&&!S.code&&(S.total||0)>(DEF.total||0))return;const lang=S.lang,snd=S.snd;S=JSON.parse(JSON.stringify(DEF));if(o&&o.chars)Object.assign(S,o);S.lang=lang;S.snd=snd||{fx:1,mu:1};
   S.hint=S.hint||{};S.trd=S.trd||{};S.failed=S.failed||{};S.esc=null;S.wins=S.wins||0;S.dw=S.dw||0;S.dl=S.dl||0;S.boxes=S.boxes||0;S.fus=S.fus||0;S.since=S.since||Date.now()}
 function accMap(){try{return JSON.parse(localStorage.getItem('lpacc'))||{}}catch(e){return{}}}
 function accSet(m){try{localStorage.setItem('lpacc',JSON.stringify(m))}catch(e){}}
@@ -2029,7 +2038,7 @@ async function syncPlayer(){
   syncing=true;lastSync=Date.now();try{await db.doc('players/'+uid).set({...d,at:Date.now()});lastSig=sig}catch(e){if(e&&e.code!=='unavailable')syncDead=true}syncing=false;
 }
 async function codeId(code){const en=new TextEncoder(),k=await crypto.subtle.importKey('raw',en.encode(code),'PBKDF2',false,['deriveBits']),b=await crypto.subtle.deriveBits({name:'PBKDF2',salt:en.encode('legendes-pieges-v1'),iterations:60000,hash:'SHA-256'},k,128);return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
-async function watchCode(){if(!db||!S.code)return;try{const id=await codeId(S.code);myCid=id;pushPres();if(codeUnsub)codeUnsub();
+async function watchCode(){if(!db||!S.code)return;try{const id=await codeId(S.code);myCid=id;pushPres();cloudLoad();if(codeUnsub)codeUnsub();
   codeUnsub=db.doc('codes/'+id).onSnapshot(s=>{if(s.metadata&&s.metadata.fromCache)return;
     if(!s.exists){S.code='';S.joined=0;save();try{room&&room.presence({nick:null,h:null,d:null,tr:null,c:null})}catch(e){};view='home';sub={};render();drawInv();toast('Ton code a été désactivé.')}
     else{const n=cleanN(s.data().name);if(n&&n!==S.nick){S.nick=n;save()}}},()=>{})}catch(e){}}
@@ -2041,7 +2050,8 @@ async function boot(){
   try{PR=await fbPrims();uid=PR.uid;db=mkDb(PR);room=mkRoom(PR);
     if(S.code){try{const k=await admKey(S.code);isAdmin=!!k&&(await PR.get('admins/'+uid))===k}catch(e){}}
     if(S.code&&!isAdmin){let m;try{m=await PR.get('members/'+uid)}catch(e){m=undefined}
-      if(m===undefined)S.joined=S.joined?1:0;else{S.joined=m?1:0;if(!m)S.code=''}}
+      if(m===null){try{const id=await codeId(S.code);if(await PR.get('codes/'+id)){await PR.set('members/'+uid,id);m=id}}catch(e){}}
+      if(m===undefined)S.joined=S.joined?1:0;else{S.joined=m?1:0;if(!m){stashProfile();S.code=''}}}
   }catch(e){console.error('serveur',e);PR=null;db=null;room=null}
   ready=true;if(isAdmin){S.nick=S.nick||'Shai';S.joined=1}if(boss()){unlockAll();S.pts=INF}render();pushPres();
   if(db&&isAdmin){let seeded=false;db.doc('adm/codes').onSnapshot(s=>{CODES=s.exists?(s.data().list||[]).slice():[];rosterSync();if(!seeded){seeded=true;if(!s.exists)seedCodes(S.code)}if(view==='admin'&&!typing())render()},()=>{})}
