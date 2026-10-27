@@ -596,7 +596,7 @@ const HE={'ÉGALITÉ':'תיקו','EN ATTENTE…':'ממתין…','Duel en cours'
  'Ton code':'הקוד שלך','Ton pseudo':'הכינוי שלך','Sans compte Claude, tu joues en solo : pas de duels ni d\'échanges avec tes potes.':'בלי חשבון Claude משחקים לבד: אין דו־קרבות ואין החלפות עם חברים.','Écris aussi ton pseudo (2 caractères minimum).':'כתוב גם את הכינוי שלך (לפחות 2 תווים).','Entrer':'כניסה','Écris ton code (lettres et chiffres).':'כתוב את הקוד שלך (אותיות ומספרים).',
  'Ce code n\'existe pas. Vérifie-le ou demande-en un à l\'admin.':'הקוד הזה לא קיים. בדוק אותו או בקש קוד ממנהל המשחק.',
  'Connexion au serveur impossible. Vérifie ta connexion internet et recharge la page.':'אין חיבור לשרת. בדוק את חיבור האינטרנט וטען את הדף מחדש.',
- 'Impossible de vérifier le code pour le moment. Réessaie.':'לא ניתן לבדוק את הקוד כרגע. נסה שוב.','Vérification…':'בודק…','Ton code a été désactivé.':'הקוד שלך בוטל.','Ton compte est bloqué jusqu\'à':'החשבון שלך חסום עד','Tu ne perds rien : tu retrouveras toute ta progression en remettant ton code.':'לא תאבד כלום: תמצא את כל ההתקדמות שלך כשתכניס שוב את הקוד.',
+ 'Impossible de vérifier le code pour le moment. Réessaie.':'לא ניתן לבדוק את הקוד כרגע. נסה שוב.','Vérification…':'בודק…','Ton code a changé ou a été désactivé. Demande ton code à l\'admin.':'הקוד שלך שונה או בוטל. בקש את הקוד שלך ממנהל המשחק.','Ton compte est bloqué jusqu\'à':'החשבון שלך חסום עד','Tu ne perds rien : tu retrouveras toute ta progression en remettant ton code.':'לא תאבד כלום: תמצא את כל ההתקדמות שלך כשתכניס שוב את הקוד.',
  'Facile':'קל','Moyen':'בינוני','Difficile':'קשה','Extrême':'קיצוני',
  'Commun':'נפוץ','Rare':'נדיר','Épique':'אפי','Légendaire':'אגדי','Mythique':'מיתי',
  'Braskar':'ברסקר','Sylvar':'סילבר','Givrelame':'גיברלם','Tonnerok':'טונרוק','Ombrax':'אומברקס','Pyralis':'פיראליס','Drakonir':'דרקוניר','Aethon':'אתון','Néantis':'נאנטיס','Kael\'Thar':'קאל׳תאר',
@@ -1913,6 +1913,7 @@ const A={
  async code(d){const err=m=>{const e=$('#codeerr');if(e)e.textContent=m},v=String((d&&d.v)||val('code')).trim().toLowerCase(),bad='Ce code n\'existe pas. Vérifie-le ou demande-en un à l\'admin.';BLKMSG='';
   if(!/^[a-z0-9]{4,12}$/.test(v))return err('Écris ton code (lettres et chiffres).');
   if(!db||!PR)return err('Connexion au serveur impossible. Vérifie ta connexion internet et recharge la page.');
+  try{const pv=localStorage.getItem('lpprev'),m=accMap();if(pv&&!m[v]){if(!Object.values(m).includes(pv)){m[v]=pv;accSet(m)}localStorage.removeItem('lpprev')}}catch(e){}
   {const t=appFor(v,CUR_APP);if(t!==CUR_APP){err('Vérification…');try{localStorage.setItem('lppend',JSON.stringify({v,app:t}))}catch(e){}location.reload();return}}
   err('Vérification…');
   try{const k=await admKey(v);if(k){await PR.set('admins/'+uid,k);accLink(v);loadProfile(v);S.code=v;S.joined=1;S.nick='Shai';save();location.reload();return}}catch(e){}
@@ -1929,6 +1930,18 @@ const A={
     if(!code){const al='abcdefghjkmnpqrstuvwxyz23456789',r=crypto.getRandomValues(new Uint8Array(12));do{code=[...r].slice(0,6).map(x=>al[x%al.length]).join('');crypto.getRandomValues(r)}while(CODES.some(c=>c.code===code))}
   if(CODES.some(c=>c.code===code))return toast('Ce code existe déjà');
   try{const id=await codeId(code);await db.doc('codes/'+id).set({name,at:Date.now()});await db.doc('adm/codes').set({list:CODES.concat({code,name,id})});toast('Code créé pour '+name+' : '+code)}catch(e){toast('Création refusée : '+(e.code||'erreur'))}},
+ // Changer le code d'un joueur : on recopie sa fiche (et sa sauvegarde) sous le nouveau code, puis l'ancien code est effacé
+ async cchg(d){if(!db)return;const c=CODES.find(x=>x.id===d.id);if(!c)return;const inp=$('#ncode');let code=String(inp?inp.value:'').trim().toLowerCase();
+  if(code&&!/^[a-z0-9]{4,12}$/.test(code))return toast('Le code doit faire 4 à 12 lettres ou chiffres');
+  if(!code){const al='abcdefghjkmnpqrstuvwxyz23456789',r=crypto.getRandomValues(new Uint8Array(12));do{code=[...r].slice(0,6).map(x=>al[x%al.length]).join('');crypto.getRandomValues(r)}while(CODES.some(x=>x.code===code));if(inp)inp.value=code}
+  if(code===c.code)return toast('C\'est déjà son code');if(CODES.some(x=>x.code===code))return toast('Ce code existe déjà');
+  if(sub.cc!==c.id||sub.ncv!==code){sub.cc=c.id;sub.ncv=code;render();return}sub.cc=null;
+  try{if(await admKey(code))return toast('Ce code est réservé');const id=await codeId(code),old=await db.doc('codes/'+c.id).get();if(!old.exists)return toast('Ce code n\'existe plus');
+   if((await db.doc('codes/'+id).get()).exists)return toast('Ce code existe déjà');
+   await db.doc('codes/'+id).set({...old.data()});
+   try{const sv=await db.doc('saves/'+c.id).get();if(sv.exists)await db.doc('saves/'+id).set(sv.data())}catch(e){}
+   await db.doc('adm/codes').set({list:CODES.map(x=>x.id===c.id?{...x,code,id}:x)});await db.doc('codes/'+c.id).delete();
+   sub.pv=id;toast('Nouveau code de '+c.name+' : '+code)}catch(e){toast('Changement refusé : '+(e.code||'erreur'))}},
  async cdel(d){if(!db)return;const c=CODES.find(x=>x.id===d.id);if(!c)return;if(sub.cd!==c.id){sub.cd=c.id;render();return}
   try{await db.doc('codes/'+c.id).delete();await db.doc('adm/codes').set({list:CODES.filter(x=>x.id!==c.id)});sub.cd=null;toast('Code supprimé : '+c.name+' ne peut plus entrer')}catch(e){toast('Suppression refusée : '+(e.code||'erreur'))}},
  async cblk(d){if(!db)return;const c=CODES.find(x=>x.id===d.id);if(!c)return;const blk=+d.m?Date.now()+(+d.m)*60000:0;
@@ -2265,6 +2278,8 @@ function plRecs(cid){const m=new Map();for(const k in SEEN)if(SEEN[k].cid===cid)
 function plPanel(){
   const c=CODES.find(x=>x.id===sub.pv);if(!c)return '';const recs=plRecs(c.id),cnt=x=>String(x||'').split(',').filter(Boolean).length;
   return `<div class="panel" style="border-color:var(--gold)"><div class="row"><h2 class="grow">Compte de ${esc(c.name)}</h2><button data-a="pclose">Fermer</button></div><p class="small mute">Code : <span class="code">${esc(c.code)}</span></p>
+  <div class="row"><label class="grow">Nouveau code<input id="ncode" maxlength="12" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="vide = au hasard" value="${sub.cc===c.id?esc(sub.ncv||''):''}"></label><button class="btn2" data-a="cchg" data-id="${esc(c.id)}">${sub.cc===c.id?'Confirmer ?':'Changer le code'}</button></div>
+  <p class="small mute">Il garde toute sa progression. Son ancien code ne marche plus : donne-lui le nouveau.</p>
   <div class="panel" style="border-color:var(--bad)"><h3>🔒 Bloquer temporairement</h3>${blkOn(c)
    ?`<p>Bloqué jusqu'à <b>${hhmm(c.blk)}</b>. Quand il tape son code, il voit que son compte est bloqué.</p><div class="row"><button class="btn" data-a="cblk" data-id="${esc(c.id)}" data-m="0">Débloquer maintenant</button></div>`
    :`<p class="small mute">Il ne peut plus jouer pendant ce temps. Rien n'est effacé : il retrouve toute sa progression en remettant son code à la fin du blocage.</p><div class="row">${[[30,'30 min'],[60,'1 h'],[120,'2 h'],[1440,'1 jour']].map(([m,t])=>`<button data-a="cblk" data-id="${esc(c.id)}" data-m="${m}">${t}</button>`).join('')}</div>`}</div>
@@ -2372,7 +2387,7 @@ function blkMsg(t){return L('Ton compte est bloqué jusqu\'à')+' '+hhmm(t)+'. '
 async function codeId(code){const en=new TextEncoder(),k=await crypto.subtle.importKey('raw',en.encode(code),'PBKDF2',false,['deriveBits']),b=await crypto.subtle.deriveBits({name:'PBKDF2',salt:en.encode('legendes-pieges-v1'),iterations:60000,hash:'SHA-256'},k,128);return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
 async function watchCode(){if(!db||!S.code)return;try{const id=await codeId(S.code);myCid=id;pushPres();cloudLoad();if(codeUnsub)codeUnsub();
   codeUnsub=db.doc('codes/'+id).onSnapshot(s=>{if(s.metadata&&s.metadata.fromCache)return;
-    if(!s.exists){S.code='';S.joined=0;save();try{room&&room.presence({nick:null,h:null,d:null,tr:null,c:null})}catch(e){};view='home';sub={};render();drawInv();toast('Ton code a été désactivé.')}
+    if(!s.exists){try{const m=accMap();if(m[S.code]){localStorage.setItem('lpprev',m[S.code]);delete m[S.code];accSet(m)}}catch(e){}S.code='';S.joined=0;save();try{room&&room.presence({nick:null,h:null,d:null,tr:null,c:null})}catch(e){};view='home';sub={};render();drawInv();toast('Ton code a changé ou a été désactivé. Demande ton code à l\'admin.')}
     else if(blkOn(s.data())){cloudSave(1);stashProfile();BLKMSG=blkMsg(s.data().blk);if(codeUnsub){codeUnsub();codeUnsub=null}
       S.code='';S.joined=0;save();try{room&&room.presence({nick:null,h:null,d:null,tr:null,c:null})}catch(e){};view='home';sub={};render();drawInv()}
     else{const n=cleanN(s.data().name);if(n&&n!==S.nick){S.nick=n;save()}}},()=>{})}catch(e){}}
