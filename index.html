@@ -882,7 +882,7 @@ function dragon(g,c,t,o,st){
 function drawHero(g,c,x,y,sc,t,o={}){
   const st=o.st||1, k=sc*c.bulk*(1+.08*(st-1));
   g.save();g.translate(x,y);
-  {const al=o.alt||0,sh=1/(1+al/160);g.fillStyle='rgba(0,0,0,'+(.4*sh)+')';g.beginPath();g.ellipse(0,al,28*k*sh,6*k*sh,0,0,7);g.fill()}
+  {const al=o.alt||0,sh=1/(1+al/160),dx=(x-620)*.05*sh,rw=34*k*sh,gs=g.createRadialGradient(dx,al,0,dx,al,rw);gs.addColorStop(0,'rgba(0,0,0,'+(.55*sh)+')');gs.addColorStop(.6,'rgba(0,0,0,'+(.3*sh)+')');gs.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gs;g.beginPath();g.ellipse(dx,al,rw,8*k*sh,0,0,7);g.fill()}
   g.scale((o.face||1)*k,k);g.translate(0,(c.fly?-18+Math.sin(t*2.2+c.seed)*5:Math.sin(t*3+c.seed)*1.2));
   const dz=o.dance&&DNB[o.dance.id]?DNB[o.dance.id].f(o.dance.t):null;if(dz){g.translate(dz.dx||0,dz.dy||0);if(dz.rot)g.rotate(dz.rot);if(dz.sx!=null)g.scale(dz.sx,1);if(dz.arm!=null)o={...o,arm:dz.arm}}
   if(st>1||o.charge){const R=58+st*12+(o.charge?10*Math.sin(t*20):0),gr=g.createRadialGradient(0,-50,6,0,-50,R);gr.addColorStop(0,c.glow+'88');gr.addColorStop(1,c.glow+'00');g.fillStyle=gr;g.beginPath();g.arc(0,-50,R,0,7);g.fill()}
@@ -922,6 +922,11 @@ function arenaBg(k){
   gr=g.createLinearGradient(0,GY-6,0,HH);gr.addColorStop(0,'#2b2d55');gr.addColorStop(1,'#0a0b18');g.fillStyle=gr;g.fillRect(0,GY-6,W,HH-GY+6);
   g.strokeStyle=pal[2];g.lineWidth=2;g.globalAlpha=.7;for(let i=0;i<9;i++){let x=r()*W,y=GY+4;g.beginPath();g.moveTo(x,y);for(let j=0;j<4;j++){x+=(r()-.5)*70;y+=10+r()*8;g.lineTo(x,y)}g.stroke()}
   g.globalAlpha=1;g.fillStyle=pal[2];g.fillRect(0,GY-7,W,2);
+  // Sol en perspective (2,5D) : lignes qui fuient vers l'horizon et bandes de plus en plus serrées au loin
+  g.save();g.beginPath();g.rect(0,GY-5,W,HH-GY+5);g.clip();g.strokeStyle=pal[2];g.lineWidth=1;
+  for(let i=-12;i<=12;i++){g.globalAlpha=.16;g.beginPath();g.moveTo(W/2+i*18,GY-5);g.lineTo(W/2+i*150,HH+40);g.stroke()}
+  for(let j=1;j<7;j++){const y=GY-5+(HH-GY+5)*Math.pow(j/7,1.7);g.globalAlpha=.09+j*.02;g.beginPath();g.moveTo(0,y);g.lineTo(W,y);g.stroke()}
+  gr=g.createLinearGradient(0,GY-6,0,GY+26);gr.addColorStop(0,'rgba(0,0,0,.45)');gr.addColorStop(1,'rgba(0,0,0,0)');g.globalAlpha=1;g.fillStyle=gr;g.fillRect(0,GY-5,W,31);g.restore();
   if(isHal()){for(const px of[60,180,330,470,640,760]){const y=GY+18+r()*14,s=10+r()*8;g.fillStyle='#ff7a00';g.beginPath();g.ellipse(px,y,s*1.3,s,0,0,7);g.fill();g.fillStyle='#2d5a1a';g.fillRect(px-2,y-s-6,4,7);g.fillStyle='#ffe066';g.beginPath();g.moveTo(px-s*.6,y-2);g.lineTo(px-s*.3,y-s*.4);g.lineTo(px,y-2);g.fill();g.beginPath();g.moveTo(px+s*.6,y-2);g.lineTo(px+s*.3,y-s*.4);g.lineTo(px,y-2);g.fill();g.fillRect(px-s*.5,y+s*.25,s,3)}
     g.fillStyle='#0a0510';for(let i=0;i<7;i++){const bx=80+r()*640,by=40+r()*150,bs=6+r()*6;g.beginPath();g.moveTo(bx,by);g.quadraticCurveTo(bx-bs,by-bs,bx-bs*2.2,by);g.quadraticCurveTo(bx-bs,by-bs*.3,bx,by+bs*.4);g.quadraticCurveTo(bx+bs,by-bs*.3,bx+bs*2.2,by);g.quadraticCurveTo(bx+bs,by-bs,bx,by);g.fill()}}
   return bgCache[hk]=cv;
@@ -1047,7 +1052,11 @@ function fightTick(dt,t){
   // bords en plus (plein écran) : on prolonge le décor en étirant ses bords
   if(ox>1||oy>1){g.setTransform(1,0,0,1,0,0);if(ox>1){g.drawImage(F.bg,0,0,1,HH,0,oy,ox+1,HH*sc);g.drawImage(F.bg,W-1,0,1,HH,cv.width-ox-1,oy,ox+1,HH*sc)}if(oy>1){g.drawImage(F.bg,0,0,1,1,0,0,cv.width,oy+1);g.drawImage(F.bg,0,HH-1,1,1,0,cv.height-oy-1,cv.width,oy+1)}}
   g.setTransform(sc,0,0,sc,ox,oy);g.save();g.translate((Math.random()-.5)*F.shake,(Math.random()-.5)*F.shake);
-  g.drawImage(F.bg,0,0);
+  // Caméra 2,5D : léger zoom qui suit les deux combattants (plus fort sur les gros coups) ; le décor glisse moins vite que les héros
+  const Z=1.06+Math.min(.07,F.shake*.0035),lim=W/2*(1-1/Z),AY=HH*.62,want=Math.max(-lim,Math.min(lim,((F.p.x+F.e.x)/2-W/2)*.6));
+  F.cam=Math.max(-lim,Math.min(lim,F.cam==null?want:F.cam+(want-F.cam)*Math.min(1,dt*3)));
+  const cam=k=>{g.translate(W/2,AY);g.scale(Z,Z);g.translate(-W/2-F.cam*k,-AY)};
+  g.save();cam(.5);g.drawImage(F.bg,0,0);g.restore();cam(1);
   for(let i=0;i<14;i++){const x=(i*61+t*18*(1+i%3))%W,y=GY-((i*97+t*30)%330);g.fillStyle='rgba(255,220,160,'+(.25+.25*Math.sin(t*2+i))+')';g.fillRect(x,y,2.5,2.5)}
   for(const e of[F.e,F.p]){
     if(e.hp<=0&&F.over>.25)continue;
@@ -1062,6 +1071,7 @@ function fightTick(dt,t){
     drawHero(g,e.c,e.x,e.y,1.25,t,{st:e.st,face:e.face,atk:e.atkT>0?1-e.atkT:0,hit:e.hitT,shield:e.shield,charge:e.charge,alt:GY-e.y,dance:wn===e&&e.hp>0&&e.dn?{id:e.dn,t:F.over}:null});
   }
   for(const e of[F.e,F.p])if(e.pet&&e.hp>0)drawPet(g,e.pet.id,e.x-e.face*48,cy(e)-70+Math.sin(t*3+(e===F.p?0:1))*6,t,e.pet.lvl,1.1);
+  {g.save();g.translate(-F.cam*.5,0);g.fillStyle='rgba(4,4,12,.9)';for(const[x0,w,h]of[[-60,190,44],[110,70,22],[650,90,26],[730,160,48]]){g.beginPath();g.moveTo(x0,HH+30);g.quadraticCurveTo(x0+w*.2,HH-h,x0+w*.5,HH-h*.9);g.quadraticCurveTo(x0+w*.8,HH-h*.7,x0+w,HH+30);g.fill()}g.restore()}
   g.globalCompositeOperation='lighter';
   for(const p of F.parts){g.globalAlpha=Math.min(1,p.l*2.5);g.fillStyle=p.col;g.beginPath();g.arc(p.x,p.y,p.r,0,7);g.fill()}
   g.globalAlpha=1;
@@ -1070,6 +1080,7 @@ function fightTick(dt,t){
   g.textAlign='center';
   for(const n of F.nums){g.globalAlpha=Math.min(1,n.l*2);g.font=(typeof n.v==='number'?'24px':'18px')+' "Russo One",sans-serif';g.lineWidth=4;g.strokeStyle='#000';g.strokeText(n.v,n.x,n.y);g.fillStyle=n.col;g.fillText(n.v,n.x,n.y)}
   g.globalAlpha=1;g.restore();
+  {const vt=F.vt,vg=g.createRadialGradient(W/2,HH*.55,HH*.45,W/2,HH*.55,W*.75);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.5)');g.fillStyle=vg;g.fillRect(-vt.ox/vt.sc,-vt.oy/vt.sc,cv.width/vt.sc,cv.height/vt.sc)}
   if(F.mod&&F.mod.k==='brume'){const fg=g.createRadialGradient(F.p.x,cy(F.p),70,F.p.x,cy(F.p),330);fg.addColorStop(0,'rgba(200,210,230,0)');fg.addColorStop(1,'rgba(200,210,230,.86)');g.fillStyle=fg;const vt=F.vt||{sc:1,ox:0,oy:0};g.fillRect(-vt.ox/vt.sc,-vt.oy/vt.sc,cv.width/vt.sc,cv.height/vt.sc)}
   if(F.mod){g.font='18px "Russo One",sans-serif';g.textAlign='left';g.lineWidth=4;g.strokeStyle='#000';g.strokeText(F.mod.n,12,26);g.fillStyle='#fff';g.fillText(F.mod.n,12,26);g.textAlign='center';if(F.mod.k==='vent'){g.fillStyle='rgba(255,255,255,.35)';for(let i=0;i<8;i++){const x=((t*F.wind*2+i*137)%W+W)%W;g.fillRect(x,60+i*40,40,2)}}}
   if(F.intro>0||F.over){g.font='54px "Russo One",sans-serif';g.lineWidth=8;g.strokeStyle='#000';let win=F.win;if(F.duel&&F.over){const r=duelRes();win=r==='win'||r==='forf'?1:r==='draw'||r==='void'?2:0}
@@ -1561,8 +1572,8 @@ function fmtD(ms){const h=Math.max(0,Math.floor(ms/3600000));return h>=24?Math.f
 /* ================== VUES ================== */
 const ICON={adv:'<path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/>',home:'<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',rid:'<path d="M9 9a3 3 0 1 1 4 2.8c-.7.4-1 1-1 1.7V14"/><circle cx="12" cy="18" r=".6"/><circle cx="12" cy="12" r="10"/>',fprep:'<path d="M4 4l10 10M14 4L4 14M14 14l6 6M17 11l-6 6"/>',heroes:'<path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/>',forge:'<path d="M4 9h12a4 4 0 0 0 4-4M6 9v3a4 4 0 0 0 4 4h0a4 4 0 0 0 4-4V9M8 21h8M10 16v5M14 16v5"/>',admin:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>'};
 function nav(){
-  const tabs=[['home','Accueil'],['rid','Énigmes'],['adv','Aventure'],['fprep','Combat'],['heroes','Héros'],['forge','Forge']];if(isAdmin){const n=ALLSUBS.filter(x=>x.st==='wait').length;tabs.push(['admin','Admin'+(n?' ('+n+')':'')])}
-  const cur=view==='kingdom'||view==='kbattle'?'home':view==='season'?'home':view==='pal'||view==='conq'?'fprep':view==='fight'||view==='duel'?(F&&F.mode==='adv'?'adv':'fprep'):view==='riddle'?'rid':view==='profile'?'home':view;
+  const tabs=[['home','Accueil'],['rid','Énigmes'],['fprep','Combat'],['heroes','Héros'],['forge','Forge']];if(isAdmin){const n=ALLSUBS.filter(x=>x.st==='wait').length;tabs.push(['admin','Admin'+(n?' ('+n+')':'')])}
+  const cur=view==='kingdom'||view==='kbattle'||view==='adv'?'home':view==='season'?'home':view==='pal'||view==='conq'?'fprep':view==='fight'||view==='duel'?(F&&F.mode==='adv'?'home':'fprep'):view==='riddle'?'rid':view==='profile'?'home':view;
   $('#nav').innerHTML=tabs.map(([v,l])=>`<button class="${cur===v?'on':''}" data-a="go" data-v="${v}"><svg viewBox="0 0 24 24">${ICON[v]}</svg>${l}</button>`).join('');
 }
 function hud(){
