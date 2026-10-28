@@ -1248,7 +1248,7 @@ const DJBB=Object.fromEntries(DJB.map(b=>[b.k,b]));
 const DJMAX=5,djCan=b=>b.k==='heal'||(DJ.b[b.k]||0)<DJMAX;
 let DJ=null;
 function djFoe(w){const pool=H.filter(c=>!c.ex),r=rng(DJ.seed+w*97),c=pool[Math.floor(r()*pool.length)],boss=w%5===0;
-  return {c,l:Math.min(20,1+Math.floor(w*.9)),st:Math.min(3,(w>=20?3:w>=10?2:1)+(boss?1:0)),k:(.62+.026*w)*(w>20?Math.pow(1.08,w-20):1)*(boss?1.3:1),skill:Math.min(.88,.25+.03*w+(boss?.1:0))}}
+  return {c,l:Math.min(20,1+Math.floor(w*.9)),st:Math.min(3,(w>=20?3:w>=10?2:1)+(boss?1:0)),k:1.5*(.62+.026*w)*(w>10?Math.pow(1.08,w-10):1)*(boss?1.3:1),skill:Math.min(.92,.35+.035*w+(boss?.1:0))}}
 function djStart(){if(inDuel())return toast('Termine d\'abord ton duel');DJ={w:1,hp:null,b:{},seed:Math.floor(Math.random()*1e9),pts:0};djFight()}
 function djFight(){const f=djFoe(DJ.w),me=S.chars[S.sel],mc=HB[S.sel],b=DJ.b;
   F={mode:'dj',dj:DJ,stage:DJ.w,p:mkFighter(mc,me.lvl,me.st,200,1),e:mkFighter(f.c,f.l,f.st,600,-1,f.k),shots:[],parts:[],nums:[],shake:0,t:0,over:0,intro:1.4,bg:arenaBg(Math.floor((DJ.w-1)/3)%3)};
@@ -1257,7 +1257,7 @@ function djFight(){const f=djFoe(DJ.w),me=S.chars[S.sel],mc=HB[S.sel],b=DJ.b;
   F.e.hp=F.e.mhp;F.e.skill=f.skill;if(mc.fly)p.y=GY-80;if(f.c.fly)F.e.y=GY-80;armGun(p);petArm(p);p.dn=S.dn;F.e.dn=DANCES[DJ.w%DANCES.length].id;arenaMod(DJ.seed+DJ.w);if(p.gun&&b.ammo)p.ammo=Math.round(p.ammo*Math.pow(1.5,b.ammo));
   view='fight';sub={};render()}
 function djEnd(){const w=DJ.w;let html;
-  if(F.win){seaAdd(5);if(w%5===0)setTimeout(()=>giveEgg(Math.floor(w/10),'boss du donjon'),1200);const pts=gain((8+6*w)*mult());DJ.pts+=pts;DJ.hp=F.p.hp;const up=addXp(S.sel,10+2*w);djRec(w);save();sfx('win');if(up)setTimeout(()=>sfx('lvl'),700);
+  if(F.win){seaAdd(5);if(w%5===0)setTimeout(()=>giveEgg(Math.floor(w/10),'boss du donjon'),1200);const pts=gain(Math.round((4+3*w)*mult()));DJ.pts+=pts;DJ.hp=F.p.hp;const up=addXp(S.sel,10+2*w);djRec(w);save();sfx('win');if(up)setTimeout(()=>sfx('lvl'),700);
     const r=rng(DJ.seed+w*31),pool=DJB.filter(b=>(!b.gun||F.p.gun)&&djCan(b)).map(b=>[r(),b]).sort((x,y)=>x[0]-y[0]).slice(0,3).map(x=>x[1]);
     html=`<div class="panel" style="text-align:center;align-items:center;border-color:var(--gold)"><h2 style="color:var(--gold)">Vague ${w} réussie !</h2><p>+${pts} points · vie restante ${Math.round(F.p.hp)} / ${Math.round(F.p.mhp)}</p>
      <p class="small mute">Choisis un bonus pour la suite :</p><div class="djb">${pool.map(b=>`<button data-a="djpick" data-k="${b.k}"><span style="font-size:28px">${b.ic}</span><b>${b.n}</b><span class="small mute">${b.d}${b.k==='heal'?'':' · '+(DJ.b[b.k]||0)+' / '+DJMAX}</span></button>`).join('')}</div></div>`}
