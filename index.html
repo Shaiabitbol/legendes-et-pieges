@@ -1404,17 +1404,26 @@ const KN=8,KB_T=[ // type : nom, icône, coût de construction, PV(l), couleur
  {k:'mine',n:'Mine d\'or',ic:'⛏️',c:150,hp:l=>400+150*(l-1),col:'#f6b73c'},
  {k:'tower',n:'Tour d\'archers',ic:'🗼',c:250,hp:l=>600+250*(l-1),col:'#4ff0ff'},
  {k:'wall',n:'Muraille',ic:'🧱',c:40,hp:l=>500+300*(l-1),col:'#b0a090'},
- {k:'barracks',n:'Caserne',ic:'⛺',c:200,hp:l=>500+150*(l-1),col:'#ff6a3d'}];
+ {k:'barracks',n:'Caserne',ic:'⛺',c:200,hp:l=>500+150*(l-1),col:'#ff6a3d'},
+ {k:'mtower',n:'Tour de mage',ic:'🔮',c:400,hp:l=>550+200*(l-1),col:'#c77dff',ul:3},
+ {k:'airdef',n:'Défense anti-dragon',ic:'🎯',c:350,hp:l=>500+180*(l-1),col:'#ff4d6d',ul:2},
+ {k:'vault',n:'Coffre-fort',ic:'🏦',c:300,hp:l=>700+250*(l-1),col:'#ffd23f',ul:2}];
 const KBB=Object.fromEntries(KB_T.map(b=>[b.k,b]));
-const KTROOP={sol:{n:'Soldat',ic:'🗡️',c:15,hp:120,dmg:18,rg:.7,sp:1,col:'#ff9a3d'},arc:{n:'Archer',ic:'🏹',c:25,hp:70,dmg:14,rg:2.2,sp:1.1,col:'#3ff08f'}};
+// sz : places prises dans la caserne · ul : niveau de château pour l'entraîner · fly : vole au-dessus des murailles · spl : dégâts de zone
+const KTROOP={sol:{n:'Soldat',ic:'🗡️',c:15,hp:120,dmg:18,rg:.7,sp:1,col:'#ff9a3d',d:'au corps à corps'},arc:{n:'Archer',ic:'🏹',c:25,hp:70,dmg:14,rg:2.2,sp:1.1,col:'#3ff08f',d:'tire de loin'},
+ mage:{n:'Sorcier',ic:'🧙',c:60,hp:200,dmg:55,rg:1.8,sp:.9,col:'#c77dff',sz:2,ul:2,spl:1,d:'boules de feu : abîme aussi les bâtiments autour'},
+ dragon:{n:'Dragon',ic:'🐉',c:250,hp:1500,dmg:70,rg:1.2,sp:.8,col:'#ff4d6d',sz:5,ul:4,fly:1,d:'vole au-dessus des murailles, très solide'}};
+// Défenses : portée, cadence, dégâts ; spl = dégâts de zone, air = ne vise que les dragons
+const KDEF={castle:{rg:170,cd:1.4,dmg:l=>25+10*l,col:'#ffd23f'},tower:{rg:210,cd:1,dmg:l=>30+15*(l-1),col:'#4ff0ff'},
+ mtower:{rg:190,cd:1.8,dmg:l=>45+15*(l-1),col:'#c77dff',spl:60},airdef:{rg:240,cd:1,dmg:l=>70+25*(l-1),col:'#ff4d6d',air:1}};
 const CASTLE_UP=[0,400,900,1800,3500];
 // Or stocké : le double du prix de la prochaine amélioration du château (au niveau max, le double de la dernière)
 const kCapL=l=>2*CASTLE_UP[Math.min(4,Math.max(1,+l||1))];
 function kdom(){if(!S.kd)S.kd={g:300,b:[{t:'castle',x:3,y:3,l:1},{t:'mine',x:1,y:1,l:1},{t:'tower',x:5,y:2,l:1}],col:Date.now(),tr:{sol:5,arc:0},tro:0,raids:{}};return S.kd}
 const kCastle=()=>kdom().b.find(b=>b.t==='castle')||{l:1};
-const kCap=()=>kCapL(kCastle().l),kTroopCap=()=>8+6*kdom().b.filter(b=>b.t==='barracks').reduce((a,b)=>a+b.l,0);
-const kTroops=()=>Object.values(kdom().tr).reduce((a,b)=>a+b,0);
-function kLimit(t){const L=kCastle().l;return t==='castle'?1:t==='mine'||t==='tower'?L+1:t==='wall'?4*L+4:1}
+const kCap=()=>kCapL(kCastle().l)+1000*kdom().b.filter(b=>b.t==='vault').reduce((a,b)=>a+b.l,0),kTroopCap=()=>8+6*kdom().b.filter(b=>b.t==='barracks').reduce((a,b)=>a+b.l,0);
+const kTroops=()=>Object.entries(kdom().tr).reduce((a,[k,n])=>a+n*((KTROOP[k]||{}).sz||1),0);
+function kLimit(t){const L=kCastle().l;return t==='castle'?1:t==='mine'||t==='tower'?L+1:t==='wall'?4*L+4:t==='mtower'?Math.max(0,L-2):t==='airdef'||t==='vault'?(L>=2?L-1:0):1}
 function kProd(){return kdom().b.filter(b=>b.t==='mine').reduce((a,b)=>a+80*b.l,0)}
 function kPending(){const z=kdom();return Math.max(0,Math.min(kCap()-z.g,Math.floor((Date.now()-(z.col||Date.now()))/3.6e6*kProd())))}
 function kUpCost(b){return b.t==='castle'?CASTLE_UP[b.l]||0:b.t==='wall'?60*b.l:Math.round(KBB[b.t].c*b.l*1.5)}
@@ -1430,7 +1439,7 @@ function kLastRaid(u,v){let m=0;for(const id in v||{})m=Math.max(m,+(v[id]||{}).
 // Camps de gobelins (cibles d'entraînement, toujours disponibles)
 function kGoblin(n){const r=rng(n*977+3),b=[{t:'castle',x:3+Math.floor(r()*2),y:3+Math.floor(r()*2),l:Math.min(5,n)}],used=new Set([b[0].x+','+b[0].y]);
   const put=(t,l)=>{for(let k=0;k<40;k++){const x=Math.floor(r()*KN),y=Math.floor(r()*KN);if(!used.has(x+','+y)){used.add(x+','+y);b.push({t,x,y,l});return}}};
-  for(let i=0;i<n+1;i++)put('tower',Math.max(1,n-1));for(let i=0;i<n+1;i++)put('mine',n);for(let i=0;i<3*n+2;i++)put('wall',n);return {nick:'Camp gobelin '+'I II III IV V'.split(' ')[n-1],b,l:n,g:150+n*250,gob:n}}
+  for(let i=0;i<n+1;i++)put('tower',Math.max(1,n-1));for(let i=0;i<n+1;i++)put('mine',n);for(let i=0;i<3*n+2;i++)put('wall',n);if(n>=3)put('mtower',n-2);if(n>=4)put('airdef',n-3);return {nick:'Camp gobelin '+'I II III IV V'.split(' ')[n-1],b,l:n,g:150+n*250,gob:n}}
 
 // ---------- écran du royaume ----------
 function kingdomView(){const z=kdom(),pend=kPending(),bt=sub.bt,sel=sub.kb!=null?z.b[sub.kb]:null;
@@ -1446,12 +1455,12 @@ function kingdomView(){const z=kdom(),pend=kPending(),bt=sub.bt,sel=sub.kb!=null
      <div class="row">${sel.t==='castle'?(sel.l<5?`<button class="btn" data-a="kup" ${z.g<kUpCost(sel)?'disabled':''}>Améliorer · ${kUpCost(sel)} or</button>`:'<button disabled>Niveau max</button>'):(sel.l<kCastle().l?`<button class="btn" data-a="kup" ${z.g<kUpCost(sel)?'disabled':''}>Améliorer · ${kUpCost(sel)} or</button>`:`<button disabled>Max (améliore le château)</button>`)}
      ${sel.t!=='castle'?`<button data-a="kmv">Déplacer</button><button data-a="kdel">${sub.kdc?'Confirmer ?':'Démolir'}</button>`:''}<button data-a="kt" data-x="-1">Fermer</button></div>${sub.kmv?'<p class="small">Touche une case vide pour l\'y déplacer.</p>':''}</div>`:''}</div>
   <div class="panel"><h3>🔨 Construire</h3><div class="kbuild">${KB_T.filter(b=>b.k!=='castle').map(b=>{const n=z.b.filter(x=>x.t===b.k).length,lim=kLimit(b.k);
-    return `<button class="${bt===b.k?'btn2':''}" data-a="kbt" data-t="${b.k}" ${n>=lim||z.g<b.c?'disabled':''}><span style="font-size:24px">${b.ic}</span><b class="small">${b.n}</b><span class="small">🪙 ${b.c} · ${n}/${lim}</span></button>`}).join('')}</div>
+    return `<button class="${bt===b.k?'btn2':''}" data-a="kbt" data-t="${b.k}" ${n>=lim||z.g<b.c?'disabled':''}><span style="font-size:24px">${b.ic}</span><b class="small">${b.n}</b><span class="small">${lim?`🪙 ${b.c} · ${n}/${lim}`:`🔒 château niv. ${b.ul}`}</span></button>`}).join('')}</div>
    <p class="small mute">Améliore ton château pour construire plus de bâtiments et monter leur niveau.</p></div>
-  <div class="panel"><h3>🛡️ Caserne · ${kTroops()} / ${kTroopCap()}</h3>${Object.entries(KTROOP).map(([k,T])=>`<div class="row"><span style="font-size:22px">${T.ic}</span><span class="grow"><b>${T.n}</b> × ${z.tr[k]||0}<br><span class="small mute">vie ${T.hp} · dégâts ${T.dmg}/s · ${k==='arc'?'tire de loin':'au corps à corps'}</span></span><button data-a="ktr" data-k="${k}" ${z.g<T.c||kTroops()>=kTroopCap()?'disabled':''}>+1 · 🪙 ${T.c}</button><button data-a="ktr" data-k="${k}" data-n="5" ${z.g<T.c*5||kTroops()+5>kTroopCap()?'disabled':''}>+5</button></div>`).join('')}
+  <div class="panel"><h3>🛡️ Caserne · ${kTroops()} / ${kTroopCap()}</h3>${Object.entries(KTROOP).map(([k,T])=>`<div class="row"><span style="font-size:22px">${T.ic}</span><span class="grow"><b>${T.n}</b> × ${z.tr[k]||0}<br><span class="small mute">vie ${T.hp} · dégâts ${T.dmg}/s · ${T.d}${(T.sz||1)>1?' · prend '+T.sz+' places':''}</span></span>${(T.ul||1)>kCastle().l?`<button disabled>🔒 château niv. ${T.ul}</button>`:`<button data-a="ktr" data-k="${k}" ${z.g<T.c||kTroops()+(T.sz||1)>kTroopCap()?'disabled':''}>+1 · 🪙 ${T.c}</button><button data-a="ktr" data-k="${k}" data-n="5" ${z.g<T.c*5||kTroops()+5*(T.sz||1)>kTroopCap()?'disabled':''}>+5</button>`}</div>`).join('')}
    <p class="small mute">Construis et améliore des casernes pour avoir plus de place. Ton héros actif (${HB[S.sel].n}) combat aussi à chaque attaque.</p></div>
   ${kRanking()}`}
-function kInfo(b){if(b.t==='castle')return 'Vie '+KBB.castle.hp(b.l)+' · stocke '+kCapL(b.l)+' or · débloque plus de bâtiments';if(b.t==='mine')return 'Produit '+80*b.l+' or par heure';if(b.t==='tower')return 'Tire sur les attaquants : '+(30+15*(b.l-1))+' dégâts/s';if(b.t==='wall')return 'Vie '+KBB.wall.hp(b.l)+' : ralentit les attaquants';return '+'+6*b.l+' places de troupes'}
+function kInfo(b){if(b.t==='castle')return 'Vie '+KBB.castle.hp(b.l)+' · stocke '+kCapL(b.l)+' or · débloque plus de bâtiments';if(b.t==='mine')return 'Produit '+80*b.l+' or par heure';if(b.t==='tower')return 'Tire sur les attaquants : '+(30+15*(b.l-1))+' dégâts/s';if(b.t==='wall')return 'Vie '+KBB.wall.hp(b.l)+' : ralentit les attaquants';if(b.t==='mtower')return 'Boules magiques : '+KDEF.mtower.dmg(b.l)+' dégâts sur toute une zone';if(b.t==='airdef')return 'Abat les dragons : '+KDEF.airdef.dmg(b.l)+' dégâts (ne touche que les dragons)';if(b.t==='vault')return 'Garde '+1000*b.l+' or de plus';return '+'+6*b.l+' places de troupes'}
 function kRanking(){const L2=KREG.filter(k=>k.nick).sort((a,b)=>(b.tro||0)-(a.tro||0)).slice(0,10);return `<div class="panel"><h3>🏆 Classement des royaumes</h3>${L2.length?`<div class="tw"><table>${L2.map((k,i)=>`<tr><td>${['🥇','🥈','🥉'][i]||i+1}</td><td>${esc(cleanN(k.nick))}${k.id===uid?' (toi)':''}</td><td>🏆 ${k.tro||0}</td><td>château ${k.l||1}</td></tr>`).join('')}</table></div>`:'<p class="small mute">Personne pour l\'instant.</p>'}</div>`}
 function kAttackList(){const z=kdom(),others=KREG.filter(k=>k.id!==uid&&Array.isArray(k.b)&&k.b.length),now=Date.now();
   const row=(k,gob)=>{const prot=!gob&&k.lr&&now-k.lr<2*3600e3,loot=gob?Math.round(k.g*.5):Math.floor(Math.min(kCapL(k.l),(k.g||0)+((now-(k.at||now))/3.6e6)*(k.p||0))*.3);
@@ -1495,6 +1504,17 @@ function kSprite(g,b,x,y,s,t,nb){const B=y+s*.2,l=+b.l||1;g.save();g.lineJoin='r
     g.fillStyle='#2a2018';kRR(g,x-s*.025,B-s*.4,s*.05,s*.12,2);g.fill();
     kCyl(g,x,B-s*.58,s*.26,s*.1,s*.09,'#e2dccd','#a59e8c');g.fillStyle='#e2dccd';for(const dx of[-.18,0,.18]){kRR(g,x+dx*s-s*.04,B-s*.67-s*.13,s*.08,s*.07,2);g.fill()}
     const pu=.6+.4*Math.sin(t*3+x),cy=B-s*.85;g.save();g.shadowColor='#4ff0ff';g.shadowBlur=s*.25*pu;g.fillStyle='#4ff0ff';g.beginPath();g.moveTo(x,cy-s*.13);g.lineTo(x+s*.07,cy);g.lineTo(x,cy+s*.06);g.lineTo(x-s*.07,cy);g.fill();g.restore()}
+  else if(b.t==='mtower'){kShadow(g,x,B+s*.06,s*.3,s*.11);kCyl(g,x,B,s*.18,s*.08,s*.5,'#6a4a9a','#3d2a5e');
+    g.fillStyle='#8a5fd0';g.beginPath();g.moveTo(x-s*.26,B-s*.5);g.lineTo(x,B-s*.86);g.lineTo(x+s*.26,B-s*.5);g.fill();g.fillStyle='#5a3a8f';g.beginPath();g.moveTo(x,B-s*.86);g.lineTo(x+s*.26,B-s*.5);g.lineTo(x,B-s*.46);g.fill();
+    const pu=.6+.4*Math.sin(t*2.5+x),oy=B-s*.98+Math.sin(t*2+x)*s*.03;g.save();g.shadowColor='#e0a8ff';g.shadowBlur=s*.3*pu;g.fillStyle='#e9c8ff';g.beginPath();g.arc(x,oy,s*.08,0,7);g.fill();g.restore();
+    for(let i=0;i<3;i++){const a=t*2+i*2.1;g.fillStyle='rgba(224,168,255,.8)';g.beginPath();g.arc(x+Math.cos(a)*s*.2,oy+Math.sin(a)*s*.07,s*.02,0,7);g.fill()}}
+  else if(b.t==='airdef'){kShadow(g,x,B+s*.06,s*.34,s*.12);kBox(g,x,B,s*.56,s*.4,s*.16,'#8a8f9a','#4e535e');
+    const a=Math.sin(t*1.3+x)*.5,cy=B-s*.3;g.save();g.translate(x,cy);g.fillStyle='#3a3f4a';g.beginPath();g.ellipse(0,0,s*.17,s*.1,0,0,7);g.fill();g.rotate(a-.6);
+    g.fillStyle='#d9434f';for(const dx of[-.07,.07]){kRR(g,dx*s-s*.035,-s*.36,s*.07,s*.34,s*.03);g.fill()}g.fillStyle='#ffd23f';for(const dx of[-.07,.07]){g.beginPath();g.arc(dx*s,-s*.36,s*.035,0,7);g.fill()}g.restore()}
+  else if(b.t==='vault'){kShadow(g,x,B+s*.06,s*.38,s*.13);kBox(g,x,B,s*.66,s*.42,s*.3,'#e8e2d0','#a8a08a');
+    g.fillStyle='#b8902a';g.beginPath();g.moveTo(x-s*.38,B-s*.48);g.lineTo(x,B-s*.66);g.lineTo(x+s*.38,B-s*.48);g.fill();
+    g.fillStyle='#8a8370';for(const dx of[-.22,-.07,.07,.22]){g.fillRect(x+dx*s-s*.025,B-s*.3,s*.05,s*.28)}
+    g.fillStyle='#ffd23f';g.beginPath();g.arc(x,B-s*.56,s*.05,0,7);g.fill();for(let i=0;i<Math.min(5,b.l+1);i++){g.fillStyle='#ffd23f';g.beginPath();g.ellipse(x-s*.24+i*s*.12,B+s*.13,s*.05,s*.025,0,0,7);g.fill()}}
   else{kShadow(g,x,B+s*.06,s*.4,s*.13);kBox(g,x,B,s*.7,s*.44,s*.18,'#c28d58','#7a5232');
     const ty=B-s*.18-s*.1;g.fillStyle='#ff6a3d';g.beginPath();g.moveTo(x-s*.4,ty+s*.12);g.lineTo(x,ty-s*.34);g.lineTo(x,ty+s*.16);g.fill();g.fillStyle='#c8442a';g.beginPath();g.moveTo(x+s*.4,ty+s*.12);g.lineTo(x,ty-s*.34);g.lineTo(x,ty+s*.16);g.fill();
     g.fillStyle='#3a1a10';g.beginPath();g.moveTo(x-s*.08,B);g.lineTo(x,B-s*.2);g.lineTo(x+s*.08,B);g.fill();kFlag(g,x,ty-s*.32,s,'#3ff08f',t)}
@@ -1513,28 +1533,29 @@ function kGridDraw(t){const cv=$('#kcv');if(!cv||view!=='kingdom')return;const r
 // ---------- bataille ----------
 let KB=null;
 function kStart(target){const z=kdom(),C=80,OFF=C;
-  KB={tg:target,t:0,left:90,over:0,units:[],shots:[],parts:[],dep:{sol:0,arc:0,hero:0},sel:z.tr.sol?'sol':z.tr.arc?'arc':'hero',
+  KB={tg:target,t:0,left:90,over:0,units:[],shots:[],parts:[],dep:{hero:0,...Object.fromEntries(Object.keys(KTROOP).map(q=>[q,0]))},sel:Object.keys(KTROOP).find(q=>z.tr[q])||'hero',
     bld:asArr(target.b).map(b=>{if(Array.isArray(b)||(b&&b[0]!=null&&b.t==null)){const q=asArr(b);b={t:q[0],x:q[1],y:q[2],l:q[3]}}return b}).filter(b=>b&&KBB[b.t]).map(b=>{const B=KBB[b.t]||KBB.wall;const hp=B.hp(+b.l||1);return {t:b.t,l:+b.l||1,gx:+b.x,gy:+b.y,x:OFF+(+b.x+.5)*C,y:OFF+(+b.y+.5)*C,hp,mhp:hp,cd:0}}),tot:0,dead:0};
   KB.tot=KB.bld.filter(b=>b.t!=='wall').length;view='kbattle';sub={};render()}
 function kDeploy(x,y){const k=KB;if(!k||k.over)return;const C=80;if(x>C&&x<720&&y>C&&y<720)return toast('Pose tes troupes sur le bord (la zone rouge)');
   const z=kdom();let T,ic,col;
   if(k.sel==='hero'){if(k.dep.hero)return toast('Ton héros est déjà sur le terrain');const o=S.chars[S.sel],h=HB[S.sel];T={hp:stat(h,o.lvl,o.st,'hp')*2.5,dmg:stat(h,o.lvl,o.st,'atk')*1.6,rg:.8,sp:1.25};k.dep.hero=1;ic='hero';col=h.glow}
   else{const n=(z.tr[k.sel]||0)-k.dep[k.sel];if(n<=0)return toast('Plus de '+KTROOP[k.sel].n.toLowerCase()+'s');T=KTROOP[k.sel];k.dep[k.sel]++;ic=T.ic;col=T.col}
-  k.units.push({x,y,hp:T.hp,mhp:T.hp,dmg:T.dmg,rg:T.rg*80,sp:T.sp*80,ic,col,tg:null,cd:0,hero:ic==='hero'});kDrawBar()}
+  k.units.push({x,y,hp:T.hp,mhp:T.hp,dmg:T.dmg,rg:T.rg*80,sp:T.sp*80,ic,col,tg:null,cd:0,hero:ic==='hero',fly:!!T.fly,spl:!!T.spl});kDrawBar()}
 function kTick(dt,t){const k=KB,cv=$('#karena');if(!k||!cv)return;const g=cv.getContext('2d'),C=80;
   if(!k.over){k.t+=dt;k.left-=dt;
     for(const u of k.units){if(u.hp<=0)continue;let tg=u.tg&&u.tg.hp>0?u.tg:null;
-      if(!tg){let best=null,bd=1e9;for(const b of k.bld)if(b.hp>0){const d=Math.hypot(b.x-u.x,b.y-u.y)+(b.t==='wall'?160:0);if(d<bd){bd=d;best=b}}u.tg=tg=best}
+      if(!tg){let best=null,bd=1e9;for(const b of k.bld)if(b.hp>0&&!(u.fly&&b.t==='wall')){const d=Math.hypot(b.x-u.x,b.y-u.y)+(b.t==='wall'?160:0);if(d<bd){bd=d;best=b}}u.tg=tg=best}
       if(!tg)continue;const d=Math.hypot(tg.x-u.x,tg.y-u.y);
       // une muraille sur le chemin bloque : on la casse d'abord
-      if(d>u.rg+28){let wl=null;for(const b of k.bld)if(b.hp>0&&b.t==='wall'&&Math.hypot(b.x-u.x,b.y-u.y)<46){wl=b;break}
+      if(d>u.rg+28){let wl=null;if(!u.fly)for(const b of k.bld)if(b.hp>0&&b.t==='wall'&&Math.hypot(b.x-u.x,b.y-u.y)<46){wl=b;break}
         if(wl&&Math.hypot(wl.x-tg.x,wl.y-tg.y)<d){u.tg=tg=wl}else{u.x+=(tg.x-u.x)/d*u.sp*dt;u.y+=(tg.y-u.y)/d*u.sp*dt;continue}}
-      u.cd-=dt;if(u.cd<=0){u.cd=1;tg.hp-=u.dmg;if(u.rg>100)k.shots.push({x:u.x,y:u.y,tx:tg.x,ty:tg.y,l:.25,col:u.col});else for(let i=0;i<4;i++)k.parts.push({x:tg.x+(Math.random()-.5)*30,y:tg.y+(Math.random()-.5)*30,vx:0,vy:-40,l:.4,col:'#fff'});
+      u.cd-=dt;if(u.cd<=0){u.cd=1;tg.hp-=u.dmg;if(u.spl)for(const o of k.bld)if(o!==tg&&o.hp>0&&Math.hypot(o.x-tg.x,o.y-tg.y)<70){o.hp-=u.dmg*.5;if(o.hp<=0){o.hp=0;if(o.t!=='wall')k.dead++}}if(u.rg>100)k.shots.push({x:u.x,y:u.y,tx:tg.x,ty:tg.y,l:.25,col:u.col});else for(let i=0;i<4;i++)k.parts.push({x:tg.x+(Math.random()-.5)*30,y:tg.y+(Math.random()-.5)*30,vx:0,vy:-40,l:.4,col:'#fff'});
         if(tg.hp<=0){tg.hp=0;if(tg.t!=='wall')k.dead++;for(let i=0;i<24;i++){const a=Math.random()*7;k.parts.push({x:tg.x,y:tg.y,vx:Math.cos(a)*160,vy:Math.sin(a)*160,l:.6,col:KBB[tg.t].col})}sfx('hit')}}}
-    for(const b of k.bld){if(b.hp<=0||b.t!=='tower'&&b.t!=='castle')continue;b.cd-=dt;if(b.cd>0)continue;const rg=b.t==='castle'?170:210;let best=null,bd=rg;
-      for(const u of k.units)if(u.hp>0){const d=Math.hypot(u.x-b.x,u.y-b.y);if(d<bd){bd=d;best=u}}
-      if(best){b.cd=b.t==='castle'?1.4:1;best.hp-=b.t==='castle'?25+10*b.l:30+15*(b.l-1);k.shots.push({x:b.x,y:b.y-20,tx:best.x,ty:best.y,l:.22,col:b.t==='castle'?'#ffd23f':'#4ff0ff'})}}
-    const z=kdom(),left=(z.tr.sol||0)-k.dep.sol+(z.tr.arc||0)-k.dep.arc+(k.dep.hero?0:1),alive=k.units.some(u=>u.hp>0);
+    for(const b of k.bld){const D=KDEF[b.t];if(b.hp<=0||!D)continue;b.cd-=dt;if(b.cd>0)continue;let best=null,bd=D.rg;
+      for(const u of k.units)if(u.hp>0&&(!D.air||u.fly)){const d=Math.hypot(u.x-b.x,u.y-b.y);if(d<bd){bd=d;best=u}}
+      if(best){b.cd=D.cd;const dm=D.dmg(b.l);if(D.spl){for(const u of k.units)if(u.hp>0&&!u.fly&&Math.hypot(u.x-best.x,u.y-best.y)<D.spl)u.hp-=dm;if(best.fly)best.hp-=dm;for(let i=0;i<10;i++){const a=Math.random()*7;k.parts.push({x:best.x,y:best.y,vx:Math.cos(a)*120,vy:Math.sin(a)*120,l:.4,col:D.col})}}else best.hp-=dm;
+        k.shots.push({x:b.x,y:b.y-20,tx:best.x,ty:best.fly?best.y-34:best.y,l:.22,col:D.col})}}
+    const z=kdom(),left=Object.keys(KTROOP).reduce((a,q)=>a+(z.tr[q]||0)-k.dep[q],0)+(k.dep.hero?0:1),alive=k.units.some(u=>u.hp>0);
     if(k.dead>=k.tot||k.left<=0||(!alive&&left<=0&&k.units.length))kEnd()}
   // rendu
   const sc=cv.width/800;g.setTransform(sc,0,0,sc,0,0);g.fillStyle='#3a7d2c';g.fillRect(0,0,800,800);
@@ -1546,14 +1567,14 @@ function kTick(dt,t){const k=KB,cv=$('#karena');if(!k||!cv)return;const g=cv.get
   kScene(g,k.bld.filter(b=>b.hp>0).map(b=>({...b,px:b.x,py:b.y,s:C})),t);
   for(const b of k.bld)if(b.hp>0&&b.hp<b.mhp){const hy=b.y-(b.t==='wall'?30:b.t==='mine'?34:62);g.fillStyle='#200';g.fillRect(b.x-32,hy,64,9);g.fillStyle='#3ff08f';g.fillRect(b.x-32,hy,64*b.hp/b.mhp,9)}
   for(const u of k.units){if(u.hp<=0)continue;g.fillStyle='rgba(0,0,0,.3)';g.beginPath();g.ellipse(u.x,u.y+12,12,5,0,0,7);g.fill();
-    if(u.hero){g.save();g.translate(u.x,u.y+14);drawHero(g,HB[S.sel],0,0,.55,t,{st:S.chars[S.sel].st,face:1});g.restore()}else{g.fillStyle=u.col;g.beginPath();g.arc(u.x,u.y,18,0,7);g.fill();g.strokeStyle='#000';g.lineWidth=3;g.stroke();g.font='22px serif';g.fillText(u.ic,u.x,u.y+1)}
+    if(u.hero){g.save();g.translate(u.x,u.y+14);drawHero(g,HB[S.sel],0,0,.55,t,{st:S.chars[S.sel].st,face:1});g.restore()}else{const fy=u.fly?u.y-34+Math.sin(t*4+u.x)*4:u.y,R=u.fly?26:18;g.fillStyle=u.col;g.beginPath();g.arc(u.x,fy,R,0,7);g.fill();g.strokeStyle='#000';g.lineWidth=3;g.stroke();g.font=(u.fly?34:22)+'px serif';g.fillText(u.ic,u.x,fy+1)}
     g.fillStyle='#200';g.fillRect(u.x-14,u.y-24-(u.hero?26:0),28,5);g.fillStyle='#ffd23f';g.fillRect(u.x-14,u.y-24-(u.hero?26:0),28*u.hp/u.mhp,5)}
   for(const s2 of k.shots){s2.l-=dt;g.strokeStyle=s2.col;g.lineWidth=3;g.beginPath();const u=1-s2.l/.25;g.moveTo(s2.x+(s2.tx-s2.x)*u*.8,s2.y+(s2.ty-s2.y)*u*.8);g.lineTo(s2.x+(s2.tx-s2.x)*u,s2.y+(s2.ty-s2.y)*u);g.stroke()}k.shots=k.shots.filter(s2=>s2.l>0);
   for(const q of k.parts){q.l-=dt;q.x+=q.vx*dt;q.y+=q.vy*dt;g.globalAlpha=Math.max(0,q.l*2);g.fillStyle=q.col;g.fillRect(q.x-3,q.y-3,6,6)}g.globalAlpha=1;k.parts=k.parts.filter(q=>q.l>0);
   g.font='28px "Russo One",sans-serif';g.lineWidth=6;g.strokeStyle='#000';const pct=Math.round(k.dead/Math.max(1,k.tot)*100),tx=Math.ceil(k.left)+' s · '+pct+' %';g.strokeText(tx,400,40);g.fillStyle='#fff';g.fillText(tx,400,40)}
 function kStars(){const k=KB,pct=k.dead/Math.max(1,k.tot),castle=k.bld.find(b=>b.t==='castle');return (pct>=.5?1:0)+(castle&&castle.hp<=0?1:0)+(pct>=1?1:0)}
 function kEnd(){const k=KB;if(k.over)return;k.over=1;const z=kdom(),st=kStars(),pct=k.dead/Math.max(1,k.tot),T=k.tg;
-  z.tr.sol=Math.max(0,(z.tr.sol||0)-k.dep.sol);z.tr.arc=Math.max(0,(z.tr.arc||0)-k.dep.arc);
+  for(const q in KTROOP)z.tr[q]=Math.max(0,(z.tr[q]||0)-k.dep[q]);
   let loot=0;if(T.gob)loot=Math.round(T.g*.5*pct);else{const avail=Math.min(kCapL(T.l),(T.g||0)+((Date.now()-(T.at||Date.now()))/3.6e6)*(T.p||0));loot=Math.floor(avail*.3*pct)}
   loot=Math.min(loot,Math.max(0,kCap()-z.g));z.g+=loot;const tro=st*10;z.tro=(z.tro||0)+tro;
   if(!T.gob&&db&&loot+st>0){const id=Date.now().toString(36)+Math.random().toString(36).slice(2,5);db.doc('raids/'+T.id+'/'+id).set({by:uid,nick:S.nick||'Joueur',loot,st,at:Date.now()}).catch(()=>{})}
@@ -1562,7 +1583,7 @@ function kEnd(){const k=KB;if(k.over)return;k.over=1;const z=kdom(),st=kStars(),
    <p>${Math.round(pct*100)} % détruit · 🪙 +${loot} or · 🏆 +${tro}</p><div class="row" style="justify-content:center"><button class="btn" data-a="kback">Retour au royaume</button><button data-a="katk">Attaquer encore</button></div></div>`;
   const r=$('#kres');if(r)r.innerHTML=k.res;kDrawBar()}
 function kDrawBar(){const b=$('#kbar');if(!b||!KB)return;const z=kdom(),k=KB;
-  b.innerHTML=k.over?'':[['sol',KTROOP.sol.ic+' '+((z.tr.sol||0)-k.dep.sol)],['arc',KTROOP.arc.ic+' '+((z.tr.arc||0)-k.dep.arc)],['hero','🦸 '+(k.dep.hero?0:1)]].map(([s2,l])=>`<button class="${k.sel===s2?'btn':''}" data-a="ksel" data-k="${s2}">${l}</button>`).join('')+'<button data-a="kquit">Abandonner</button>'}
+  b.innerHTML=k.over?'':Object.keys(KTROOP).filter(q=>q==='sol'||q==='arc'||(z.tr[q]||0)>0).map(q=>[q,KTROOP[q].ic+' '+((z.tr[q]||0)-k.dep[q])]).concat([['hero','🦸 '+(k.dep.hero?0:1)]]).map(([s2,l])=>`<button class="${k.sel===s2?'btn':''}" data-a="ksel" data-k="${s2}">${l}</button>`).join('')+'<button data-a="kquit">Abandonner</button>'}
 function kBattleView(){if(!KB){view='kingdom';return kingdomView()}
   return `<div class="panel" style="padding:10px;gap:8px"><div class="row"><b class="grow">⚔️ ${esc(cleanN(KB.tg.nick))}</b><span class="small mute">Touche le bord rouge pour poser tes troupes</span></div>
    <canvas id="karena" width="800" height="800" style="width:100%;max-width:560px;aspect-ratio:1;margin:0 auto;display:block;border-radius:14px;touch-action:none"></canvas>
@@ -2045,7 +2066,7 @@ const A={
  kmv(){sub.kmv=1;render()},
  kdel(){const z=kdom();if(sub.kb==null)return;if(!sub.kdc){sub.kdc=1;render();return}const b=z.b[sub.kb];z.g=Math.min(kCap(),z.g+Math.floor(KBB[b.t].c/2));z.b.splice(sub.kb,1);sub.kb=null;sub.kdc=0;kSave();render()},
  kcol(){const z=kdom(),p=kPending();z.g+=p;z.col=Date.now();sfx('chest');kSave();render();toast('🪙 +'+p+' or')},
- ktr(d){const z=kdom(),T=KTROOP[d.k],n=+d.n||1;if(!T)return;if(z.g<T.c*n)return toast('Pas assez d\'or');if(kTroops()+n>kTroopCap())return toast('Caserne pleine');z.g-=T.c*n;z.tr[d.k]=(z.tr[d.k]||0)+n;kSave();render()},
+ ktr(d){const z=kdom(),T=KTROOP[d.k],n=+d.n||1;if(!T)return;if((T.ul||1)>kCastle().l)return toast('Améliore ton château');if(z.g<T.c*n)return toast('Pas assez d\'or');if(kTroops()+n*(T.sz||1)>kTroopCap())return toast('Caserne pleine');z.g-=T.c*n;z.tr[d.k]=(z.tr[d.k]||0)+n;kSave();render()},
  katk(){KB=null;view='kingdom';sub={km:'atk'};render();scrollTo(0,0)},
  kback(){KB=null;view='kingdom';sub={};render();scrollTo(0,0)},
  kgo(d){if(inDuel())return toast('Termine d\'abord ton duel');if(!kTroops())return toast('Entraîne d\'abord des troupes');let T;if(String(d.u).startsWith('gob'))T=kGoblin(+String(d.u).slice(3));else{T=KREG.find(k=>k.id===d.u);if(!T)return;if(T.lr&&Date.now()-T.lr<2*3600e3)return toast('Ce royaume est protégé')}
