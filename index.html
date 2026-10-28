@@ -1539,6 +1539,7 @@ const kCastle=()=>kdom().b.find(b=>b.t==='castle')||{l:1};
 const kCap=()=>kCapL(kCastle().l)+1000*kdom().b.filter(b=>b.t==='vault').reduce((a,b)=>a+b.l,0),kTroopCap=()=>8+6*kdom().b.filter(b=>b.t==='barracks').reduce((a,b)=>a+b.l,0);
 const kTroops=()=>Object.entries(kdom().tr).reduce((a,[k,n])=>a+n*((KTROOP[k]||{}).sz||1),0);
 function kLimit(t){const L=kCastle().l;return t==='castle'?1:t==='mine'||t==='tower'?L+1:t==='wall'?4*L+4:t==='mtower'?Math.max(0,L-2):t==='airdef'||t==='vault'?(L>=2?L-1:0):1}
+const kCount=t=>kdom().b.filter(b=>b.t===t).length+(kdom().inv||[]).filter(b=>b.t===t).length;
 function kProd(){return kdom().b.filter(b=>b.t==='mine').reduce((a,b)=>a+80*b.l,0)}
 function kPending(){const z=kdom();return Math.max(0,Math.min(kCap()-z.g,Math.floor((Date.now()-(z.col||Date.now()))/3.6e6*kProd())))}
 function kUpCost(b){return b.t==='castle'?CASTLE_UP[b.l]||0:b.t==='wall'?60*b.l:Math.round(KBB[b.t].c*b.l*1.5)}
@@ -1560,21 +1561,35 @@ function kGoblin(n){const r=rng(n*977+3),b=[{t:'castle',x:3+Math.floor(r()*2),y:
 function kingdomView(){const z=kdom(),pend=kPending(),bt=sub.bt,sel=sub.kb!=null?z.b[sub.kb]:null;
   if(sub.km==='atk')return kAttackList();
   const tiles=[];for(let y=0;y<KN;y++)for(let x=0;x<KN;x++){const i=z.b.findIndex(b=>b.x===x&&b.y===y),b=z.b[i];
-    tiles.push(b?`<button class="kt ${sub.kb===i?'sel':''}" style="--kc:${KBB[b.t].col}" data-a="kt" data-x="${x}" data-y="${y}"><span>${KBB[b.t].ic}</span><i>${b.l}</i></button>`:`<button class="kt e ${bt?'can':''}" data-a="kt" data-x="${x}" data-y="${y}"></button>`)}
+    tiles.push(b?`<button class="kt ${sub.kb===i?'sel':''}" style="--kc:${KBB[b.t].col}" data-a="kt" data-x="${x}" data-y="${y}"><span>${KBB[b.t].ic}</span><i>${b.l}</i></button>`:`<button class="kt e ${bt||sub.bi?'can':''}" data-a="kt" data-x="${x}" data-y="${y}"></button>`)}
   return `<div class="panel" style="border-color:#ffd23f"><div class="row"><h2 class="grow">👑 Mon Royaume</h2><span class="chip pts">🪙 ${z.g} / ${kCap()}</span><span class="chip">🏆 ${z.tro||0}</span></div>
    <div class="row"><span class="small grow">Château niv. ${kCastle().l} · production ${kProd()} or / heure · troupes ${kTroops()} / ${kTroopCap()}</span>${pend?`<button class="btn" data-a="kcol">Récolter ${pend} or</button>`:''}</div>
    <div class="row"><button class="btn" data-a="katk">⚔️ Attaquer un royaume</button></div></div>
   <div class="panel" style="padding:10px"><div class="kgrid"><canvas id="kcv"></canvas>${tiles.join('')}</div>
+   ${sub.bi?`<p class="small" style="text-align:center">Touche une case vide pour poser : <b>${KBB[sub.bi.split(':')[0]].ic} ${KBB[sub.bi.split(':')[0]].n} niv. ${sub.bi.split(':')[1]}</b> · <button data-a="kinv" data-k="${sub.bi}">Annuler</button></p>`:''}
    ${bt?`<p class="small" style="text-align:center">Touche une case vide pour construire : <b>${KBB[bt].ic} ${KBB[bt].n}</b> · <button data-a="kbt" data-t="">Annuler</button></p>`:''}
    ${sel?`<div class="panel" style="padding:10px"><div class="row"><span style="font-size:28px">${KBB[sel.t].ic}</span><span class="grow"><b>${KBB[sel.t].n}</b> niv. ${sel.l}<br><span class="small mute">${kInfo(sel)}</span></span></div>
      <div class="row">${sel.t==='castle'?(sel.l<5?`<button class="btn" data-a="kup" ${z.g<kUpCost(sel)?'disabled':''}>Améliorer · ${kUpCost(sel)} or</button>`:'<button disabled>Niveau max</button>'):(sel.l<kCastle().l?`<button class="btn" data-a="kup" ${z.g<kUpCost(sel)?'disabled':''}>Améliorer · ${kUpCost(sel)} or</button>`:`<button disabled>Max (améliore le château)</button>`)}
-     ${sel.t!=='castle'?`<button data-a="kmv">Déplacer</button><button data-a="kdel">${sub.kdc?'Confirmer ?':'Démolir'}</button>`:''}<button data-a="kt" data-x="-1">Fermer</button></div>${sub.kmv?'<p class="small">Touche une case vide pour l\'y déplacer.</p>':''}</div>`:''}</div>
-  <div class="panel"><h3>🔨 Construire</h3><div class="kbuild">${KB_T.filter(b=>b.k!=='castle').map(b=>{const n=z.b.filter(x=>x.t===b.k).length,lim=kLimit(b.k);
+     ${sel.t!=='castle'?`<button data-a="kmv">Déplacer</button><button data-a="kput">📦 Ranger</button><button data-a="kdel">${sub.kdc?'Confirmer ?':'Démolir'}</button>`:''}<button data-a="kt" data-x="-1">Fermer</button></div>${sub.kmv?'<p class="small">Touche une case vide pour l\'y déplacer.</p>':''}</div>`:''}</div>
+  <div class="panel" style="border-color:#4fc3ff"><h3>📦 Réserve${(z.inv||[]).length?' ('+z.inv.length+')':''}</h3>
+   ${(()=>{const g={};for(const b of z.inv||[]){const k=b.t+':'+b.l;g[k]=(g[k]||0)+1}const ks=Object.keys(g);return ks.length?`<p class="small mute">Touche un bâtiment, puis une case vide pour le poser (gratuit).</p><div class="row" style="flex-wrap:wrap">${ks.map(k=>{const [t,l]=k.split(':');return `<button class="${sub.bi===k?'btn':''}" data-a="kinv" data-k="${k}">${KBB[t].ic} ${KBB[t].n} niv. ${l} ×${g[k]}</button>`}).join('')}</div>`:'<p class="small mute">Rien de rangé. Pour refaire ta base, range tout d\'un coup, puis repose les bâtiments un par un ou automatiquement. C\'est gratuit et ils gardent leur niveau.</p>'})()}
+   <div class="row">${(z.inv||[]).length?'<button class="btn" data-a="kauto">✨ Tout placer automatiquement</button>':''}${z.b.some(b=>b.t!=='castle')?`<button data-a="kstoreall">${sub.ksa?'Confirmer ?':'📦 Tout ranger'}</button>`:''}</div></div>
+  <div class="panel"><h3>🔨 Construire</h3><div class="kbuild">${KB_T.filter(b=>b.k!=='castle').map(b=>{const n=kCount(b.k),lim=kLimit(b.k);
     return `<button class="${bt===b.k?'btn2':''}" data-a="kbt" data-t="${b.k}" ${n>=lim||z.g<b.c?'disabled':''}><span style="font-size:24px">${b.ic}</span><b class="small">${b.n}</b><span class="small">${lim?`🪙 ${b.c} · ${n}/${lim}`:`🔒 château niv. ${b.ul}`}</span></button>`}).join('')}</div>
    <p class="small mute">Améliore ton château pour construire plus de bâtiments et monter leur niveau.</p></div>
   <div class="panel"><h3>🛡️ Caserne · ${kTroops()} / ${kTroopCap()}</h3>${Object.entries(KTROOP).map(([k,T])=>`<div class="row"><span style="font-size:22px">${T.ic}</span><span class="grow"><b>${T.n}</b> × ${z.tr[k]||0}<br><span class="small mute">vie ${T.hp} · dégâts ${T.dmg}/s · ${T.d}${(T.sz||1)>1?' · prend '+T.sz+' places':''}</span></span>${(T.ul||1)>kCastle().l?`<button disabled>🔒 château niv. ${T.ul}</button>`:`<button data-a="ktr" data-k="${k}" ${z.g<T.c||kTroops()+(T.sz||1)>kTroopCap()?'disabled':''}>+1 · 🪙 ${T.c}</button><button data-a="ktr" data-k="${k}" data-n="5" ${z.g<T.c*5||kTroops()+5*(T.sz||1)>kTroopCap()?'disabled':''}>+5</button>`}</div>`).join('')}
    <p class="small mute">Construis et améliore des casernes pour avoir plus de place. Ton héros actif (${HB[S.sel].n}) combat aussi à chaque attaque.</p></div>
   ${cqPanel()}${kRanking()}`}
+// Placement automatique de la réserve : murailles tout autour, défenses près du château, le reste dans les cases libres
+function kAuto(z){const inv=z.inv||[],used=new Set(z.b.map(b=>b.x+','+b.y)),c=z.b.find(b=>b.t==='castle')||{x:3,y:3},free=(x,y)=>!used.has(x+','+y);
+  const ring=[];for(let x=0;x<KN;x++)ring.push([x,KN-1]);for(let y=KN-2;y>=0;y--)ring.push([KN-1,y]);for(let x=KN-2;x>=0;x--)ring.push([x,0]);for(let y=1;y<KN-1;y++)ring.push([0,y]);
+  const inner=[];for(let y=1;y<KN-1;y++)for(let x=1;x<KN-1;x++)inner.push([x,y]);inner.sort((a,b)=>Math.hypot(a[0]-c.x,a[1]-c.y)-Math.hypot(b[0]-c.x,b[1]-c.y));
+  const put=(b,spots)=>{for(const [x,y] of spots)if(free(x,y)){used.add(x+','+y);z.b.push({t:b.t,x,y,l:b.l});return true}return false};
+  const order=['airdef','mtower','tower','barracks','vault','mine'],left=[];inv.sort((a,b)=>b.l-a.l);
+  for(const b of inv.filter(b=>b.t==='wall'))if(!put(b,ring)&&!put(b,inner))left.push(b);
+  for(const t of order)for(const b of inv.filter(b=>b.t===t))if(!put(b,t==='mine'||t==='vault'?inner.slice().reverse():inner)&&!put(b,ring))left.push(b);
+  for(const b of inv.filter(b=>b.t!=='wall'&&!order.includes(b.t)))if(!put(b,inner)&&!put(b,ring))left.push(b);
+  z.inv=left}
 function kInfo(b){if(b.t==='castle')return 'Vie '+KBB.castle.hp(b.l)+' · stocke '+kCapL(b.l)+' or · débloque plus de bâtiments';if(b.t==='mine')return 'Produit '+80*b.l+' or par heure';if(b.t==='tower')return 'Tire sur les attaquants : '+(30+15*(b.l-1))+' dégâts/s';if(b.t==='wall')return 'Vie '+KBB.wall.hp(b.l)+' : ralentit les attaquants';if(b.t==='mtower')return 'Boules magiques : '+KDEF.mtower.dmg(b.l)+' dégâts sur toute une zone';if(b.t==='airdef')return 'Abat les dragons : '+KDEF.airdef.dmg(b.l)+' dégâts (ne touche que les dragons)';if(b.t==='vault')return 'Garde '+1000*b.l+' or de plus';return '+'+6*b.l+' places de troupes'}
 function kRanking(){const L2=KREG.filter(k=>k.nick).sort((a,b)=>(b.tro||0)-(a.tro||0)).slice(0,10);return `<div class="panel"><h3>🏆 Classement des royaumes</h3>${L2.length?`<div class="tw"><table>${L2.map((k,i)=>`<tr><td>${['🥇','🥈','🥉'][i]||i+1}</td><td>${esc(cleanN(k.nick))}${k.id===uid?' (toi)':''}</td><td>🏆 ${k.tro||0}</td><td>château ${k.l||1}</td></tr>`).join('')}</table></div>`:'<p class="small mute">Personne pour l\'instant.</p>'}</div>`}
 function kAttackList(){const z=kdom(),others=KREG.filter(k=>k.id!==uid&&Array.isArray(k.b)&&k.b.length),now=Date.now();
@@ -2197,10 +2212,16 @@ const A={
  kt(d){const z=kdom(),x=+d.x,y=+d.y;if(x<0){sub.kb=null;sub.kmv=0;render();return}const i=z.b.findIndex(b=>b.x===x&&b.y===y);
   if(sub.kmv&&sub.kb!=null){if(i<0){z.b[sub.kb].x=x;z.b[sub.kb].y=y;sub.kmv=0;kSave();render()}return}
   if(i>=0){sub.kb=sub.kb===i?null:i;sub.kdc=0;render();return}
-  if(sub.bt){const B=KBB[sub.bt];if(z.g<B.c)return toast('Pas assez d\'or');if(z.b.filter(b=>b.t===B.k).length>=kLimit(B.k))return toast('Limite atteinte : améliore ton château');z.g-=B.c;z.b.push({t:B.k,x,y,l:1});sfx('ok');if(z.b.filter(b=>b.t===B.k).length>=kLimit(B.k)||z.g<B.c)sub.bt='';kSave();render()}},
+  if(sub.bi){const inv=z.inv||[],j=inv.findIndex(b=>b.t+':'+b.l===sub.bi);if(j<0){sub.bi='';render();return}const b=inv.splice(j,1)[0];z.b.push({t:b.t,x,y,l:b.l});sfx('ok');if(!inv.some(q=>q.t+':'+q.l===sub.bi))sub.bi='';kSave();render();return}
+  if(sub.bt){const B=KBB[sub.bt];if(z.g<B.c)return toast('Pas assez d\'or');if(kCount(B.k)>=kLimit(B.k))return toast('Limite atteinte : améliore ton château');z.g-=B.c;z.b.push({t:B.k,x,y,l:1});sfx('ok');if(kCount(B.k)>=kLimit(B.k)||z.g<B.c)sub.bt='';kSave();render()}},
  kbt(d){sub.bt=d.t||'';sub.kb=null;render()},
  kup(){const z=kdom(),b=z.b[sub.kb];if(!b)return;const c=kUpCost(b);if(z.g<c)return toast('Pas assez d\'or');if(b.t!=='castle'&&b.l>=kCastle().l)return;if(b.t==='castle'&&b.l>=5)return;z.g-=c;b.l++;sfx('lvl');kSave();render();toast(KBB[b.t].n+' niveau '+b.l+' !')},
  kmv(){sub.kmv=1;render()},
+ // Ranger : le bâtiment part dans la réserve avec son niveau (rien n'est perdu, le reposer est gratuit)
+ kput(){const z=kdom(),b=z.b[sub.kb];if(!b||b.t==='castle')return;z.inv=z.inv||[];z.inv.push({t:b.t,l:b.l});z.b.splice(sub.kb,1);sub.kb=null;kSave();render()},
+ kstoreall(){const z=kdom();if(!sub.ksa){sub.ksa=1;render();return}sub.ksa=0;z.inv=(z.inv||[]).concat(z.b.filter(b=>b.t!=='castle').map(b=>({t:b.t,l:b.l})));z.b=z.b.filter(b=>b.t==='castle');sub.kb=null;sub.bi='';kSave();render();toast('📦 Tout est rangé dans la réserve')},
+ kinv(d){sub.bi=sub.bi===d.k?'':d.k;sub.bt='';sub.kb=null;render()},
+ kauto(){const z=kdom(),inv=z.inv||[];if(!inv.length)return;kAuto(z);sub.bi='';kSave();render();toast(z.inv.length?'Il n\'y avait pas assez de place pour tout poser':'✨ Tout est placé !')},
  kdel(){const z=kdom();if(sub.kb==null)return;if(!sub.kdc){sub.kdc=1;render();return}const b=z.b[sub.kb];z.g=Math.min(kCap(),z.g+Math.floor(KBB[b.t].c/2));z.b.splice(sub.kb,1);sub.kb=null;sub.kdc=0;kSave();render()},
  kcol(){const z=kdom(),p=kPending();z.g+=p;z.col=Date.now();sfx('chest');kSave();render();toast('🪙 +'+p+' or')},
  ktr(d){const z=kdom(),T=KTROOP[d.k],n=+d.n||1;if(!T)return;if((T.ul||1)>kCastle().l)return toast('Améliore ton château');if(z.g<T.c*n)return toast('Pas assez d\'or');if(kTroops()+n*(T.sz||1)>kTroopCap())return toast('Caserne pleine');z.g-=T.c*n;z.tr[d.k]=(z.tr[d.k]||0)+n;kSave();render()},
