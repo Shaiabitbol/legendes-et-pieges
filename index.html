@@ -1985,7 +1985,13 @@ const A={
  async pcmd(d){if(!db)return toast('Base indisponible ici');const u=d.u;let it;
   if(d.op==='pts'){const v=Math.floor(+val('ap_'+u)||0);if(v<=0)return toast('Écris un nombre de points');it={op:'pts',v:v*(+d.s)}}
   else if(d.op==='arena'){const v=Math.floor(+val('aa_'+u)||0);if(v<1)return toast('Écris un numéro d\'étage');it={op:'arena',v}}
-  else if(d.op==='rid')it={op:'rid'};else if(d.op==='hlvl')it={op:'hlvl',h:d.h,v:-1};else if(d.op==='rmchar')it={op:'rmchar',h:d.h};else return;
+  else if(d.op==='rid')it={op:'rid'};else if(d.op==='hlvl')it={op:'hlvl',h:d.h,v:-1};else if(d.op==='rmchar')it={op:'rmchar',h:d.h};
+  else if(['setpts','settot','streak','dj','kg','kcl'].includes(d.op)){const v=Math.floor(+(d.v!=null?d.v:val(d.f+'_'+u)));if(!(v>=0))return toast('Écris un nombre');it={op:d.op,v}}
+  else if(d.op==='adv'){const r=d.r!=null?+d.r:+val('avr_'+u),v=d.v!=null?+d.v:Math.floor(+val('avl_'+u));if(!(v>=0))return toast('Écris un nombre');it={op:'adv',r,v}}
+  else if(d.op==='hset')it={op:'hset',h:d.h,v:Math.floor(+val('hl_'+u+'_'+d.h)||1),s:Math.floor(+val('hs_'+u+'_'+d.h)||1)};
+  else if(d.op==='kreset'||d.op==='sea'||d.op==='wipe')it={op:d.op};else return;
+  // Les remises à zéro demandent un deuxième appui
+  if(d.c){const key=u+d.op+(d.r||'')+(d.v||'');if(sub.cf!==key){sub.cf=key;render();return}sub.cf=null}
   try{await sendCmd(u,it);toast('Changement envoyé au joueur')}catch(e){toast('Envoi refusé : '+(e.code||'erreur'))}},
  topen(d){trUI=d.p;if(view!=='heroes'){view='heroes';sub={}}render();document.getElementById('trp')?.scrollIntoView({block:'center'})},
  tclose(){trUI=null;render()},
@@ -2294,10 +2300,23 @@ function plPanel(){
    <div class="row"><label class="grow">Points<input id="ap_${u}" type="number" min="1" value="50"></label><button data-a="pcmd" data-u="${u}" data-op="pts" data-s="-1">Retirer</button><button data-a="pcmd" data-u="${u}" data-op="pts" data-s="1">Ajouter</button></div>
    <div class="row"><label class="grow">Étage d'arène<input id="aa_${u}" type="number" min="1" value="${P.a}"></label><button data-a="pcmd" data-u="${u}" data-op="arena">Changer l'étage</button></div>
    <div><button data-a="pcmd" data-u="${u}" data-op="rid">Remettre ses énigmes à zéro</button></div>
-   <div class="tw"><table><tr><th>Héros</th><th>Ex.</th><th>Niv.</th><th>★</th><th></th></tr>${Object.entries(ch).map(([id,o])=>`<tr><td>${HB[id].n}</td><td>${o.n}</td><td>${o.lvl}</td><td>${o.st}</td><td><button data-a="pcmd" data-u="${u}" data-op="hlvl" data-h="${id}" ${o.lvl<=1?'disabled':''}>−1 niveau</button> <button data-a="pcmd" data-u="${u}" data-op="rmchar" data-h="${id}">Retirer</button></td></tr>`).join('')}</table></div></div>`}).join('')
+   ${ctlPanel(P,u)}
+   <div class="tw"><table><tr><th>Héros</th><th>Ex.</th><th>Niv.</th><th>★</th><th></th></tr>${Object.entries(ch).map(([id,o])=>`<tr><td>${HB[id].n}</td><td>${o.n}</td><td>${o.lvl}</td><td>${o.st}</td><td><input id="hl_${u}_${id}" type="number" min="1" max="20" value="${o.lvl}" style="width:58px"> <select id="hs_${u}_${id}">${[1,2,3].map(n=>`<option value="${n}" ${+o.st===n?'selected':''}>${n} ★</option>`).join('')}</select> <button data-a="pcmd" data-u="${u}" data-op="hset" data-h="${id}">OK</button> <button data-a="pcmd" data-u="${u}" data-op="rmchar" data-h="${id}">Retirer</button></td></tr>`).join('')}</table></div></div>`}).join('')
    :'<p class="mute">Pas encore d\'infos : ce joueur ne s\'est pas connecté pendant que tu avais le jeu ouvert.</p>'}
   <p class="small mute">Un changement s'applique tout de suite si le joueur est en ligne, sinon à sa prochaine connexion. Les infos d'un joueur hors ligne datent de la dernière fois où vous étiez connectés en même temps.</p></div>`;
 }
+// Contrôle total d'un joueur : chaque mode peut être réglé à un niveau précis ou remis à zéro
+function ctlPanel(P,u){const pl=PLAYERS.find(x=>x.id===P.uid)||{},cb=(op,lab,r='',v='')=>`<button data-a="pcmd" data-u="${u}" data-op="${op}" data-c="1" ${r!==''?`data-r="${r}"`:''} ${v!==''?`data-v="${v}"`:''}>${sub.cf===u+op+r+v?'Confirmer ?':lab}</button>`,
+  row=(lab,f,op,v)=>`<div class="row"><label class="grow">${lab}<input id="${f}_${u}" type="number" min="0" value="${v}"></label><button data-a="pcmd" data-u="${u}" data-op="${op}" data-f="${f}">Mettre</button></div>`;
+  return `<details class="panel" style="border-color:var(--arc)"><summary style="cursor:pointer"><b>🎛️ Contrôle total</b> <span class="small mute">(chaque mode, niveau précis ou remise à zéro)</span></summary>
+   <h3>💰 Points et niveau</h3>${row('Points (exactement)','cp','setpts',P.pts)}${row('Total gagné (donne le niveau du joueur)','ct','settot',P.tot)}${row('Série d\'énigmes','cs','streak',0)}
+   <h3>🏰 Donjon infini</h3>${row('Record (vague)','cd','dj',pl.djr||0)}<div class="row">${cb('dj','Remettre le donjon à zéro','','0')}</div>
+   <h3>🗺️ Aventure</h3><div class="row"><label class="grow">Région<select id="avr_${u}">${REG.map((R,i)=>`<option value="${i}">${R.ic} ${R.n}</option>`).join('')}</select></label><label class="grow">Niveaux faits (0 à 6)<input id="avl_${u}" type="number" min="0" max="6" value="0"></label><button data-a="pcmd" data-u="${u}" data-op="adv">Mettre</button></div>
+    <div class="row"><button data-a="pcmd" data-u="${u}" data-op="adv" data-r="-1" data-v="99">Tout débloquer</button>${cb('adv','Remettre l\'Aventure à zéro','-1','0')}</div>
+   <h3>👑 Royaume</h3>${row('Or','ko','kg',0)}<div class="row"><label class="grow">Niveau du château<select id="kc_${u}">${[1,2,3,4,5].map(n=>`<option value="${n}">${n}</option>`).join('')}</select></label><button data-a="pcmd" data-u="${u}" data-op="kcl" data-f="kc">Mettre</button></div>
+    <div class="row">${cb('kreset','Remettre le royaume à zéro')}</div>
+   <h3>🎟️ Saison</h3><div class="row">${cb('sea','Remettre sa saison à zéro')}</div>
+   <h3>⚠️ Tout le compte</h3><p class="small mute">Remet tout à zéro comme un nouveau joueur. Il garde seulement son pseudo et son code.</p><div class="row">${cb('wipe','Tout réinitialiser')}</div></details>`}
 async function sendCmd(pid,item){const ref=db.doc('gifts/'+pid),s=await ref.get(),items=(s.exists?s.data().items||[]:[]).slice(-40).concat({...item,k:Date.now().toString(36)+Math.random().toString(36).slice(2,6)});await ref.set({items})}
 function applyCmds(items){
   S.gifted=S.gifted||{};let lastH=null,n=0,mod=0,gp=0;
@@ -2308,9 +2327,21 @@ function applyCmds(items){
     else if(it.op==='arena')S.arena=Math.max(1,Math.min(999,v||1));
     else if(it.op==='rid'){S.solved={};S.failed={};S.hint={};S.streak=0;S.daily=''}
     else if(it.op==='hlvl'&&o){o.lvl=Math.max(1,Math.min(20,o.lvl+v));o.xp=0}
+    else if(it.op==='setpts')S.pts=Math.max(0,v);
+    else if(it.op==='settot')S.total=Math.max(0,v);
+    else if(it.op==='streak')S.streak=Math.max(0,v);
+    else if(it.op==='dj')S.dj=v>0?{...(S.dj||{}),best:v,wk:weekId(),wb:v}:{};
+    else if(it.op==='adv'){const r=Math.floor(+it.r);if(r<0){S.adv={};S.advU={};if(v<=0)S.advH={};else REG.forEach((R,i)=>{S.adv[i]=R.lv.length;S.advU[i]=1})}
+      else if(REG[r]){S.adv={...(S.adv||{}),[r]:Math.max(0,Math.min(REG[r].lv.length,v))};S.advU={...(S.advU||{}),[r]:1}}}
+    else if(it.op==='kreset')S.kd=null;
+    else if(it.op==='kg')kdom().g=Math.max(0,v);
+    else if(it.op==='kcl'){const c=kdom().b.find(b=>b.t==='castle');if(c)c.l=Math.max(1,Math.min(5,v||1))}
+    else if(it.op==='sea')S.sea=null;
+    else if(it.op==='hset'&&o){o.lvl=Math.max(1,Math.min(20,v||1));o.st=Math.max(1,Math.min(3,Math.floor(+it.s)||1));o.xp=0}
+    else if(it.op==='wipe'){const keep={nick:S.nick,code:S.code,joined:S.joined,lang:S.lang,snd:S.snd,gifted:S.gifted};S=Object.assign(JSON.parse(JSON.stringify(DEF)),keep)}
     else if(it.op==='rmchar'&&o){if(Object.keys(S.chars).length>1){delete S.chars[it.h];if(S.sel===it.h)S.sel=Object.keys(S.chars)[0];if(S.craft&&S.craft.out===it.h&&S.craft.evo)S.craft=null}else{o.n=1;o.lvl=1;o.st=1;o.xp=0}}
   }
-  if(n||mod){save();if(view!=='fight'&&view!=='duel')render()}
+  if(n||mod){save();if(mod){cloudSave(1);kPub()}if(view!=='fight'&&view!=='duel')render()}
   if(n)reward(lastH,S.chars[lastH].st,n>1?n+' cadeaux de l\'admin reçus !':'Cadeau de l\'admin !');else if(gp)toast('🎁 Cadeau de l\'admin : +'+gp+' points !');else if(mod)toast('L\'admin a modifié ton compte');
 }
 /* ---- Tous les joueurs qui ont un code (liste « roster » tenue à jour par l'admin), en ligne ou non ---- */
