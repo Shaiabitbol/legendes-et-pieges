@@ -658,7 +658,9 @@ function allR(){return RIDDLES.concat((CFG.riddles||[]).filter(r=>!r.by||r.by!==
 const fin=id=>!!(S.solved[id]||S.failed[id]);
 function ordered(d){return allR().filter(r=>r.d===d)}
 function locked(r){if(boss())return false;for(const x of ordered(r.d)){if(x.id===r.id)return false;if(!fin(x.id))return true}return false}
-function diffOpen(k){return boss()||k===0||ordered(k-1).every(r=>fin(r.id))||ordered(k).some(r=>fin(r.id))}
+// Un niveau s'ouvre quand on a réussi 20 énigmes du niveau d'avant (ou toutes, s'il y en a moins)
+const DNEED=20,dNeed=k=>Math.min(DNEED,ordered(k).length),dGot=k=>ordered(k).filter(r=>S.solved[r.id]).length;
+function diffOpen(k){return boss()||k===0||dGot(k-1)>=dNeed(k-1)||ordered(k-1).every(r=>fin(r.id))||ordered(k).some(r=>fin(r.id))}
 // Énigme du jour : la prochaine énigme à faire, jouée pour la première fois de la journée
 function dailyR(){for(let k=0;k<4;k++){if(!diffOpen(k))break;const r=ordered(k).find(x=>!fin(x.id));if(r)return r}return null}
 function ansText(r){if(r.sol)return r.sol;if(r.type==='c')return r.o[+r.a];if(r.type==='n')return String(r.a);if(r.word)return 'le mot « '+r.word+' » dans la question';const i=r.it.find(x=>x.ok);return i?(i.e||i.t):''}
@@ -1032,7 +1034,23 @@ function arenaBg(k){
     g.fillStyle='#0a0510';for(let i=0;i<7;i++){const bx=80+r()*640,by=40+r()*150,bs=6+r()*6;g.beginPath();g.moveTo(bx,by);g.quadraticCurveTo(bx-bs,by-bs,bx-bs*2.2,by);g.quadraticCurveTo(bx-bs,by-bs*.3,bx,by+bs*.4);g.quadraticCurveTo(bx+bs,by-bs*.3,bx+bs*2.2,by);g.quadraticCurveTo(bx+bs,by-bs,bx,by);g.fill()}}
   return bgCache[hk]=cv;
 }
-function mkFighter(c,lvl,st,x,face,k=1){
+// ---------- Boutique de prestige : des achats chers et sans fin pour les joueurs riches (du style seulement : on ne devient pas plus fort) ----------
+const TITLES=[{k:'appr',t:'🌱 Apprenti',p:2000},{k:'guer',t:'⚔️ Guerrier',p:10000},{k:'gen',t:'🧠 Génie',p:25000},{k:'drag',t:'🐉 Dompteur de dragons',p:50000},{k:'roi',t:'👑 Roi du jeu',p:100000},{k:'leg',t:'🌌 Légende vivante',p:250000},{k:'imm',t:'♾️ Immortel',p:1000000}];
+const AURAS=[{k:'feu',n:'Aura de feu',c:'#ff5a1f',p:15000},{k:'glace',n:'Aura de glace',c:'#7fe7ff',p:15000},{k:'poison',n:'Aura de poison',c:'#6aff6a',p:30000},{k:'or',n:'Aura d\'or',c:'#ffd700',p:60000},{k:'ombre',n:'Aura d\'ombre',c:'#b14dff',p:120000},{k:'arc',n:'Aura arc-en-ciel',c:'',p:500000}];
+const RAINBOW=['#ff4d6d','#ffb238','#fff35e','#6aff6a','#4fc3ff','#b14dff'];
+const presCost=()=>100000*((S.pres||0)+1);
+function myTag(){const t=TITLES.find(x=>x.k===S.title),n=S.pres||0;return [t?t.t:'',n?(n<=5?'⭐'.repeat(n):'⭐×'+n):''].filter(Boolean).join(' ')}
+function auraCol(){const a=AURAS.find(x=>x.k===S.aura);return a?(a.c||RAINBOW[Math.floor(Math.random()*RAINBOW.length)]):null}
+function shopView(){const own=S.titles||{},oa=S.auras||{},P=S.pts,f=n=>n.toLocaleString('fr-FR');
+  return `<div class="panel" style="border-color:#ff6ad5"><div class="row"><button data-a="go" data-v="home">← Accueil</button><h2 class="grow" style="text-align:center">💎 Boutique de prestige</h2></div>
+   <p class="small mute">Pour les joueurs riches : des titres, des auras et des étoiles pour montrer à tout le monde que tu es une légende. Ça ne rend pas plus fort, c'est juste la classe.</p>${myTag()?`<p>Ton nom : <b>${esc(S.nick||'Joueur')} ${esc(myTag())}</b></p>`:''}</div>
+  <div class="panel"><h3>🏷️ Titres</h3><p class="small mute">Ils s'affichent à côté de ton pseudo, en haut de l'écran et dans le classement.</p>${TITLES.map(x=>`<div class="row" style="border-top:1px solid var(--line);padding-top:6px"><b class="grow">${x.t}</b>${own[x.k]?(S.title===x.k?'<button disabled>Porté ✓</button>':`<button class="btn2" data-a="shopt" data-k="${x.k}">Porter</button>`):`<button data-a="shopt" data-k="${x.k}" ${P<x.p?'disabled':''}>◆ ${f(x.p)}</button>`}</div>`).join('')}
+   ${S.title?'<div class="row"><button data-a="shopt" data-k="">Ne plus porter de titre</button></div>':''}</div>
+  <div class="panel"><h3>✨ Auras</h3><p class="small mute">La couleur de la lueur de ton héros pendant les combats (tirs, coups spéciaux, énergie).</p>${AURAS.map(x=>`<div class="row" style="border-top:1px solid var(--line);padding-top:6px"><span style="width:22px;height:22px;border-radius:50%;flex:none;background:${x.c||'conic-gradient('+RAINBOW.join(',')+')'};box-shadow:0 0 10px ${x.c||'#fff'}"></span><b class="grow">${x.n}</b>${oa[x.k]?(S.aura===x.k?'<button disabled>Activée ✓</button>':`<button class="btn2" data-a="shopa" data-k="${x.k}">Activer</button>`):`<button data-a="shopa" data-k="${x.k}" ${P<x.p?'disabled':''}>◆ ${f(x.p)}</button>`}</div>`).join('')}
+   ${S.aura?'<div class="row"><button data-a="shopa" data-k="">Couleur normale du héros</button></div>':''}</div>
+  <div class="panel" style="border-color:var(--gold)"><h3>⭐ Étoiles de prestige · tu en as ${S.pres||0}</h3><p class="small mute">Sans limite : chaque étoile coûte 100 000 points de plus que la précédente. Elles s'affichent à côté de ton nom.</p>
+   <div class="row"><button class="btn" data-a="shopp" ${P<presCost()?'disabled':''}>${sub.sp?'Confirmer ?':'Acheter une étoile · ◆ '+f(presCost())}</button></div></div>`}
+function mkFighter(c,lvl,st,x,face,k=1){if(face===1&&c===HB[S.sel]&&S.aura){const g=auraCol();if(g)c={...c,glow:g}}
   return {c,lvl,st,x,y:GY,vx:0,vy:0,face,mhp:stat(c,lvl,st,'hp')*k,hp:0,men:c.en,en:c.en*.5,atk:stat(c,lvl,st,'atk')*k,spd:c.spd,
     atkT:0,atkCd:0,shCd:0,spCd:0,sg:2.5,lock:0,hitT:0,spA:null,spOk:lvl>=3,shield:0,charge:0,ai:{t:0,o:{}}};
 }
@@ -1453,13 +1471,13 @@ function cqTake(i){const T=TR2[i];return T&&T.at&&Date.now()<T.at+CQPROT&&T.u!==
 function cqEarn(i){const T=TR2[i];if(!T||T.u!==uid)return 0;const since=Math.max(T.at||0,(S.cqc||{})[i]||0),h=Math.min(24,(Date.now()-since)/3.6e6);return Math.floor(h*TERR[i].r)}
 function cqWatch(v){const old=TR2;TR2={};for(const k in v||{})TR2[k]=v[k];
   for(const k in old)if(old[k]&&old[k].u===uid&&TR2[k]&&TR2[k].u!==uid)toast('⚔️ '+(cleanN(TR2[k].nick)||'Quelqu\'un')+' t\'a pris '+TERR[k].n+' !');
-  if((view==='conq'||view==='fprep'||view==='home')&&!typing())render()}
+  if((view==='conq'||view==='kingdom'||view==='home')&&!typing())render()}
 function cqPanel(){const mine=TERR.map((t,i)=>i).filter(i=>TR2[i]&&TR2[i].u===uid),earn=mine.reduce((a,i)=>a+cqEarn(i),0),rate=mine.reduce((a,i)=>a+TERR[i].r,0);
   return `<div class="panel" style="border-color:#9be36b"><div class="row"><h2 class="grow">🗺️ Conquête</h2><span class="chip">${mine.length} / ${TERR.length} territoires</span></div>
    <p class="small mute">Prends des territoires en battant leur gardien. Chacun te rapporte des points chaque heure… jusqu'à ce qu'un pote te le reprenne !</p>
    ${mine.length?`<p class="small">Tu gagnes <b>${rate} points / heure</b>.</p>`:''}<div class="row">${earn>0?`<button class="btn" data-a="cqclaim">Récolter ${earn} points</button>`:''}<button class="btn2" data-a="go" data-v="conq">Voir la carte</button></div></div>`}
 function conqView(){const mine=TERR.map((t,i)=>i).filter(i=>TR2[i]&&TR2[i].u===uid),earn=mine.reduce((a,i)=>a+cqEarn(i),0);
-  return `<div class="panel" style="border-color:#9be36b"><div class="row"><button data-a="go" data-v="fprep">← Combat</button><h2 class="grow" style="text-align:center">🗺️ Conquête</h2></div>
+  return `<div class="panel" style="border-color:#9be36b"><div class="row"><button data-a="go" data-v="kingdom">← Mon royaume</button><h2 class="grow" style="text-align:center">🗺️ Conquête</h2></div>
    <p class="small mute">Bats le gardien d'un territoire pour le prendre : ton héros actif devient son nouveau gardien. Récolte tes points (jusqu'à 24 h d'avance). Un territoire qui vient d'être pris est protégé 10 minutes.</p>
    ${!db?'<p class="mute">Serveur injoignable : la conquête a besoin d\'internet.</p>':''}
    ${earn>0?`<button class="btn" data-a="cqclaim">Récolter ${earn} points</button>`:''}</div>
@@ -1556,7 +1574,7 @@ function kingdomView(){const z=kdom(),pend=kPending(),bt=sub.bt,sel=sub.kb!=null
    <p class="small mute">Améliore ton château pour construire plus de bâtiments et monter leur niveau.</p></div>
   <div class="panel"><h3>🛡️ Caserne · ${kTroops()} / ${kTroopCap()}</h3>${Object.entries(KTROOP).map(([k,T])=>`<div class="row"><span style="font-size:22px">${T.ic}</span><span class="grow"><b>${T.n}</b> × ${z.tr[k]||0}<br><span class="small mute">vie ${T.hp} · dégâts ${T.dmg}/s · ${T.d}${(T.sz||1)>1?' · prend '+T.sz+' places':''}</span></span>${(T.ul||1)>kCastle().l?`<button disabled>🔒 château niv. ${T.ul}</button>`:`<button data-a="ktr" data-k="${k}" ${z.g<T.c||kTroops()+(T.sz||1)>kTroopCap()?'disabled':''}>+1 · 🪙 ${T.c}</button><button data-a="ktr" data-k="${k}" data-n="5" ${z.g<T.c*5||kTroops()+5*(T.sz||1)>kTroopCap()?'disabled':''}>+5</button>`}</div>`).join('')}
    <p class="small mute">Construis et améliore des casernes pour avoir plus de place. Ton héros actif (${HB[S.sel].n}) combat aussi à chaque attaque.</p></div>
-  ${kRanking()}`}
+  ${cqPanel()}${kRanking()}`}
 function kInfo(b){if(b.t==='castle')return 'Vie '+KBB.castle.hp(b.l)+' · stocke '+kCapL(b.l)+' or · débloque plus de bâtiments';if(b.t==='mine')return 'Produit '+80*b.l+' or par heure';if(b.t==='tower')return 'Tire sur les attaquants : '+(30+15*(b.l-1))+' dégâts/s';if(b.t==='wall')return 'Vie '+KBB.wall.hp(b.l)+' : ralentit les attaquants';if(b.t==='mtower')return 'Boules magiques : '+KDEF.mtower.dmg(b.l)+' dégâts sur toute une zone';if(b.t==='airdef')return 'Abat les dragons : '+KDEF.airdef.dmg(b.l)+' dégâts (ne touche que les dragons)';if(b.t==='vault')return 'Garde '+1000*b.l+' or de plus';return '+'+6*b.l+' places de troupes'}
 function kRanking(){const L2=KREG.filter(k=>k.nick).sort((a,b)=>(b.tro||0)-(a.tro||0)).slice(0,10);return `<div class="panel"><h3>🏆 Classement des royaumes</h3>${L2.length?`<div class="tw"><table>${L2.map((k,i)=>`<tr><td>${['🥇','🥈','🥉'][i]||i+1}</td><td>${esc(cleanN(k.nick))}${k.id===uid?' (toi)':''}</td><td>🏆 ${k.tro||0}</td><td>château ${k.l||1}</td></tr>`).join('')}</table></div>`:'<p class="small mute">Personne pour l\'instant.</p>'}</div>`}
 function kAttackList(){const z=kdom(),others=KREG.filter(k=>k.id!==uid&&Array.isArray(k.b)&&k.b.length),now=Date.now();
@@ -1687,7 +1705,7 @@ function kBattleView(){if(!KB){view='kingdom';return kingdomView()}
    <div class="row" id="kbar" style="justify-content:center"></div><div id="kres"></div></div>`}
 function advDone(r){return (S.adv||{})[r]||0}
 // Une région reste ouverte une fois débloquée, même si de nouvelles énigmes sont ajoutées ensuite
-function advOpen(r){if(r===0||boss()||(S.advU||{})[r])return true;if(ordered(r-1).length&&ordered(r-1).every(x=>fin(x.id))){S.advU=S.advU||{};S.advU[r]=1;return true}return false}
+function advOpen(r){if(r===0||boss()||(S.advU||{})[r])return true;if(ordered(r-1).length&&(dGot(r-1)>=dNeed(r-1)||ordered(r-1).every(x=>fin(x.id)))){S.advU=S.advU||{};S.advU[r]=1;return true}return false}
 function advLvl(r,l){if(!advOpen(r)||l>advDone(r))return;const t=REG[r].lv[l];if(t==='q'){view='adv';sub={r,l,q:1};render();scrollTo(0,0)}else startFight('adv',{r,l})}
 function advEnd(){const {r,l}=F.adv,R=REG[r],t=R.lv[l];let pts=0,xp=8,got=null,first=l>=advDone(r);
   if(F.win){pts=gain(ADVP[t](r)*(first?1:.3));xp=t==='b'?60+15*r:20+6*r;if(first)S.adv={...(S.adv||{}),[r]:l+1};S.wins++;bump('win');
@@ -1704,11 +1722,11 @@ function advEnd(){const {r,l}=F.adv,R=REG[r],t=R.lv[l];let pts=0,xp=8,got=null,f
 }
 function advMap(){
   const all=REG.every(R=>S.chars[R.hero]);
-  return `<div class="panel" style="border-color:var(--gold)"><h2>Aventure</h2><p class="mute small">Traverse les 5 régions des éléments. Chaque région a ses combats, ses questions pièges et un boss qui garde un héros exclusif. Finis toutes les énigmes d'une difficulté pour ouvrir la région suivante. Avec les 5 héros des éléments, forge le héros ultime !</p></div>
+  return `<div class="panel" style="border-color:var(--gold)"><h2>Aventure</h2><p class="mute small">Traverse les 5 régions des éléments. Chaque région a ses combats, ses questions pièges et un boss qui garde un héros exclusif. Réussis 20 énigmes d'une difficulté pour ouvrir la région suivante. Avec les 5 héros des éléments, forge le héros ultime !</p></div>
   <div style="display:flex;flex-direction:column;gap:10px">${REG.map((R,r)=>{const op=advOpen(r),d=advDone(r),n=R.lv.length,c=ELC[r],h=S.chars[R.hero];
    return `<button class="panel reg ${op?'':'lock'}" style="--ec:${c}" data-a="advmap" data-r="${r}" ${op?'':'disabled'}>
     <div class="regi">${R.ic}</div><div class="grow" style="text-align:left"><b style="font:20px var(--display);color:${c}">${R.n}</b> <span class="mute small">· ${R.ti}</span>
-    <div class="small">${op?(d>=n?'✓ Région terminée':'Progression '+d+' / '+n):'🔒 Finis toutes les énigmes « '+DIFF[r-1]+' » pour ouvrir'}</div>
+    <div class="small">${op?(d>=n?'✓ Région terminée':'Progression '+d+' / '+n):'🔒 Réussis '+dNeed(r-1)+' énigmes « '+DIFF[r-1]+' » pour ouvrir ('+Math.min(dGot(r-1),dNeed(r-1))+' / '+dNeed(r-1)+')'}</div>
     <div class="bar xp" style="margin-top:4px"><i style="width:${d/n*100}%;background:${c}"></i></div></div>
     <div style="width:64px;flex:none" class="${h?'':'card lock'}">${pt(R.hero,1)}</div></button>`}).join('')}</div>
   <div class="panel" style="border-color:#fff;text-align:center;align-items:center"><h2>Fusion des 5 éléments</h2>
@@ -1748,11 +1766,11 @@ function fmtD(ms){const h=Math.max(0,Math.floor(ms/3600000));return h>=24?Math.f
 const ICON={adv:'<path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/>',home:'<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',rid:'<path d="M9 9a3 3 0 1 1 4 2.8c-.7.4-1 1-1 1.7V14"/><circle cx="12" cy="18" r=".6"/><circle cx="12" cy="12" r="10"/>',fprep:'<path d="M4 4l10 10M14 4L4 14M14 14l6 6M17 11l-6 6"/>',heroes:'<path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/>',forge:'<path d="M4 9h12a4 4 0 0 0 4-4M6 9v3a4 4 0 0 0 4 4h0a4 4 0 0 0 4-4V9M8 21h8M10 16v5M14 16v5"/>',admin:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>'};
 function nav(){
   const tabs=[['home','Accueil'],['rid','Énigmes'],['fprep','Combat'],['heroes','Héros'],['forge','Forge']];if(isAdmin){const n=ALLSUBS.filter(x=>x.st==='wait').length;tabs.push(['admin','Admin'+(n?' ('+n+')':'')])}
-  const cur=view==='kingdom'||view==='kbattle'||view==='adv'?'home':view==='season'?'home':view==='pal'||view==='conq'?'fprep':view==='fight'||view==='duel'?(F&&F.mode==='adv'?'home':'fprep'):view==='riddle'?'rid':view==='profile'?'home':view;
+  const cur=view==='kingdom'||view==='kbattle'||view==='adv'||view==='conq'||view==='shop'?'home':view==='season'?'home':view==='pal'?'fprep':view==='fight'||view==='duel'?(F&&F.mode==='adv'?'home':'fprep'):view==='riddle'?'rid':view==='profile'?'home':view;
   $('#nav').innerHTML=tabs.map(([v,l])=>`<button class="${cur===v?'on':''}" data-a="go" data-v="${v}"><svg viewBox="0 0 24 24">${ICON[v]}</svg>${l}</button>`).join('');
 }
 function hud(){
-  $('#hpts').textContent='◆ '+(boss()?'∞':S.pts.toLocaleString('fr-FR'));$('#hlvl').textContent='Niv. '+plvl();$('#hstk').textContent='Série '+S.streak;const hn=$('#hnick'),lg=ready&&!gated();hn.hidden=!S.nick||!lg;hn.textContent=S.nick;const hs=$('#hsnd');if(hs){hs.textContent=S.snd&&(S.snd.fx||S.snd.mu)?'🔊':'🔇';hs.hidden=!lg}for(const i of['hpts','hlvl','hstk','hcfg'])$('#'+i).hidden=!lg;const ho=$('#hout');if(ho){ho.hidden=true;$('#houtl').textContent=L('Changer de compte')}if(hs)hs.hidden=true;const hl=$('#hlang');if(hl)hl.hidden=lg;
+  $('#hpts').textContent='◆ '+(boss()?'∞':S.pts.toLocaleString('fr-FR'));$('#hlvl').textContent='Niv. '+plvl();$('#hstk').textContent='Série '+S.streak;const hn=$('#hnick'),lg=ready&&!gated();hn.hidden=!S.nick||!lg;hn.textContent=S.nick+(myTag()?' '+myTag():'');const hs=$('#hsnd');if(hs){hs.textContent=S.snd&&(S.snd.fx||S.snd.mu)?'🔊':'🔇';hs.hidden=!lg}for(const i of['hpts','hlvl','hstk','hcfg'])$('#'+i).hidden=!lg;const ho=$('#hout');if(ho){ho.hidden=true;$('#houtl').textContent=L('Changer de compte')}if(hs)hs.hidden=true;const hl=$('#hlang');if(hl)hl.hidden=lg;
   const e=ev(),b=$('#evbar');b.hidden=!e;if(e)b.innerHTML=`<span>Événement : ${esc(e.name)} · points ×${e.mult}</span><span>fin dans ${fmt(e.end-Date.now())}</span>`;
 }
 function stars(n){return '<span class="stars">'+'★'.repeat(n)+'<span style="opacity:.25">'+'★'.repeat(3-n)+'</span></span>'}
@@ -1769,7 +1787,7 @@ const V={
      ${tile('go','adv','🗺️','Aventure',REG.every((R,r)=>advDone(r)>=R.lv.length)?'terminée !':'5 régions','#43e97b,#1fae6a','#0d6b3c')}
      ${tile('go','fprep','⚔️','Arène','étage '+S.arena,'#4facfe,#2563eb','#173b8f')}
      ${tile('djgo','','🏰','Donjon','record '+((S.dj||{}).best||0),'#a855f7,#6d28d9','#3b1080')}
-     ${tile('go','conq','🚩','Conquête',TERR.filter((t,i)=>TR2[i]&&TR2[i].u===uid).length+' / '+TERR.length+' territoires','#f6d365,#fda085','#a2572a')}
+     ${tile('go','shop','💎','Boutique','titres · auras · prestige','#ff6ad5,#7b2ff7','#4a1590')}
      ${tile('go','kingdom','👑','Royaume','🪙 '+kdom().g+(kPending()?' · +'+kPending()+' à récolter':''),'#ffd23f,#ff9f1c','#9a5a00',kPending()>=50?'🪙':'')}
      ${tile('go','forge','⚒️','Forge',S.craft?(S.craft.end<=Date.now()?'prête !':'en cours…'):'fusions','#ff6ad5,#c026d3','#7a0f86',S.craft&&S.craft.end<=Date.now()?'!':'')}
     </div>
@@ -1783,13 +1801,13 @@ const V={
   ${e?`<div class="panel" style="border-color:var(--ember)"><h2>Événement : ${esc(e.name)}</h2><p>Points ×${e.mult} sur les énigmes et les combats. ${HB[e.out]?`Recette spéciale à la forge : <b>${HB[e.out].n}</b>.`:''}</p>
     <div class="row"><button class="btn" data-a="fight" data-m="boss" ${S.boss===e.end?'disabled':''}>${S.boss===e.end?'Boss vaincu':'Défier le boss · '+(e.reward||150)+' points'}</button><span class="mute">Fin dans ${fmt(e.end-Date.now())}</span></div></div>`:''}
   ${weekPanel()}
-  ${top.length?`<details class="panel"><summary style="cursor:pointer"><b>Classement général</b></summary><div class="tw"><table>${top.map((p,i)=>`<tr><td>${i+1}</td><td>${esc(p.nick||'Joueur')}</td><td>${(p.total||0).toLocaleString('fr-FR')} pts</td><td>étage ${p.arena||1}</td></tr>`).join('')}</table></div></details>`:''}`;
+  ${top.length?`<details class="panel"><summary style="cursor:pointer"><b>Classement général</b></summary><div class="tw"><table>${top.map((p,i)=>`<tr><td>${i+1}</td><td>${esc(p.nick||'Joueur')}${p.ti?` <span class="small">${esc(String(p.ti).slice(0,40))}</span>`:''}</td><td>${(p.total||0).toLocaleString('fr-FR')} pts</td><td>étage ${p.arena||1}</td></tr>`).join('')}</table></div></details>`:''}`;
  },
  rid(){
   const d=sub.d??0,dy=S.daily!==today()?dailyR():null,list=ordered(d),cnt=k=>ordered(k).filter(r=>fin(r.id)).length;let open=true;
   return `${wkqPanel()}<div class="panel"><h2>🧩 Énigmes pièges</h2><details><summary style="cursor:pointer" class="small"><b>Comment ça marche ?</b></summary><p class="mute small">Les énigmes se font dans l'ordre et tu n'as qu'un seul essai. Si tu te trompes, la réponse s'affiche, tu gagnes 0 point et tu passes à la suivante. Tu peux refaire une énigme ratée pour le plaisir, sans points. Une série de bonnes réponses augmente tes gains (+10 % par réponse, jusqu'à ×2).</p></details>
    <div class="diff">${DIFF.map((n,k)=>`<button class="${k===d?'on':''}" data-a="diff" data-d="${k}" ${diffOpen(k)?'':'disabled'}>${n} · ${DPTS[k]} pts${diffOpen(k)?'':' (verrouillé)'}</button>`).join('')}</div>
-   ${d===DIFF.length-1||diffOpen(d+1)?'':`<p class="mute small">Termine encore ${ordered(d).length-cnt(d)} énigme(s) « ${DIFF[d]} » pour ouvrir « ${DIFF[d+1]} ».</p>`}
+   ${d===DIFF.length-1||diffOpen(d+1)?'':`<p class="mute small">Termine encore ${Math.max(1,dNeed(d)-dGot(d))} énigme(s) « ${DIFF[d]} » pour ouvrir « ${DIFF[d+1]} ».</p>`}
    <div class="rid">${list.map((r,i)=>{const lk=!open;if(!fin(r.id))open=false;return `<button class="${S.solved[r.id]?'done':S.failed[r.id]?'fail':''} ${dy&&r.id===dy.id?'day':''}" data-a="riddle" data-id="${r.id}" ${lk?'disabled':''} title="${S.solved[r.id]?'Réussie':S.failed[r.id]?'Ratée':lk?'Termine d\'abord la précédente':'À faire'}">${S.solved[r.id]?'✓':S.failed[r.id]?'✗':i+1}</button>`}).join('')}</div></div>${subPanel()}`;
  },
  riddle(){
@@ -1813,6 +1831,7 @@ const V={
  },
  pal(){return palView()},
  conq(){return conqView()},
+ shop(){return shopView()},
  season(){return seasonView()},
  kingdom(){if(!S.kd){kdom();kPub()}return kingdomView()},
  kbattle(){return kBattleView()},
@@ -1831,7 +1850,7 @@ const V={
     <details><summary style="cursor:pointer"><b>Commandes</b></summary><p class="small mute">Téléphone : joystick à gauche, boutons à droite. Pousse le joystick vers le haut pour voler.</p>
     <p class="small mute">Clavier : flèches ou ZQSD pour bouger et voler, J frapper, K tirer (12 d'énergie), Maj dash (15 d'énergie), L bouclier (dégâts −50 %, 2,5 s max), U recharger l'énergie, I attaque spéciale.</p>
     <p class="small mute">Les tirs sont lents : esquive-les avec le dash (tu es intouchable pendant le bond). Un tir grossit en volant et fait jusqu'à 2 fois plus de dégâts de loin. Frapper au corps à corps fait peu de dégâts.</p>
-    <p class="small mute">L'attaque spéciale se lance seulement quand ta barre d'énergie est pleine, et elle la vide d'un coup. Bouclier et recharge t'immobilisent. Un bouclier vidé met 3 s à revenir.</p></details></div></div>${halPanel()}${djPanel()}${cqPanel()}`;
+    <p class="small mute">L'attaque spéciale se lance seulement quand ta barre d'énergie est pleine, et elle la vide d'un coup. Bouclier et recharge t'immobilisent. Un bouclier vidé met 3 s à revenir.</p></details></div></div>${halPanel()}${djPanel()}`;
  },
  fight(){
   const p=F.p,e=F.e;
@@ -2058,6 +2077,11 @@ const A={
   try{const id=await codeId(code);await db.doc('codes/'+id).set({name,at:Date.now()});await db.doc('adm/codes').set({list:CODES.concat({code,name,id})});toast('Code créé pour '+name+' : '+code)}catch(e){toast('Création refusée : '+(e.code||'erreur'))}},
  // Changer le code d'un joueur : on recopie sa fiche (et sa sauvegarde) sous le nouveau code, puis l'ancien code est effacé
  mvgo(){const r=allR().find(x=>x.id===sub.id);if(r&&r.type==='m')return mvStart(r)},
+ shopt(d){const x=TITLES.find(y=>y.k===d.k);S.titles=S.titles||{};if(!d.k){S.title='';save();render();return}if(!x)return;
+  if(!S.titles[x.k]){if(S.pts<x.p)return toast('Pas assez de points');S.pts-=x.p;S.titles[x.k]=1;sfx('lvl');toast('Nouveau titre : '+x.t)}S.title=x.k;lastSync=0;save();render()},
+ shopa(d){const x=AURAS.find(y=>y.k===d.k);S.auras=S.auras||{};if(!d.k){S.aura='';save();render();return}if(!x)return;
+  if(!S.auras[x.k]){if(S.pts<x.p)return toast('Pas assez de points');S.pts-=x.p;S.auras[x.k]=1;sfx('lvl');toast(x.n+' débloquée !')}S.aura=x.k;save();render()},
+ shopp(){const c=presCost();if(S.pts<c)return toast('Pas assez de points');if(!sub.sp){sub.sp=1;render();return}sub.sp=0;S.pts-=c;S.pres=(S.pres||0)+1;lastSync=0;sfx('lvl');save();render();toast('⭐ Étoile de prestige n° '+S.pres+' !')},
  async cchg(d){if(!db)return;const c=CODES.find(x=>x.id===d.id);if(!c)return;const inp=$('#ncode');let code=String(inp?inp.value:'').trim().toLowerCase();
   if(code&&!/^[a-z0-9]{4,12}$/.test(code))return toast('Le code doit faire 4 à 12 lettres ou chiffres');
   if(!code){const al='abcdefghjkmnpqrstuvwxyz23456789',r=crypto.getRandomValues(new Uint8Array(12));do{code=[...r].slice(0,6).map(x=>al[x%al.length]).join('');crypto.getRandomValues(r)}while(CODES.some(x=>x.code===code));if(inp)inp.value=code}
@@ -2584,7 +2608,7 @@ let lastMin=0;setInterval(()=>{hud();duelClock();seenSync();if(view==='heroes'&&
 },1000);
 async function syncPlayer(){
   if(!db||!uid||syncDead||syncing||!ready||gated())return;
-  wkAdd(0);const d={nick:S.nick||'Joueur',pts:S.pts,total:S.total,arena:S.arena,heroes:Object.keys(S.chars).length,solved:Object.keys(S.solved).length,wk:S.wk.id,djw:(S.dj||{}).wk||'',djb:(S.dj||{}).wb||0,djr:(S.dj||{}).best||0,wp:S.wk.p,lwk:S.lwk?.id||'',lwp:S.lwk?.p||0,adm:isAdmin?1:0,cid:myCid||'',dw:S.dw||0,dl:S.dl||0,sec:Object.keys(S.sec||{}).length,sel:[S.sel,S.chars[S.sel].lvl,S.chars[S.sel].st],c:Object.entries(S.chars).map(([k,v])=>k+':'+v.n+':'+v.lvl+':'+v.st).join(',').slice(0,900)},sig=JSON.stringify(d);
+  wkAdd(0);const d={nick:S.nick||'Joueur',ti:myTag(),pts:S.pts,total:S.total,arena:S.arena,heroes:Object.keys(S.chars).length,solved:Object.keys(S.solved).length,wk:S.wk.id,djw:(S.dj||{}).wk||'',djb:(S.dj||{}).wb||0,djr:(S.dj||{}).best||0,wp:S.wk.p,lwk:S.lwk?.id||'',lwp:S.lwk?.p||0,adm:isAdmin?1:0,cid:myCid||'',dw:S.dw||0,dl:S.dl||0,sec:Object.keys(S.sec||{}).length,sel:[S.sel,S.chars[S.sel].lvl,S.chars[S.sel].st],c:Object.entries(S.chars).map(([k,v])=>k+':'+v.n+':'+v.lvl+':'+v.st).join(',').slice(0,900)},sig=JSON.stringify(d);
   if(sig===lastSig&&Date.now()-lastSync<300000||Date.now()-lastSync<20000)return;
   syncing=true;lastSync=Date.now();try{await db.doc('players/'+uid).set({...d,at:Date.now()});lastSig=sig}catch(e){if(e&&e.code!=='unavailable')syncDead=true}syncing=false;
 }
