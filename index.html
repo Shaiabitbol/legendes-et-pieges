@@ -1404,9 +1404,11 @@ const KN=8,KB_T=[ // type : nom, icône, coût de construction, PV(l), couleur
 const KBB=Object.fromEntries(KB_T.map(b=>[b.k,b]));
 const KTROOP={sol:{n:'Soldat',ic:'🗡️',c:15,hp:120,dmg:18,rg:.7,sp:1,col:'#ff9a3d'},arc:{n:'Archer',ic:'🏹',c:25,hp:70,dmg:14,rg:2.2,sp:1.1,col:'#3ff08f'}};
 const CASTLE_UP=[0,400,900,1800,3500];
+// Or stocké par niveau de château : toujours au moins le prix de l'amélioration suivante
+const KCAP=[0,600,1200,1800,3500,5000],kCapL=l=>KCAP[Math.min(5,Math.max(1,+l||1))];
 function kdom(){if(!S.kd)S.kd={g:300,b:[{t:'castle',x:3,y:3,l:1},{t:'mine',x:1,y:1,l:1},{t:'tower',x:5,y:2,l:1}],col:Date.now(),tr:{sol:5,arc:0},tro:0,raids:{}};return S.kd}
 const kCastle=()=>kdom().b.find(b=>b.t==='castle')||{l:1};
-const kCap=()=>600*kCastle().l,kTroopCap=()=>8+6*kdom().b.filter(b=>b.t==='barracks').reduce((a,b)=>a+b.l,0);
+const kCap=()=>kCapL(kCastle().l),kTroopCap=()=>8+6*kdom().b.filter(b=>b.t==='barracks').reduce((a,b)=>a+b.l,0);
 const kTroops=()=>Object.values(kdom().tr).reduce((a,b)=>a+b,0);
 function kLimit(t){const L=kCastle().l;return t==='castle'?1:t==='mine'||t==='tower'?L+1:t==='wall'?4*L+4:1}
 function kProd(){return kdom().b.filter(b=>b.t==='mine').reduce((a,b)=>a+80*b.l,0)}
@@ -1445,10 +1447,10 @@ function kingdomView(){const z=kdom(),pend=kPending(),bt=sub.bt,sel=sub.kb!=null
   <div class="panel"><h3>🛡️ Caserne · ${kTroops()} / ${kTroopCap()}</h3>${Object.entries(KTROOP).map(([k,T])=>`<div class="row"><span style="font-size:22px">${T.ic}</span><span class="grow"><b>${T.n}</b> × ${z.tr[k]||0}<br><span class="small mute">vie ${T.hp} · dégâts ${T.dmg}/s · ${k==='arc'?'tire de loin':'au corps à corps'}</span></span><button data-a="ktr" data-k="${k}" ${z.g<T.c||kTroops()>=kTroopCap()?'disabled':''}>+1 · 🪙 ${T.c}</button><button data-a="ktr" data-k="${k}" data-n="5" ${z.g<T.c*5||kTroops()+5>kTroopCap()?'disabled':''}>+5</button></div>`).join('')}
    <p class="small mute">Construis et améliore des casernes pour avoir plus de place. Ton héros actif (${HB[S.sel].n}) combat aussi à chaque attaque.</p></div>
   ${kRanking()}`}
-function kInfo(b){if(b.t==='castle')return 'Vie '+KBB.castle.hp(b.l)+' · stocke '+600*b.l+' or · débloque plus de bâtiments';if(b.t==='mine')return 'Produit '+80*b.l+' or par heure';if(b.t==='tower')return 'Tire sur les attaquants : '+(30+15*(b.l-1))+' dégâts/s';if(b.t==='wall')return 'Vie '+KBB.wall.hp(b.l)+' : ralentit les attaquants';return '+'+6*b.l+' places de troupes'}
+function kInfo(b){if(b.t==='castle')return 'Vie '+KBB.castle.hp(b.l)+' · stocke '+kCapL(b.l)+' or · débloque plus de bâtiments';if(b.t==='mine')return 'Produit '+80*b.l+' or par heure';if(b.t==='tower')return 'Tire sur les attaquants : '+(30+15*(b.l-1))+' dégâts/s';if(b.t==='wall')return 'Vie '+KBB.wall.hp(b.l)+' : ralentit les attaquants';return '+'+6*b.l+' places de troupes'}
 function kRanking(){const L2=KREG.filter(k=>k.nick).sort((a,b)=>(b.tro||0)-(a.tro||0)).slice(0,10);return `<div class="panel"><h3>🏆 Classement des royaumes</h3>${L2.length?`<div class="tw"><table>${L2.map((k,i)=>`<tr><td>${['🥇','🥈','🥉'][i]||i+1}</td><td>${esc(cleanN(k.nick))}${k.id===uid?' (toi)':''}</td><td>🏆 ${k.tro||0}</td><td>château ${k.l||1}</td></tr>`).join('')}</table></div>`:'<p class="small mute">Personne pour l\'instant.</p>'}</div>`}
 function kAttackList(){const z=kdom(),others=KREG.filter(k=>k.id!==uid&&Array.isArray(k.b)&&k.b.length),now=Date.now();
-  const row=(k,gob)=>{const prot=!gob&&k.lr&&now-k.lr<2*3600e3,loot=gob?Math.round(k.g*.5):Math.floor(Math.min(600*(k.l||1),(k.g||0)+((now-(k.at||now))/3.6e6)*(k.p||0))*.3);
+  const row=(k,gob)=>{const prot=!gob&&k.lr&&now-k.lr<2*3600e3,loot=gob?Math.round(k.g*.5):Math.floor(Math.min(kCapL(k.l),(k.g||0)+((now-(k.at||now))/3.6e6)*(k.p||0))*.3);
     return `<div class="row" style="border-top:1px solid var(--line);padding-top:8px"><span style="font-size:26px">${gob?'👺':'👑'}</span><span class="grow"><b>${esc(cleanN(k.nick))}</b><br><span class="small mute">château ${k.l||1} · ${gob?'':'🏆 '+(k.tro||0)+' · '}butin jusqu'à 🪙 ${loot}</span></span>
      ${prot?`<button disabled>🛡️ ${fmt(2*3600e3-(now-k.lr))}</button>`:`<button class="btn" data-a="kgo" data-u="${gob?'gob'+k.gob:esc(k.id)}" ${kTroops()?'':'disabled'}>Attaquer</button>`}</div>`};
   return `<div class="panel" style="border-color:#ff6a3d"><div class="row"><button data-a="kback">← Mon royaume</button><h2 class="grow" style="text-align:center">⚔️ Attaquer</h2></div>
@@ -1548,7 +1550,7 @@ function kTick(dt,t){const k=KB,cv=$('#karena');if(!k||!cv)return;const g=cv.get
 function kStars(){const k=KB,pct=k.dead/Math.max(1,k.tot),castle=k.bld.find(b=>b.t==='castle');return (pct>=.5?1:0)+(castle&&castle.hp<=0?1:0)+(pct>=1?1:0)}
 function kEnd(){const k=KB;if(k.over)return;k.over=1;const z=kdom(),st=kStars(),pct=k.dead/Math.max(1,k.tot),T=k.tg;
   z.tr.sol=Math.max(0,(z.tr.sol||0)-k.dep.sol);z.tr.arc=Math.max(0,(z.tr.arc||0)-k.dep.arc);
-  let loot=0;if(T.gob)loot=Math.round(T.g*.5*pct);else{const avail=Math.min(600*(T.l||1),(T.g||0)+((Date.now()-(T.at||Date.now()))/3.6e6)*(T.p||0));loot=Math.floor(avail*.3*pct)}
+  let loot=0;if(T.gob)loot=Math.round(T.g*.5*pct);else{const avail=Math.min(kCapL(T.l),(T.g||0)+((Date.now()-(T.at||Date.now()))/3.6e6)*(T.p||0));loot=Math.floor(avail*.3*pct)}
   loot=Math.min(loot,Math.max(0,kCap()-z.g));z.g+=loot;const tro=st*10;z.tro=(z.tro||0)+tro;
   if(!T.gob&&db&&loot+st>0){const id=Date.now().toString(36)+Math.random().toString(36).slice(2,5);db.doc('raids/'+T.id+'/'+id).set({by:uid,nick:S.nick||'Joueur',loot,st,at:Date.now()}).catch(()=>{})}
   if(st>0)bump('win');kSave();sfx(st?'win':'lose');
