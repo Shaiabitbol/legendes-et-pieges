@@ -315,6 +315,8 @@ const ELC=['#9be36b','#ff7b2e','#4fc3ff','#e8fbff','#fff35e'];
 // Exclusifs de forge : un héros unique par recette (voir POOL), 5 % de chance
 const CXL=H.filter(c=>c.cx).map(c=>c.id),CXP=.05;
 const HB=Object.fromEntries(H.map(c=>[c.id,c]));
+// Collection rangée du plus fort au plus faible : rareté d'abord, puis vie × attaque
+const HSORT=H.slice().sort((a,b)=>b.r-a.r||b.hp*b.atk-a.hp*a.atk);
 // Coffres : prix en points et chances (en %) par rareté, de Commun à Mythique
 const BOX=[{n:'Coffre de bronze',p:100,col:'#c98a4b',o:[62,27,8.5,2.2,.3]},{n:'Coffre runique',p:350,col:'#c77dff',o:[0,55,32,11,2]}];
 function give(id){const o=S.chars[id];if(o){o.n++;return true}S.chars[id]={n:1,lvl:1,xp:0,st:1};return false}
@@ -1762,7 +1764,7 @@ const V={
   const boxes=`<div class="panel"><h2>Coffres</h2><p class="mute small">Un coffre donne un héros au hasard. Plus la rareté est haute, plus la chance est faible. Un héros déjà possédé devient un double pour la forge.</p><div class="split">${BOX.map((b,i)=>`<div class="panel" style="border-color:${b.col};text-align:center;align-items:center"><svg viewBox="0 0 64 52" width="64" aria-hidden="true"><rect x="4" y="20" width="56" height="28" rx="4" fill="${b.col}"/><path d="M4 22a28 18 0 0 1 56 0z" fill="${b.col}" opacity=".75"/><rect x="4" y="20" width="56" height="5" fill="#0e1024" opacity=".55"/><rect x="26" y="16" width="12" height="16" rx="3" fill="#ffd166"/><circle cx="32" cy="24" r="2.5" fill="#0e1024"/></svg><h3>${b.n}</h3>
    <p class="small">${b.o.map((v,r)=>v?`<span style="color:${RAR[r].c};white-space:nowrap">${RAR[r].n} ${String(v).replace('.',',')} %</span>`:'').filter(Boolean).join(' · ')}</p>
    <button class="btn" data-a="box" data-i="${i}" ${S.pts<b.p?'disabled':''}>Ouvrir · ${b.p} pts</button></div>`).join('')}</div></div>`;
-  return det+`<div class="panel"><h2>Collection · ${Object.keys(S.chars).length} / ${H.length}</h2><div class="grid coll">${H.map(x=>card(x,S.chars[x.id]?`<div class="small">${stars(S.chars[x.id].st)} niv. ${S.chars[x.id].lvl}</div>`:`<div class="small mute">${x.sea?'Saison':x.hal?'Halloween':x.id==='primordius'||x.id==='omnirex'?'Fusion ultime':x.cx?'Forge 5 %':x.ex?'Aventure':'Coffre'}</div>`,(x.id===id?'sel':''))).join('')}</div></div>`+boxes+tradePanel();
+  return det+`<div class="panel"><h2>Collection · ${Object.keys(S.chars).length} / ${H.length}</h2><div class="grid coll">${HSORT.map(x=>card(x,S.chars[x.id]?`<div class="small">${stars(S.chars[x.id].st)} niv. ${S.chars[x.id].lvl}</div>`:`<div class="small mute">${x.sea?'Saison':x.hal?'Halloween':x.id==='primordius'||x.id==='omnirex'?'Fusion ultime':x.cx?'Forge 5 %':x.ex?'Aventure':'Coffre'}</div>`,(x.id===id?'sel':''))).join('')}</div></div>`+boxes+tradePanel();
  },
  forge(){
   const cr=S.craft,now=Date.now(),rec=recipes();
