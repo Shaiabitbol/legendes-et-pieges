@@ -2224,7 +2224,7 @@ const A={
    F.quit=1;duelTx(true);pubD(1);setTimeout(()=>{try{room&&room.live(null).catch(()=>{})}catch(e){}},3000);finishDuel('lose');return}view='fprep';render()},
  // Relancer le jeu comme si on le fermait et le rouvrait (la progression est gardée)
  reload(){if(F&&F.duel&&!F.over&&DU&&DU.s==='play'){if(!sub.rl){sub.rl=1;toast(L('Appuie encore pour relancer : tu perds le duel et ta mise'));setTimeout(()=>{sub.rl=0},3000);return}}
-  try{save();stashProfile()}catch(e){}location.reload()},
+  freshGo()},
  cfg(){const m=$('#modal');m.hidden=false;const on=S.snd&&(S.snd.fx||S.snd.mu);
   m.innerHTML=`<div class="panel cfgm"><h2>${L('Réglages')}</h2><button data-a="cfgmute">${on?'🔊 '+L('Son activé'):'🔇 '+L('Son coupé')}</button><button data-a="cfglang">🌐 ${LANG==='he'?'Français':'עברית'}</button>
    <button data-a="reload">↻ ${L('Relancer le jeu')}</button>${S.code?`<button data-a="logout" style="color:var(--bad)">${L('Changer de compte')}</button>`:''}<button class="btn" data-a="close">${L('Fermer')}</button></div>`},
@@ -2523,12 +2523,19 @@ function allPlayers(){
 function rosterSync(){if(!isAdmin||!db||!rosterOk)return;const ids=new Set(CODES.map(c=>c.id));
   for(const c of CODES){const n=cleanN(c.name);if(n&&(!ROSTER[c.id]||ROSTER[c.id].name!==n))db.doc('roster/'+c.id).set({name:n}).catch(()=>{})}
   for(const id in ROSTER)if(!ids.has(id))db.doc('roster/'+id).delete().catch(()=>{})}
-/* ---- Mises à jour automatiques : on relit régulièrement la page sur le serveur ; si elle a changé, on propose de mettre à jour ---- */
-let verH=null,verT=0;
+/* ---- Mises à jour automatiques : on compare le code qui tourne sur ce téléphone avec celui du site.
+   S'il est différent (vieille copie gardée en mémoire par le téléphone), on charge la nouvelle version. ---- */
+let verT=0;
+const codeHash=doc=>{let t='';doc.querySelectorAll('script:not([src])').forEach(x=>t+=x.textContent);let h=0;for(let i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))|0;return h};
+const MYVER=codeHash(document);
+function freshGo(){try{save();stashProfile()}catch(e){}location.replace(location.pathname+'?v='+Date.now().toString(36))}
 async function verCheck(){if(!/^https?:$/.test(location.protocol)||Date.now()-verT<60000)return;verT=Date.now();
-  try{const r=await fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text();let h=0;for(let i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))|0;
-    if(verH===null){verH=h;return}const b=$('#updbar');if(h!==verH&&b&&b.hidden){b.innerHTML=`<span>${L('Nouvelle version du jeu disponible')}</span><button class="btn" data-a="reload">${L('Mettre à jour')}</button>`;b.hidden=false}}catch(e){}}
-setTimeout(verCheck,3000);setInterval(verCheck,5*60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)verCheck()});
+  try{const r=await fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const h=codeHash(new DOMParser().parseFromString(await r.text(),'text/html'));if(h===MYVER)return;
+    // Nouvelle version : tout de suite si le joueur n'est pas en plein combat, sinon on lui propose
+    const busy=(view==='fight'||view==='duel')&&F&&!F.over||view==='kbattle'&&KB&&!KB.over;let tried=null;try{tried=sessionStorage.getItem('lpver')}catch(e){}
+    if(!busy&&tried!==String(h)){try{sessionStorage.setItem('lpver',String(h))}catch(e){}return freshGo()}
+    const b=$('#updbar');if(b&&b.hidden){b.innerHTML=`<span>${L('Nouvelle version du jeu disponible')}</span><button class="btn" data-a="reload">${L('Mettre à jour')}</button>`;b.hidden=false}}catch(e){}}
+setTimeout(verCheck,1500);setInterval(verCheck,2*60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)verCheck()});
 function duelClock(){
   const t=Date.now();if(DU&&DU.s==='play'&&F&&F.duel&&!F.rx&&room){try{pubD();duelTx(true);roomTick()}catch(e){}}
   if(DU&&DU.s==='wait'&&t-(DU.t0||t)>60000)endInvite('Pas de réponse à ton défi');
