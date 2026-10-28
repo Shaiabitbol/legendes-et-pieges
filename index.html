@@ -1784,7 +1784,8 @@ const V={
     <span class="mute small">${c.sea?'Héros de saison : palier 30 de la saison du mois (un héros différent chaque mois).':id==='spectrouille'?'Exclusif d\'Halloween : bats Spectrouille entre le 20 octobre et le 2 novembre.':id==='primordius'?'S\'obtient en fusionnant les 5 héros des éléments à la forge.':id==='omnirex'?'S\'obtient avec la fusion suprême des '+CXL.length+' exclusifs de forge.':c.cx?(()=>{const q=POOL.find(x=>x[4]===id);return 'Exclusif de forge : 5 % de chance sur la recette '+(q?HB[q[0]].n+' + '+HB[q[1]].n+' → '+HB[q[2]].n:'')+' (quand elle passe à la forge).'})():c.ex?'Exclusif : boss de la région '+REG[c.el].n+' dans l\'Aventure.':'S\'obtient dans les coffres ou à la forge.'}</span></div></div></div></div>`;
   const boxes=`<div class="panel"><h2>Coffres</h2><p class="mute small">Un coffre donne un héros au hasard. Plus la rareté est haute, plus la chance est faible. Un héros déjà possédé devient un double pour la forge.</p><div class="split">${BOX.map((b,i)=>`<div class="panel" style="border-color:${b.col};text-align:center;align-items:center"><svg viewBox="0 0 64 52" width="64" aria-hidden="true"><rect x="4" y="20" width="56" height="28" rx="4" fill="${b.col}"/><path d="M4 22a28 18 0 0 1 56 0z" fill="${b.col}" opacity=".75"/><rect x="4" y="20" width="56" height="5" fill="#0e1024" opacity=".55"/><rect x="26" y="16" width="12" height="16" rx="3" fill="#ffd166"/><circle cx="32" cy="24" r="2.5" fill="#0e1024"/></svg><h3>${b.n}</h3>
    <p class="small">${b.o.map((v,r)=>v?`<span style="color:${RAR[r].c};white-space:nowrap">${RAR[r].n} ${String(v).replace('.',',')} %</span>`:'').filter(Boolean).join(' · ')}</p>
-   <button class="btn" data-a="box" data-i="${i}" ${S.pts<b.p?'disabled':''}>Ouvrir · ${b.p} pts</button></div>`).join('')}</div></div>`;
+   <button class="btn" data-a="box" data-i="${i}" ${S.pts<b.p?'disabled':''}>Ouvrir · ${b.p} pts</button>
+   <div class="row" style="justify-content:center;width:100%"><label style="max-width:110px">Combien ?<input id="bq${i}" type="number" min="1" max="1000" value="10" inputmode="numeric" data-p="${b.p}"></label><button data-a="boxn" data-i="${i}" id="bqb${i}">Ouvrir ×10 · ${(10*b.p).toLocaleString('fr-FR')} pts</button></div></div>`).join('')}</div></div>`;
   return det+`<div class="panel"><h2>Collection · ${Object.keys(S.chars).length} / ${H.length}</h2><div class="grid coll">${HSORT.map(x=>card(x,S.chars[x.id]?`<div class="small">${stars(S.chars[x.id].st)} niv. ${S.chars[x.id].lvl}</div>`:`<div class="small mute">${x.sea?'Saison':x.hal?'Halloween':x.id==='primordius'||x.id==='omnirex'?'Fusion ultime':x.cx?'Forge 5 %':x.ex?'Aventure':'Coffre'}</div>`,(x.id===id?'sel':''))).join('')}</div></div>`+boxes+tradePanel();
  },
  forge(){
@@ -1996,6 +1997,19 @@ const A={
  up(d){const o=S.chars[d.id],c=25*o.lvl;if(S.pts<c||o.lvl>=20)return;S.pts-=c;o.lvl++;o.xp=0;save();render();toast(HB[d.id].n+' passe niveau '+o.lvl)},
  box(d){const b=BOX[+d.i];if(!b||(!d.free&&S.pts<b.p))return;if(!d.free){S.pts-=b.p;bump('box')}S.boxes++;let x=Math.random()*100,r=0;while(r<4&&x>=b.o[r]){x-=b.o[r];r++}
   const pool=H.filter(c=>c.r===r&&!c.ex),c=pool[Math.floor(Math.random()*pool.length)],had=give(c.id);if(Math.random()<(+d.i===1?.25:.1))setTimeout(()=>giveEgg(+d.i===1&&Math.random()<.3?2:+d.i,'dans le coffre'),1500);save();render();reward(c.id,S.chars[c.id].st,had?'Double obtenu : utilise-le à la forge':'Nouveau héros débloqué !')},
+ // Plusieurs coffres d'un coup (jusqu'à 1000) : tout est tiré d'un coup puis résumé dans une seule fenêtre
+ boxn(d){const i=+d.i,b=BOX[i];if(!b)return;const n=Math.max(1,Math.min(1000,Math.floor(+val('bq'+i)||0)));if(!n)return;const cost=n*b.p;
+  if(S.pts<cost)return toast('Pas assez de points : il en faut '+cost.toLocaleString('fr-FR'));S.pts-=cost;bump('box',n);S.boxes+=n;S.eggs=S.eggs||[];
+  const got={},nw=[],eg=[0,0,0];
+  for(let j=0;j<n;j++){let x=Math.random()*100,r=0;while(r<4&&x>=b.o[r]){x-=b.o[r];r++}const pool=H.filter(c=>c.r===r&&!c.ex),c=pool[Math.floor(Math.random()*pool.length)];
+   if(!give(c.id))nw.push(c.id);got[c.id]=(got[c.id]||0)+1;
+   if(Math.random()<(i===1?.25:.1)){const er=i===1&&Math.random()<.3?2:i;eg[er]++;S.eggs.push({k:Date.now().toString(36)+Math.random().toString(36).slice(2,7),r:er,end:0})}}
+  save();render();sfx('chest');const best=Object.keys(got).sort((a,c)=>HB[c].r-HB[a].r||HB[c].hp*HB[c].atk-HB[a].hp*HB[a].atk)[0],m=$('#modal');m.hidden=false;
+  m.innerHTML=`<div class="panel"><h2>${n} ${n>1?b.n.toLowerCase().replace('coffre','coffres').replace('runique','runiques'):b.n.toLowerCase()} ouvert${n>1?'s':''} !</h2><div style="width:150px;margin:0 auto">${pt(best,S.chars[best].st)}</div>
+   ${nw.length?`<p><b>✨ ${nw.length} nouveau${nw.length>1?'x':''} héros :</b> ${nw.map(id=>`<span style="color:${RAR[HB[id].r].c}">${HB[id].n}</span>`).join(', ')}</p>`:'<p class="mute">Pas de nouveau héros cette fois.</p>'}
+   <div class="tw" style="max-height:220px;overflow:auto"><table>${Object.entries(got).sort((a,c)=>HB[c[0]].r-HB[a[0]].r).map(([id,k])=>`<tr><td style="color:${RAR[HB[id].r].c}">${HB[id].n}</td><td class="small">${RAR[HB[id].r].n}</td><td>×${k}</td></tr>`).join('')}</table></div>
+   ${eg.some(Boolean)?`<p>🥚 ${eg.map((k,r)=>k?k+' '+(k>1?EGG[r].n.toLowerCase().replace(/(\S+) (\S+)/,'$1s $2s'):EGG[r].n.toLowerCase()):'').filter(Boolean).join(' · ')} → Héros → Familiers</p>`:''}
+   <p class="small mute">−${cost.toLocaleString('fr-FR')} points · les doubles servent à la forge</p><button class="btn" data-a="close">Continuer</button></div>`},
  async giftpts(){if(!db)return toast('Base indisponible ici');const p=val('gp'),v=Math.floor(+val('gpts')||0);if(!p)return;if(v<=0)return toast('Écris un nombre de points');
   try{await sendCmd(p,{op:'pts',v});toast(v+' points offerts à '+((giftList().find(x=>x.id===p)||{}).nick||'Joueur'))}catch(e){toast('Don refusé : '+(e.code||'erreur'))}},
  async gift(){if(!db)return toast('Base indisponible ici');const p=val('gp'),h=val('gh');if(!p||!HB[h])return;
@@ -2153,6 +2167,7 @@ const A={
  t4(){if(!sub.rst){sub.rst=1;render();return}const gf=S.gifted,nk=S.nick;S=JSON.parse(JSON.stringify(DEF));S.gifted=gf;S.nick=nk;if(isAdmin)H.forEach(c=>S.chars[c.id]=S.chars[c.id]||{n:1,lvl:1,xp:0,st:1});sub={};save();render();toast('Partie remise à zéro')}
 };
 document.addEventListener('click',e=>{const el=e.target.closest('[data-a]');if(el&&(!ready||gated())&&!['code','lang','reload'].includes(el.dataset.a))return;if(el&&!el.disabled&&A[el.dataset.a])A[el.dataset.a](el.dataset)});
+document.addEventListener('input',e=>{const m=/^bq(\d)$/.exec(e.target.id||'');if(!m)return;const n=Math.max(1,Math.min(1000,Math.floor(+e.target.value||0))),b=$('#bqb'+m[1]);if(b)b.textContent='Ouvrir ×'+n+' · '+(n*(+e.target.dataset.p)).toLocaleString('fr-FR')+' pts'});
 document.addEventListener('change',e=>{if(e.target.id==='bet')betSel=+e.target.value;if(e.target.id==='stg')admStage=+e.target.value;});
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='wka')A.wkans();if(e.key==='Enter'&&e.target.id==='num')A.num();if(e.key==='Enter'&&e.target.id==='code')A.code()});
 const KEYS={j:'atk',k:'shoot',l:'shield',u:'charge',i:'sp',o:'gun',shift:'dash'},kd={};
