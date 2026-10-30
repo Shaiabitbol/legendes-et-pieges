@@ -856,11 +856,14 @@ function mkRoom(P){
     peers:()=>list,raw:()=>raw,err:()=>err,up:()=>up,onPeers:(f)=>{hs.push(f);setTimeout(()=>f({peers:list}),0);return()=>{hs=hs.filter(x=>x!==f)}}};
 }
 const ADM_SALT='lp-admin-v1',ADM_CHECK='1389cc8fbc1827eddb0ad755ec2985e3780c70875d1efabc73c41fe375caa3b2';
-async function admKey(code){const k=hex(await derive(code,ADM_SALT)),h=hex(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(k))));return h===ADM_CHECK?k:null}
+// Code admin : il déverrouille la clé admin rangée (chiffrée) dans ADM_BOX ; on vérifie ensuite qu'elle correspond bien à ADM_CHECK
+const ADM_BOX={"iv":"Xa6UXNHW1w+n3BOo","d":"2huLFacP7ZABnmvcZcJcoQHpamKbRFPNetsm0RT0KrMIDw5W15fWGgH7nE+HZ9We"};
+async function admKey(code){try{const b64=x=>Uint8Array.from(atob(x),c=>c.charCodeAt(0)),key=await crypto.subtle.importKey('raw',await derive(code,'lp-admin-box',32),'AES-GCM',false,['decrypt']);
+  const k=new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:b64(ADM_BOX.iv)},key,b64(ADM_BOX.d))),h=hex(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(k))));return h===ADM_CHECK?k:null}catch(e){return null}}
 async function derive(code,salt,bytes=16){const en=new TextEncoder(),k=await crypto.subtle.importKey('raw',en.encode(code),'PBKDF2',false,['deriveBits']),b=await crypto.subtle.deriveBits({name:'PBKDF2',salt:en.encode(salt),iterations:60000,hash:'SHA-256'},k,bytes*8);return new Uint8Array(b)}
 const hex=b=>[...b].map(x=>x.toString(16).padStart(2,'0')).join('');
 // Anciens codes des joueurs, chiffrés : seul le code admin peut les lire, pour les recopier une fois sur le serveur
-const SEED={"iv":"2j7jnlXMNiLR8g7D","d":"EpVS8vbH5e9Z9OU/9639vPZ83SghDNmBR8gG8DhkzCn5tuOz7UTtbbH2Y3/oFbPdoDTGouHaAXgOVWBGt4O/4ojsvdClNA+eLR/G12LjP3+/Cne74RCk+MHk6fkRCxIfq/HG7PDsbEZoZhcHZinuhnoO4jmQVgvJPRvDaduTDieHuHsH9SIdg+qtW/H9bJusPIy+vcXaDJ+lUSiEfK4CNFeyYO+XEj6lP4CFL2V01uuCbND9HrLLd94Jdn8EUiBAXO8MTUBR0GtN+9LO7jK3Ct+Q5by/BumffNucwE4QpIpeoBn7fW5VvJCOjtknbQoOUaT36nfnw3L9T8Rsy1HUfrKLgtju+j+zPX4zj7miYV4PO8ZT/il6BT2ijCoF7fODrmHciBVmM36jRQP1OS5Y1F9L5FeCe7ay7FURvrGj"};
+const SEED={"iv":"fH/KfOyJ1Uq0u47o","d":"/Mn+BC/96xKy1zHW2uQFWXQhkpukRXg+g7a19goewH5uxbvbWb6FXaUo26jR4fMuRfFs8Ek5IJuG8bcuTE7meCeraUz18AciqVOkhCkfOMP5AcLeZFsqqgF/9Vbu96og4FJ4xrFNi1OSqjx3y4HqWe+Zd08NRZMWz2gc8z3AyEDOeNbu488rkOj84jRI5CGuxz7/jSmP4BV60VeGYemYqgYfkMiCrrSqZ5fzgdKTlbjtUjH0JtqVlyDOFKwSa9XvMqJrwG/kGyTo+UR9KdTTZtMl3hI7bx010CN7aE2jLbubwRK0vr4HfybgyhB1joBfVSA1jCCRYYqvezYPIdYZCZ++WAp4gMQV2960SKnBxmWdfMF6dpFLSz/E6FQXO4DnitOGF8mSwdsZFbU52AccnO0xebKzR+0m9jVS7Keu"};
 async function seedCodes(code){try{if(!db||CODES.length)return;const key=await crypto.subtle.importKey('raw',await derive(code,'lp-seed-v1',32),'AES-GCM',false,['decrypt']);
   const b64=x=>Uint8Array.from(atob(x),c=>c.charCodeAt(0)),pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64(SEED.iv)},key,b64(SEED.d)),list=JSON.parse(new TextDecoder().decode(pt));
   for(const c of list)await db.doc('codes/'+c.id).set({name:c.name,at:Date.now()});await db.doc('adm/codes').set({list});}catch(e){console.error('seed',e)}}
@@ -2080,6 +2083,7 @@ const A={
   if(!/^[a-z0-9]{4,12}$/.test(v))return err('Écris ton code (lettres et chiffres).');
   if(!db||!PR)return err('Connexion au serveur impossible. Vérifie ta connexion internet et recharge la page.');
   try{const pv=localStorage.getItem('lpprev'),m=accMap();if(pv&&!m[v]){if(!Object.values(m).includes(pv)){m[v]=pv;accSet(m)}localStorage.removeItem('lpprev')}}catch(e){}
+  try{if(await admKey(v)){const m=accMap();m[v]=CUR_APP;accSet(m)}}catch(e){}
   {const t=appFor(v,CUR_APP);if(t!==CUR_APP){err('Vérification…');try{localStorage.setItem('lppend',JSON.stringify({v,app:t}))}catch(e){}location.reload();return}}
   err('Vérification…');
   try{const k=await admKey(v);if(k){await PR.set('admins/'+uid,k);accLink(v);loadProfile(v);S.code=v;S.joined=1;S.nick='Shai';save();location.reload();return}}catch(e){}
