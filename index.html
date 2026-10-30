@@ -1069,7 +1069,9 @@ function hurt(t,d,from){sfx('hit');
   if(t.hp<=0){F.over=.01;F.win=t===F.e;if(F.duel){F.myKo=1;duelTx(true)}burst(t.x,cy(t),t.c.glow,70,420);burst(t.x,cy(t),'#fff',30,300);F.shake=20}
 }
 function petRoll(e){const pool=PETS.filter(P=>P.r<=e.r),w=pool.map(P=>P.r===e.r?3:1);let x=Math.random()*w.reduce((a,b)=>a+b,0),j=0;while(x>=w[j]){x-=w[j];j++}const P=pool[j];
-  S.pets=S.pets||{};const had=S.pets[P.id];if(had)had.lvl=Math.min(10,had.lvl+1);else S.pets[P.id]={lvl:1};if(!S.pet)S.pet=P.id;return {P,had}}
+  S.pets=S.pets||{};const had=S.pets[P.id];if(had)had.lvl=Math.min(PMAX,had.lvl+1);else S.pets[P.id]={lvl:1};if(!S.pet)S.pet=P.id;return {P,had}}
+// Niveaux maximum : héros, familiers, château
+const HMAX=100,PMAX=25,KMAXC=15;
 function giveEgg(r,why){S.eggs=S.eggs||[];r=Math.max(0,Math.min(2,r));S.eggs.push({k:Date.now().toString(36)+Math.random().toString(36).slice(2,5),r,end:0});save();toast('🥚 '+EGG[r].n+' trouvé'+(why?' ('+why+')':'')+' ! Va le faire éclore dans Héros → Familiers')}
 function petArm(e){const id=S.pet,o=(S.pets||{})[id];e.pet=o&&PETB[id]?{id,lvl:o.lvl||1,cd:2.5,ht:5}:null}
 function petTick(e,foe,dt){const P=e.pet;if(!P||e.hp<=0)return;const L=P.lvl,px=e.x-e.face*48,py=cy(e)-70;P.cd-=dt;P.ht-=dt;
@@ -1201,7 +1203,7 @@ function fightTick(dt,t){
   B('php',F.p.hp/F.p.mhp);B('pen',F.p.en/F.p.men);B('psh',F.p.lock>0?0:F.p.sg/2.5);B('ehp',F.e.hp/F.e.mhp);B('een',F.e.en/F.e.men);
   const sb=$('#bsp');if(sb){const rdy=F.p.en>=F.p.men-.5&&F.p.spCd<=0;sb.disabled=!rdy;sb.classList.toggle('rdy',rdy)}
 }
-function addXp(id,x){if(id===heroDay())x*=2;const h=S.chars[id];let up=0;h.xp+=x;while(h.lvl<20&&h.xp>=40*h.lvl){h.xp-=40*h.lvl;h.lvl++;up++}return up}
+function addXp(id,x){if(id===heroDay())x*=2;const h=S.chars[id];let up=0;h.xp+=x;while(h.lvl<HMAX&&h.xp>=40*h.lvl){h.xp-=40*h.lvl;h.lvl++;up++}return up}
 function endFight(){if(F.win&&!F.duel&&F.p.hp>=F.p.mhp-.5)setTimeout(()=>secret('flaw'),1200);
   if(F.mode==='adv')return advEnd();if(F.mode==='dj')return djEnd();
   const m=mult();let pts,xp,txt='';
@@ -1436,8 +1438,8 @@ function wkqAdmin(){const q=CFG.wkq;return `<div class="panel" style="border-col
    <button class="btn" data-a="wkset">${q?'Remplacer par cette énigme':'Publier l\'énigme de la semaine'}</button></div>`}
 function petsView(){const own=S.pets||{},eggs=S.eggs||[],now=Date.now(),cur=own[S.pet]?PETB[S.pet]:null;
   const card=(P,o)=>`<div class="panel" style="padding:10px;border-color:${S.pet===P.id?'var(--gold)':'var(--line)'}"><div class="row"><canvas class="petc" data-pet="${P.id}" data-lv="${o.lvl}" width="90" height="80" style="width:72px;height:64px;flex:none"></canvas>
-   <div class="grow" style="min-width:150px"><b>${P.n}</b> <span class="small mute">· ${P.ti} · niv. ${o.lvl}${o.lvl>=10?' (max)':''}</span><div class="small">${P.d(o.lvl)}</div></div></div>
-   <div class="row">${S.pet===P.id?'<button disabled>Avec toi ✓</button>':`<button class="btn2" data-a="peq" data-id="${P.id}">L'emmener</button>`}${o.lvl<10?`<button data-a="pfeed" data-id="${P.id}" ${S.pts<80*o.lvl?'disabled':''}>🍖 Nourrir · ${80*o.lvl} pts</button>`:''}</div></div>`;
+   <div class="grow" style="min-width:150px"><b>${P.n}</b> <span class="small mute">· ${P.ti} · niv. ${o.lvl}${o.lvl>=PMAX?' (max)':''}</span><div class="small">${P.d(o.lvl)}</div></div></div>
+   <div class="row">${S.pet===P.id?'<button disabled>Avec toi ✓</button>':`<button class="btn2" data-a="peq" data-id="${P.id}">L'emmener</button>`}${o.lvl<PMAX?`<button data-a="pfeed" data-id="${P.id}" ${S.pts<80*o.lvl?'disabled':''}>🍖 Nourrir · ${80*o.lvl} pts</button>`:''}</div></div>`;
   return `<div class="panel" style="border-color:#7dff7a;align-items:center;text-align:center"><h2>🐉 Familiers</h2><p class="small mute">Ton familier vole à côté de ton héros dans tous les combats (arène, Aventure, donjon, duels) et l'aide avec son pouvoir. Nourris-le pour le faire grandir : il change d'aspect au niveau 5 et 10.</p>
    ${cur?`<canvas class="petc" data-pet="${cur.id}" data-lv="${own[cur.id].lvl}" width="180" height="150" style="width:150px;height:125px"></canvas><b>${cur.n} t'accompagne</b>`:'<p class="mute">Aucun familier pour l\'instant : fais éclore un œuf !</p>'}</div>
   <div class="panel"><h2>🥚 Couveuse (${eggs.length})</h2>${(()=>{const nc=eggs.filter(e=>!e.end).length,nr=eggs.filter(e=>e.end&&e.end<=now).length;return nc||nr?`<div class="row">${nr?`<button class="btn" data-a="phatchall">✨ Tout faire éclore (${nr})</button>`:''}${nc?`<button class="btn2" data-a="pwarmall">🔥 Tout mettre au chaud (${nc})</button>`:''}</div>`:''})()}
@@ -1515,14 +1517,15 @@ const KTROOP={sol:{n:'Soldat',ic:'🗡️',c:15,hp:120,dmg:18,rg:.7,sp:1,col:'#f
 // Défenses : portée, cadence, dégâts ; spl = dégâts de zone, air = ne vise que les dragons
 const KDEF={castle:{rg:170,cd:1.4,dmg:l=>25+10*l,col:'#ffd23f'},tower:{rg:210,cd:1,dmg:l=>30+15*(l-1),col:'#4ff0ff'},
  mtower:{rg:190,cd:1.8,dmg:l=>45+15*(l-1),col:'#c77dff',spl:60},airdef:{rg:240,cd:1,dmg:l=>70+25*(l-1),col:'#ff4d6d',air:1}};
-const CASTLE_UP=[0,400,900,1800,3500];
+const CASTLE_UP=[0,400,900,1800,3500,5950,10100,17200,29200,49700,84400,143500,244000,415000,705000];
 // Or stocké : le double du prix de la prochaine amélioration du château (au niveau max, le double de la dernière)
-const kCapL=l=>2*CASTLE_UP[Math.min(4,Math.max(1,+l||1))];
+const kCapL=l=>2*CASTLE_UP[Math.min(14,Math.max(1,+l||1))];
 function kdom(){if(!S.kd)S.kd={g:300,b:[{t:'castle',x:3,y:3,l:1},{t:'mine',x:1,y:1,l:1},{t:'tower',x:5,y:2,l:1}],col:Date.now(),tr:{sol:5,arc:0},tro:0,raids:{}};return S.kd}
 const kCastle=()=>kdom().b.find(b=>b.t==='castle')||{l:1};
 const kCap=()=>kCapL(kCastle().l)+1000*kdom().b.filter(b=>b.t==='vault').reduce((a,b)=>a+b.l,0),kTroopCap=()=>8+6*kdom().b.filter(b=>b.t==='barracks').reduce((a,b)=>a+b.l,0);
+const kTroopK=()=>1+.2*(kCastle().l-1);
 const kTroops=()=>Object.entries(kdom().tr).reduce((a,[k,n])=>a+n*((KTROOP[k]||{}).sz||1),0);
-function kLimit(t){const L=kCastle().l;return t==='castle'?1:t==='mine'||t==='tower'?L+1:t==='wall'?4*L+4:t==='mtower'?Math.max(0,L-2):t==='airdef'||t==='vault'?(L>=2?L-1:0):1}
+function kLimit(t){const L=kCastle().l;return t==='castle'?1:t==='mine'||t==='tower'?Math.min(7,L+1):t==='wall'?Math.min(28,4*L+4):t==='mtower'?Math.min(4,Math.max(0,L-2)):t==='airdef'||t==='vault'?Math.min(4,L>=2?L-1:0):Math.min(3,1+Math.floor((L-1)/4))}
 const kCount=t=>kdom().b.filter(b=>b.t===t).length+(kdom().inv||[]).filter(b=>b.t===t).length;
 function kProd(){return kdom().b.filter(b=>b.t==='mine').reduce((a,b)=>a+80*b.l,0)}
 function kPending(){const z=kdom();return Math.max(0,Math.min(kCap()-z.g,Math.floor((Date.now()-(z.col||Date.now()))/3.6e6*kProd())))}
@@ -1537,9 +1540,12 @@ function kRaidsIn(v){RAIDS_ME=v||{};const z=kdom();z.raids=z.raids||{};let lost=
   if(who.length){z.g=Math.max(0,z.g-lost);z.tro=Math.max(0,(z.tro||0)-tro);kSave();toast('🏰 '+who.join(', ')+' a attaqué ton royaume : -'+lost+' or')}}
 function kLastRaid(u,v){let m=0;for(const id in v||{})m=Math.max(m,+(v[id]||{}).at||0);return m}
 // Camps de gobelins (cibles d'entraînement, toujours disponibles)
-function kGoblin(n){const r=rng(n*977+3),b=[{t:'castle',x:3+Math.floor(r()*2),y:3+Math.floor(r()*2),l:Math.min(5,n)}],used=new Set([b[0].x+','+b[0].y]);
+function kGoblin(n){const r=rng(n*977+3),b=[{t:'castle',x:3+Math.floor(r()*2),y:3+Math.floor(r()*2),l:n<=5?n:Math.min(KMAXC,Math.round(n*1.5))}],used=new Set([b[0].x+','+b[0].y]);
   const put=(t,l)=>{for(let k=0;k<40;k++){const x=Math.floor(r()*KN),y=Math.floor(r()*KN);if(!used.has(x+','+y)){used.add(x+','+y);b.push({t,x,y,l});return}}};
-  for(let i=0;i<n+1;i++)put('tower',Math.max(1,n-1));for(let i=0;i<n+1;i++)put('mine',n);for(let i=0;i<3*n+2;i++)put('wall',n);if(n>=3)put('mtower',n-2);if(n>=4)put('airdef',n-3);return {nick:'Camp gobelin '+'I II III IV V'.split(' ')[n-1],b,l:n,g:150+n*250,gob:n}}
+  // Camps 6 à 10 : bâtiments de plus haut niveau (jusqu'à 15) pour rester durs face aux grands royaumes
+  const lv=n<=5?n:Math.min(KMAXC,Math.round(n*1.5));
+  for(let i=0;i<Math.min(7,n+1);i++)put('tower',Math.max(1,lv-1));for(let i=0;i<Math.min(6,n+1);i++)put('mine',lv);for(let i=0;i<Math.min(24,3*n+2);i++)put('wall',lv);for(let i=0;i<(n<=5?(n>=3?1:0):Math.min(4,n-4));i++)put('mtower',Math.max(1,lv-2));for(let i=0;i<(n<=5?(n>=4?1:0):Math.min(4,n-5));i++)put('airdef',Math.max(1,lv-3));
+  return {nick:'Camp gobelin '+'I II III IV V VI VII VIII IX X'.split(' ')[n-1],b,l:n,g:n<=5?150+n*250:150+n*n*150,gob:n}}
 
 // ---------- écran du royaume ----------
 function kingdomView(){const z=kdom(),pend=kPending(),bt=sub.bt,sel=sub.kb!=null?z.b[sub.kb]:null;
@@ -1553,7 +1559,7 @@ function kingdomView(){const z=kdom(),pend=kPending(),bt=sub.bt,sel=sub.kb!=null
    ${sub.bi?`<p class="small" style="text-align:center">Touche une case vide pour poser : <b>${KBB[sub.bi.split(':')[0]].ic} ${KBB[sub.bi.split(':')[0]].n} niv. ${sub.bi.split(':')[1]}</b> · <button data-a="kinv" data-k="${sub.bi}">Annuler</button></p>`:''}
    ${bt?`<p class="small" style="text-align:center">Touche une case vide pour construire : <b>${KBB[bt].ic} ${KBB[bt].n}</b> · <button data-a="kbt" data-t="">Annuler</button></p>`:''}
    ${sel?`<div class="panel" style="padding:10px"><div class="row"><span style="font-size:28px">${KBB[sel.t].ic}</span><span class="grow"><b>${KBB[sel.t].n}</b> niv. ${sel.l}<br><span class="small mute">${kInfo(sel)}</span></span></div>
-     <div class="row">${sel.t==='castle'?(sel.l<5?`<button class="btn" data-a="kup" ${z.g<kUpCost(sel)?'disabled':''}>Améliorer · ${kUpCost(sel)} or</button>`:'<button disabled>Niveau max</button>'):(sel.l<kCastle().l?`<button class="btn" data-a="kup" ${z.g<kUpCost(sel)?'disabled':''}>Améliorer · ${kUpCost(sel)} or</button>`:`<button disabled>Max (améliore le château)</button>`)}
+     <div class="row">${sel.t==='castle'?(sel.l<KMAXC?`<button class="btn" data-a="kup" ${z.g<kUpCost(sel)?'disabled':''}>Améliorer · ${kUpCost(sel)} or</button>`:'<button disabled>Niveau max</button>'):(sel.l<kCastle().l?`<button class="btn" data-a="kup" ${z.g<kUpCost(sel)?'disabled':''}>Améliorer · ${kUpCost(sel)} or</button>`:`<button disabled>Max (améliore le château)</button>`)}
      ${sel.t!=='castle'?`<button data-a="kmv">Déplacer</button><button data-a="kput">📦 Ranger</button><button data-a="kdel">${sub.kdc?'Confirmer ?':'Démolir'}</button>`:''}<button data-a="kt" data-x="-1">Fermer</button></div>${sub.kmv?'<p class="small">Touche une case vide pour l\'y déplacer.</p>':''}</div>`:''}</div>
   <div class="panel" style="border-color:#4fc3ff"><h3>📦 Réserve${(z.inv||[]).length?' ('+z.inv.length+')':''}</h3>
    ${(()=>{const g={};for(const b of z.inv||[]){const k=b.t+':'+b.l;g[k]=(g[k]||0)+1}const ks=Object.keys(g);return ks.length?`<p class="small mute">Touche un bâtiment, puis une case vide pour le poser (gratuit).</p><div class="row" style="flex-wrap:wrap">${ks.map(k=>{const [t,l]=k.split(':');return `<button class="${sub.bi===k?'btn':''}" data-a="kinv" data-k="${k}">${KBB[t].ic} ${KBB[t].n} niv. ${l} ×${g[k]}</button>`}).join('')}</div>`:'<p class="small mute">Rien de rangé. Pour refaire ta base, range tout d\'un coup, puis repose les bâtiments un par un ou automatiquement. C\'est gratuit et ils gardent leur niveau.</p>'})()}
@@ -1561,7 +1567,7 @@ function kingdomView(){const z=kdom(),pend=kPending(),bt=sub.bt,sel=sub.kb!=null
   <div class="panel"><h3>🔨 Construire</h3><div class="kbuild">${KB_T.filter(b=>b.k!=='castle').map(b=>{const n=kCount(b.k),lim=kLimit(b.k);
     return `<button class="${bt===b.k?'btn2':''}" data-a="kbt" data-t="${b.k}" ${n>=lim||z.g<b.c?'disabled':''}><span style="font-size:24px">${b.ic}</span><b class="small">${b.n}</b><span class="small">${lim?`🪙 ${b.c} · ${n}/${lim}`:`🔒 château niv. ${b.ul}`}</span></button>`}).join('')}</div>
    <p class="small mute">Améliore ton château pour construire plus de bâtiments et monter leur niveau.</p></div>
-  <div class="panel"><h3>🛡️ Caserne · ${kTroops()} / ${kTroopCap()}</h3>${Object.entries(KTROOP).map(([k,T])=>`<div class="row"><span style="font-size:22px">${T.ic}</span><span class="grow"><b>${T.n}</b> × ${z.tr[k]||0}<br><span class="small mute">vie ${T.hp} · dégâts ${T.dmg}/s · ${T.d}${(T.sz||1)>1?' · prend '+T.sz+' places':''}</span></span>${(T.ul||1)>kCastle().l?`<button disabled>🔒 château niv. ${T.ul}</button>`:`<button data-a="ktr" data-k="${k}" ${z.g<T.c||kTroops()+(T.sz||1)>kTroopCap()?'disabled':''}>+1 · 🪙 ${T.c}</button><button data-a="ktr" data-k="${k}" data-n="5" ${z.g<T.c*5||kTroops()+5*(T.sz||1)>kTroopCap()?'disabled':''}>+5</button>`}</div>`).join('')}
+  <div class="panel"><h3>🛡️ Caserne · ${kTroops()} / ${kTroopCap()}</h3><p class="small">💪 Force de tes troupes : <b>×${kTroopK().toFixed(1).replace('.',',')}</b> (elle monte avec le niveau du château)</p>${Object.entries(KTROOP).map(([k,T])=>`<div class="row"><span style="font-size:22px">${T.ic}</span><span class="grow"><b>${T.n}</b> × ${z.tr[k]||0}<br><span class="small mute">vie ${T.hp} · dégâts ${T.dmg}/s · ${T.d}${(T.sz||1)>1?' · prend '+T.sz+' places':''}</span></span>${(T.ul||1)>kCastle().l?`<button disabled>🔒 château niv. ${T.ul}</button>`:`<button data-a="ktr" data-k="${k}" ${z.g<T.c||kTroops()+(T.sz||1)>kTroopCap()?'disabled':''}>+1 · 🪙 ${T.c}</button><button data-a="ktr" data-k="${k}" data-n="5" ${z.g<T.c*5||kTroops()+5*(T.sz||1)>kTroopCap()?'disabled':''}>+5</button>`}</div>`).join('')}
    <p class="small mute">Construis et améliore des casernes pour avoir plus de place. Ton héros actif (${HB[S.sel].n}) combat aussi à chaque attaque.</p></div>
   ${cqPanel()}${kRanking()}`}
 // Placement automatique de la réserve : murailles tout autour, défenses près du château, le reste dans les cases libres
@@ -1584,7 +1590,7 @@ function kAttackList(){const z=kdom(),others=KREG.filter(k=>k.id!==uid&&Array.is
    <p class="small mute">Tu as ${kTroops()} troupes et ton héros ${HB[S.sel].n}. Détruis au moins 50 % pour 1 étoile, le château pour 2, tout pour 3. Plus tu détruis, plus tu pilles d'or. Un royaume attaqué est protégé 2 heures.</p>
    ${kTroops()?'':'<p class="res ko">Il te faut des troupes : entraîne-les à la caserne.</p>'}</div>
   <div class="panel"><h3>Royaumes des joueurs</h3>${others.length?others.map(k=>row(k,0)).join(''):'<p class="small mute">Aucun autre royaume pour l\'instant : tes potes doivent ouvrir « Mon Royaume ».</p>'}</div>
-  <div class="panel"><h3>Camps gobelins (entraînement)</h3>${[1,2,3,4,5].map(n=>row(kGoblin(n),1)).join('')}</div>`}
+  <div class="panel"><h3>Camps gobelins (entraînement)</h3>${[1,2,3,4,5,6,7,8,9,10].map(n=>row(kGoblin(n),1)).join('')}</div>`}
 // ---------- dessin des bâtiments en 2,5D (royaume et bataille) ----------
 // Vue de trois quarts : un dessus clair, une face avant plus sombre ; les murailles voisines se relient en rempart
 function kRR(g,x,y,w,h,r){g.beginPath();if(g.roundRect)g.roundRect(x,y,w,h,Math.max(0,Math.min(r,w/2,h/2)));else g.rect(x,y,w,h)}
@@ -1604,10 +1610,10 @@ function kSprite(g,b,x,y,s,t,nb){const B=y+s*.2,l=+b.l||1;g.save();g.lineJoin='r
     for(const dx of[-.4,.4])kCyl(g,x+dx*s,B+s*.18,s*.1,s*.05,s*.42,'#e6dfcc','#a39a83');
     kBox(g,x,B-s*.06,s*.46,s*.3,s*.46,'#ece6d6','#aaa18b');
     g.fillStyle='#3a2a1c';kRR(g,x-s*.07,B-s*.2,s*.14,s*.2,s*.07);g.fill();
-    const ty=B-s*.06-s*.15-s*.46,rc=KROOF[l-1]||KROOF[0];
+    const ty=B-s*.06-s*.15-s*.46,rc=KROOF[(l-1)%KROOF.length];
     g.fillStyle=rc;g.beginPath();g.moveTo(x-s*.27,ty+s*.06);g.lineTo(x,ty-s*.3);g.lineTo(x,ty+s*.12);g.fill();g.fillStyle=shade(rc,-.25);g.beginPath();g.moveTo(x+s*.27,ty+s*.06);g.lineTo(x,ty-s*.3);g.lineTo(x,ty+s*.12);g.fill();
     for(const dx of[-.4,.4]){const cx=x+dx*s,cy=B+s*.18-s*.42;g.fillStyle=rc;g.beginPath();g.moveTo(cx-s*.12,cy);g.lineTo(cx,cy-s*.2);g.lineTo(cx+s*.12,cy);g.fill()}
-    kFlag(g,x,ty-s*.28,s,'#ffd23f',t);for(let i=0;i<l-1;i++){g.fillStyle='#ffd23f';g.beginPath();g.arc(x-s*.12+i*s*.08,B-s*.36,s*.025,0,7);g.fill()}}
+    kFlag(g,x,ty-s*.28,s,'#ffd23f',t);for(let i=0;i<Math.min(l-1,6);i++){g.fillStyle='#ffd23f';g.beginPath();g.arc(x-s*.12+i*s*.08,B-s*.36,s*.025,0,7);g.fill()}}
   else if(b.t==='mine'){kShadow(g,x,B+s*.05,s*.42,s*.14);
     const gr=g.createRadialGradient(x-s*.1,B-s*.3,s*.05,x,B-s*.1,s*.45);gr.addColorStop(0,'#a8835a');gr.addColorStop(1,'#5e4127');g.fillStyle=gr;g.beginPath();g.ellipse(x,B-s*.06,s*.42,s*.32,0,Math.PI,0);g.lineTo(x+s*.42,B+s*.04);g.lineTo(x-s*.42,B+s*.04);g.fill();
     g.fillStyle='#1c120a';g.beginPath();g.moveTo(x-s*.13,B+s*.04);g.lineTo(x-s*.13,B-s*.14);g.arc(x,B-s*.14,s*.13,Math.PI,0);g.lineTo(x+s*.13,B+s*.04);g.fill();
@@ -1653,7 +1659,7 @@ function kStart(target){const z=kdom(),C=80,OFF=C;
 function kDeploy(x,y){const k=KB;if(!k||k.over)return;const C=80;if(x>C&&x<720&&y>C&&y<720)return toast('Pose tes troupes sur le bord (la zone rouge)');
   const z=kdom();let T,ic,col;
   if(k.sel==='hero'){if(k.dep.hero)return toast('Ton héros est déjà sur le terrain');const o=S.chars[S.sel],h=HB[S.sel];T={hp:stat(h,o.lvl,o.st,'hp')*2.5,dmg:stat(h,o.lvl,o.st,'atk')*1.6,rg:.8,sp:1.25};k.dep.hero=1;ic='hero';col=h.glow}
-  else{const n=(z.tr[k.sel]||0)-k.dep[k.sel];if(n<=0)return toast('Plus de '+KTROOP[k.sel].n.toLowerCase()+'s');T=KTROOP[k.sel];k.dep[k.sel]++;ic=T.ic;col=T.col}
+  else{const n=(z.tr[k.sel]||0)-k.dep[k.sel];if(n<=0)return toast('Plus de '+KTROOP[k.sel].n.toLowerCase()+'s');T=KTROOP[k.sel];const m=kTroopK();T={...T,hp:T.hp*m,dmg:T.dmg*m};k.dep[k.sel]++;ic=T.ic;col=T.col}
   k.units.push({x,y,hp:T.hp,mhp:T.hp,dmg:T.dmg,rg:T.rg*80,sp:T.sp*80,ic,col,tg:null,cd:0,hero:ic==='hero',fly:!!T.fly,spl:!!T.spl});kDrawBar()}
 function kTick(dt,t){const k=KB,cv=$('#karena');if(!k||!cv)return;const g=cv.getContext('2d'),C=80;
   if(!k.over){k.t+=dt;k.left-=dt;
@@ -1897,8 +1903,8 @@ const V={
    <div class="grow" style="display:flex;flex-direction:column;gap:6px"><h2>${c.n} ${o?stars(o.st):''}</h2>${id===heroDay()?'<span class="chip pts">⭐ Héros du jour · XP ×2</span>':''}<div class="rar" style="--rc:${R.c}">${R.n} · ${c.ti}${c.fly?' · volant':''}</div>
    <p class="small">Vie <b>${stat(c,o?.lvl||1,o?.st||1,'hp')}</b> · Attaque <b>${stat(c,o?.lvl||1,o?.st||1,'atk')}</b> · Vitesse <b>${c.spd}</b> · Énergie <b>${c.en}</b></p>
    <p class="small">Spéciale : <b>${c.spn}</b> <span class="mute">(quand l'énergie est pleine)</span></p>
-   ${o?`<div class="small mute">Niveau ${o.lvl}${o.lvl<20?` · XP ${o.xp} / ${40*o.lvl}`:' (max)'} · ${o.n} exemplaire(s)</div><div class="bar xp"><i style="width:${o.lvl<20?o.xp/(40*o.lvl)*100:100}%"></i></div>`:'<p class="mute small">Pas encore débloqué.</p>'}
-   <div class="row">${o?`<button class="btn" data-a="pick" data-id="${id}" ${S.sel===id?'disabled':''}>${S.sel===id?'Héros actif':'Choisir ce héros'}</button>${o.lvl>=20?'<button disabled>Niveau max (20)</button>':`<button data-a="up" data-id="${id}" ${S.pts<cost?'disabled':''}>Niveau +1 · ${cost} pts</button>`}${o.st<3?`<button data-a="go" data-v="forge">${'★'.repeat(o.st+1)} à la forge</button>`:''}`:''}
+   ${o?`<div class="small mute">Niveau ${o.lvl}${o.lvl<HMAX?` · XP ${o.xp} / ${40*o.lvl}`:' (max)'} · ${o.n} exemplaire(s)</div><div class="bar xp"><i style="width:${o.lvl<HMAX?o.xp/(40*o.lvl)*100:100}%"></i></div>`:'<p class="mute small">Pas encore débloqué.</p>'}
+   <div class="row">${o?`<button class="btn" data-a="pick" data-id="${id}" ${S.sel===id?'disabled':''}>${S.sel===id?'Héros actif':'Choisir ce héros'}</button>${o.lvl>=HMAX?'<button disabled>Niveau max ('+HMAX+')</button>':`<button data-a="up" data-id="${id}" ${S.pts<cost?'disabled':''}>Niveau +1 · ${cost} pts</button>`}${o.st<3?`<button data-a="go" data-v="forge">${'★'.repeat(o.st+1)} à la forge</button>`:''}`:''}
     <span class="mute small">${c.sea?'Héros de saison : palier 30 de la saison du mois (un héros différent chaque mois).':id==='spectrouille'?'Exclusif d\'Halloween : bats Spectrouille entre le 20 octobre et le 2 novembre.':id==='primordius'?'S\'obtient en fusionnant les 5 héros des éléments à la forge.':id==='omnirex'?'S\'obtient avec la fusion suprême des '+CXL.length+' exclusifs de forge.':c.cx?(()=>{const q=POOL.find(x=>x[4]===id);return 'Exclusif de forge : 5 % de chance sur la recette '+(q?HB[q[0]].n+' + '+HB[q[1]].n+' → '+HB[q[2]].n:'')+' (quand elle passe à la forge).'})():c.ex?'Exclusif : boss de la région '+REG[c.el].n+' dans l\'Aventure.':'S\'obtient dans les coffres ou à la forge.'}</span></div></div></div></div>`;
   const boxes=`<div class="panel"><h2>Coffres</h2><p class="mute small">Un coffre donne un héros au hasard. Plus la rareté est haute, plus la chance est faible. Un héros déjà possédé devient un double pour la forge.</p><div class="split">${BOX.map((b,i)=>`<div class="panel" style="border-color:${b.col};text-align:center;align-items:center"><svg viewBox="0 0 64 52" width="64" aria-hidden="true"><rect x="4" y="20" width="56" height="28" rx="4" fill="${b.col}"/><path d="M4 22a28 18 0 0 1 56 0z" fill="${b.col}" opacity=".75"/><rect x="4" y="20" width="56" height="5" fill="#0e1024" opacity=".55"/><rect x="26" y="16" width="12" height="16" rx="3" fill="#ffd166"/><circle cx="32" cy="24" r="2.5" fill="#0e1024"/></svg><h3>${b.n}</h3>
    <p class="small">${b.o.map((v,r)=>v?`<span style="color:${RAR[r].c};white-space:nowrap">${RAR[r].n} ${String(v).replace('.',',')} %</span>`:'').filter(Boolean).join(' · ')}</p>
@@ -2129,7 +2135,7 @@ const A={
  next(){const r=allR().find(x=>x.id===sub.id),n=ordered(r.d).find(x=>!fin(x.id));if(n){sub={id:n.id,d:r.d};render()}else{view='rid';sub={d:r.d};render();toast('Niveau « '+DIFF[r.d]+' » terminé !')}},
  hero(d){if(view!=='heroes')view='heroes';sub={h:d.id};render();scrollTo(0,0)},
  pick(d){S.sel=d.id;save();render()},
- up(d){const o=S.chars[d.id],c=25*o.lvl;if(S.pts<c||o.lvl>=20)return;S.pts-=c;o.lvl++;o.xp=0;save();render();toast(HB[d.id].n+' passe niveau '+o.lvl)},
+ up(d){const o=S.chars[d.id],c=25*o.lvl;if(S.pts<c||o.lvl>=HMAX)return;S.pts-=c;o.lvl++;o.xp=0;save();render();toast(HB[d.id].n+' passe niveau '+o.lvl)},
  box(d){const b=BOX[+d.i];if(!b||(!d.free&&S.pts<b.p))return;if(!d.free){S.pts-=b.p;bump('box')}S.boxes++;let x=Math.random()*100,r=0;while(r<4&&x>=b.o[r]){x-=b.o[r];r++}
   const pool=H.filter(c=>c.r===r&&!c.ex),c=pool[Math.floor(Math.random()*pool.length)],had=give(c.id);if(Math.random()<(+d.i===1?.25:.1))setTimeout(()=>giveEgg(+d.i===1&&Math.random()<.3?2:+d.i,'dans le coffre'),1500);save();render();reward(c.id,S.chars[c.id].st,had?'Double obtenu : utilise-le à la forge':'Nouveau héros débloqué !')},
  // Plusieurs coffres d'un coup (jusqu'à 1000) : tout est tiré d'un coup puis résumé dans une seule fenêtre
@@ -2212,7 +2218,7 @@ const A={
   if(sub.bi){const inv=z.inv||[],j=inv.findIndex(b=>b.t+':'+b.l===sub.bi);if(j<0){sub.bi='';render();return}const b=inv.splice(j,1)[0];z.b.push({t:b.t,x,y,l:b.l});sfx('ok');if(!inv.some(q=>q.t+':'+q.l===sub.bi))sub.bi='';kSave();render();return}
   if(sub.bt){const B=KBB[sub.bt];if(z.g<B.c)return toast('Pas assez d\'or');if(kCount(B.k)>=kLimit(B.k))return toast('Limite atteinte : améliore ton château');z.g-=B.c;z.b.push({t:B.k,x,y,l:1});sfx('ok');if(kCount(B.k)>=kLimit(B.k)||z.g<B.c)sub.bt='';kSave();render()}},
  kbt(d){sub.bt=d.t||'';sub.kb=null;render()},
- kup(){const z=kdom(),b=z.b[sub.kb];if(!b)return;const c=kUpCost(b);if(z.g<c)return toast('Pas assez d\'or');if(b.t!=='castle'&&b.l>=kCastle().l)return;if(b.t==='castle'&&b.l>=5)return;z.g-=c;b.l++;sfx('lvl');kSave();render();toast(KBB[b.t].n+' niveau '+b.l+' !')},
+ kup(){const z=kdom(),b=z.b[sub.kb];if(!b)return;const c=kUpCost(b);if(z.g<c)return toast('Pas assez d\'or');if(b.t!=='castle'&&b.l>=kCastle().l)return;if(b.t==='castle'&&b.l>=KMAXC)return;z.g-=c;b.l++;sfx('lvl');kSave();render();toast(KBB[b.t].n+' niveau '+b.l+' !')},
  kmv(){sub.kmv=1;render()},
  // Ranger : le bâtiment part dans la réserve avec son niveau (rien n'est perdu, le reposer est gratuit)
  kput(){const z=kdom(),b=z.b[sub.kb];if(!b||b.t==='castle')return;z.inv=z.inv||[];z.inv.push({t:b.t,l:b.l});z.b.splice(sub.kb,1);sub.kb=null;kSave();render()},
@@ -2231,15 +2237,15 @@ const A={
  ctab(d){if(view!=='fprep')view='fprep';sub={ct:d.t||''};render();scrollTo(0,0)},
  htab(d){sub={ht:d.t||'',h:sub.h};render()},
  peq(d){if(!(S.pets||{})[d.id])return;S.pet=d.id;save();render();toast(PETB[d.id].n+' t\'accompagne en combat !')},
- pfeed(d){const o=(S.pets||{})[d.id];if(!o||o.lvl>=10)return;const c=80*o.lvl;if(S.pts<c)return toast('Pas assez de points');S.pts-=c;o.lvl++;save();render();sfx('lvl');toast(PETB[d.id].n+' passe niveau '+o.lvl+(o.lvl===5||o.lvl===10?' et change d\'aspect !':''))},
+ pfeed(d){const o=(S.pets||{})[d.id];if(!o||o.lvl>=PMAX)return;const c=80*o.lvl;if(S.pts<c)return toast('Pas assez de points');S.pts-=c;o.lvl++;save();render();sfx('lvl');toast(PETB[d.id].n+' passe niveau '+o.lvl+(o.lvl===5||o.lvl===10?' et change d\'aspect !':''))},
  pwarm(d){const e=(S.eggs||[]).find(x=>x.k===d.k);if(!e||e.end)return;e.end=Date.now()+EGG[e.r].t*60000;save();render()},
  pwarmall(){const t=Date.now();let n=0;for(const e of S.eggs||[])if(!e.end){e.end=t+EGG[e.r].t*60000;n++}if(!n)return;save();render();toast('🔥 '+n+' œuf'+(n>1?'s':'')+' au chaud')},
  // Tous les œufs prêts éclosent d'un coup, avec un seul résumé
  phatchall(){const t=Date.now(),ready=(S.eggs||[]).filter(e=>e.end&&e.end<=t);if(!ready.length)return;S.eggs=S.eggs.filter(e=>!(e.end&&e.end<=t));const got={},nw=[];
   for(const e of ready){const {P,had}=petRoll(e);got[P.id]=(got[P.id]||0)+1;if(!had&&!nw.includes(P.id))nw.push(P.id)}save();render();sfx('chest');
   const m=$('#modal');m.hidden=false;m.innerHTML=`<div class="panel"><h2>${ready.length} œuf${ready.length>1?'s':''} éclos !</h2>${nw.length?`<p><b>✨ Nouveau${nw.length>1?'x':''} familier${nw.length>1?'s':''} :</b> ${nw.map(id=>PETB[id].n).join(', ')}</p>`:''}
-   <div class="tw"><table>${Object.entries(got).map(([id,k])=>`<tr><td><canvas class="petc" data-pet="${id}" data-lv="${S.pets[id].lvl}" width="60" height="50" style="width:48px;height:40px"></canvas></td><td><b>${PETB[id].n}</b></td><td>×${k}</td><td class="small">niv. ${S.pets[id].lvl}${S.pets[id].lvl>=10?' (max)':''}</td></tr>`).join('')}</table></div>
-   <p class="small mute">Un familier déjà obtenu gagne un niveau à chaque fois (jusqu'au niveau 10).</p><button class="btn" data-a="close">Super !</button></div>`},
+   <div class="tw"><table>${Object.entries(got).map(([id,k])=>`<tr><td><canvas class="petc" data-pet="${id}" data-lv="${S.pets[id].lvl}" width="60" height="50" style="width:48px;height:40px"></canvas></td><td><b>${PETB[id].n}</b></td><td>×${k}</td><td class="small">niv. ${S.pets[id].lvl}${S.pets[id].lvl>=PMAX?' (max)':''}</td></tr>`).join('')}</table></div>
+   <p class="small mute">Un familier déjà obtenu gagne un niveau à chaque fois (jusqu'au niveau '+PMAX+').</p><button class="btn" data-a="close">Super !</button></div>`},
  phatch(d){const i=(S.eggs||[]).findIndex(x=>x.k===d.k),e=S.eggs[i];if(!e||!e.end||e.end>Date.now())return;S.eggs.splice(i,1);
   const {P,had}=petRoll(e);save();render();sfx('chest');
   const m=$('#modal');m.hidden=false;m.innerHTML=`<div class="panel" style="--rc:${EGG[e.r].c}"><div class="rar" style="--rc:${EGG[e.r].c}">${EGG[e.r].n}</div><canvas class="petc" data-pet="${P.id}" data-lv="${S.pets[P.id].lvl}" width="180" height="150" style="width:170px;height:142px"></canvas><h2>${P.n}</h2><p>${had?'Déjà dans ta collection : il gagne un niveau ! (niv. '+S.pets[P.id].lvl+')':'Nouveau familier : '+P.ti+' !'}</p><p class="small">${P.d(S.pets[P.id].lvl)}</p><button class="btn" data-a="close">Super !</button></div>`},
@@ -2340,7 +2346,7 @@ function pname(p){return String(p?.presence?.nick||'Joueur').replace(/[^\p{L}\p{
 function pushPres(){if(!room||!ready||gated())return;const p={nick:(S.nick||'Joueur').replace(/[^\p{L}\p{N} _.\-']/gu,'').slice(0,16)||'Joueur',tot:S.total,pts:S.pts,h:myH(),cid:myCid||null,a:S.arena,c:Object.entries(S.chars).map(([k,v])=>k+':'+v.n+':'+v.lvl+':'+v.st).join(',').slice(0,900),sv:Object.keys(S.solved).join(',').slice(0,900),fl:Object.keys(S.failed).join(',').slice(0,900)};const s=JSON.stringify(p);if(s===presSig)return;presSig=s;room.presence(p).catch(()=>{})}
 function setD(d){if(room)room.presence({d}).catch(()=>{})}
 function pubD(x){const d={to:DU.to,bet:DU.bet,sd:DU.sd,mv:DU.mv,h:DU.h};if(x)d.x=x;setD(d)}
-function fz(h){const c=HB[h&&h[0]]||HB.braskar,l=Math.max(1,Math.min(20,Math.floor(+(h&&h[1])||1))),st=Math.max(1,Math.min(3,Math.floor(+(h&&h[2])||1)));return {c,l,st,mhp:stat(c,l,st,'hp'),atk:stat(c,l,st,'atk'),men:c.en}}
+function fz(h){const c=HB[h&&h[0]]||HB.braskar,l=Math.max(1,Math.min(HMAX,Math.floor(+(h&&h[1])||1))),st=Math.max(1,Math.min(3,Math.floor(+(h&&h[2])||1)));return {c,l,st,mhp:stat(c,l,st,'hp'),atk:stat(c,l,st,'atk'),men:c.en}}
 /* ---- Duel en direct : chaque joueur joue son propre héros et l'envoie ~15 fois par seconde ----
    Chaque téléphone décide seulement des coups qu'il REÇOIT (vie de son propre héros), pour qu'il n'y ait jamais de désaccord. */
 function startDuel(){
@@ -2367,7 +2373,7 @@ function duelRx(f){
   // La liste en ligne est renvoyée à chaque changement de n'importe quel joueur : on ignore une image déjà reçue
   if(f.n&&f.n===F.rxN)return;F.rxN=f.n;F.rxC=(F.rxC||0)+1;DU.seen=Date.now();
   F.rxT=performance.now();
-  e.dn=DNB[f.dn]?f.dn:'';{const q=asArr(f.pt);e.pet=q.length&&PETB[q[0]]?{id:q[0],lvl:Math.max(1,Math.min(10,+q[1]||1))}:null}e.tx=+f.x||0;e.ty=+f.y||GY;e.tvx=+f.vx||0;e.tvy=+f.vy||0;e.face=f.fc<0?-1:1;e.shield=!!f.sh;e.charge=!!f.ch;e.en=+f.en||0;
+  e.dn=DNB[f.dn]?f.dn:'';{const q=asArr(f.pt);e.pet=q.length&&PETB[q[0]]?{id:q[0],lvl:Math.max(1,Math.min(PMAX,+q[1]||1))}:null}e.tx=+f.x||0;e.ty=+f.y||GY;e.tvx=+f.vx||0;e.tvy=+f.vy||0;e.face=f.fc<0?-1:1;e.shield=!!f.sh;e.charge=!!f.ch;e.en=+f.en||0;
   if(f.mhp>0)e.mhp=+f.mhp;
   const hp=Math.max(0,+f.hp||0);
   if(hp<e.hp-.5){const d=Math.round(e.hp-hp);{const me=F.p;if(me.pet&&me.pet.id==='nocto'&&me.hp>0)me.hp=Math.min(me.mhp,me.hp+d*(.08+.01*me.pet.lvl))}e.hitT=.25;F.nums.push({x:e.x,y:cy(e)-40,v:d,l:.9,col:e.shield?'#5ee6ff':'#fff'});burst(e.x,cy(e),e.shield?'#5ee6ff':F.p.c.glow,12);F.shake=Math.min(14,F.shake+d/6);sfx('hit')}
@@ -2438,7 +2444,7 @@ function drawInv(){const b=$('#invbar');if(!ready||gated()){INV=null;TINV=null}b
 /* ---- échanges de héros entre joueurs en ligne ---- */
 let TR=null,TINV=null,trUI=null,myCid='',SEEN={},seenW={};
 function setT(t){if(room)room.presence({tr:t}).catch(()=>{})}
-function parseC(str){const o={};String(str||'').split(',').slice(0,20).forEach(x=>{const [id,n,l,st]=x.split(':');if(HB[id]&&+n>0)o[id]={n:Math.min(99,Math.floor(+n)),lvl:Math.max(1,Math.min(20,Math.floor(+l)||1)),st:Math.max(1,Math.min(3,Math.floor(+st)||1))}});return o}
+function parseC(str){const o={};String(str||'').split(',').slice(0,20).forEach(x=>{const [id,n,l,st]=x.split(':');if(HB[id]&&+n>0)o[id]={n:Math.min(99,Math.floor(+n)),lvl:Math.max(1,Math.min(HMAX,Math.floor(+l)||1)),st:Math.max(1,Math.min(3,Math.floor(+st)||1))}});return o}
 function takeHero(id){const o=S.chars[id];if(!o)return false;if(o.n>1){o.n--;return true}if(Object.keys(S.chars).length<2)return false;delete S.chars[id];if(S.sel===id)S.sel=Object.keys(S.chars)[0];if(S.craft&&S.craft.out===id&&S.craft.evo)S.craft=null;return true}
 function tradeTick(){
   if(TR){const op=PEERS.find(p=>p.peer===TR.to),t=op?.presence?.tr;
@@ -2484,7 +2490,7 @@ function plPanel(){
    <div class="row"><label class="grow">Étage d'arène<input id="aa_${u}" type="number" min="1" value="${P.a}"></label><button data-a="pcmd" data-u="${u}" data-op="arena">Changer l'étage</button></div>
    <div><button data-a="pcmd" data-u="${u}" data-op="rid">Remettre ses énigmes à zéro</button></div>
    ${ctlPanel(P,u)}
-   <div class="tw"><table><tr><th>Héros</th><th>Ex.</th><th>Niv.</th><th>★</th><th></th></tr>${Object.entries(ch).map(([id,o])=>`<tr><td>${HB[id].n}</td><td>${o.n}</td><td>${o.lvl}</td><td>${o.st}</td><td><input id="hl_${u}_${id}" type="number" min="1" max="20" value="${o.lvl}" style="width:58px"> <select id="hs_${u}_${id}">${[1,2,3].map(n=>`<option value="${n}" ${+o.st===n?'selected':''}>${n} ★</option>`).join('')}</select> <button data-a="pcmd" data-u="${u}" data-op="hset" data-h="${id}">OK</button> <button data-a="pcmd" data-u="${u}" data-op="rmchar" data-h="${id}">Retirer</button></td></tr>`).join('')}</table></div></div>`}).join('')
+   <div class="tw"><table><tr><th>Héros</th><th>Ex.</th><th>Niv.</th><th>★</th><th></th></tr>${Object.entries(ch).map(([id,o])=>`<tr><td>${HB[id].n}</td><td>${o.n}</td><td>${o.lvl}</td><td>${o.st}</td><td><input id="hl_${u}_${id}" type="number" min="1" max="${HMAX}" value="${o.lvl}" style="width:58px"> <select id="hs_${u}_${id}">${[1,2,3].map(n=>`<option value="${n}" ${+o.st===n?'selected':''}>${n} ★</option>`).join('')}</select> <button data-a="pcmd" data-u="${u}" data-op="hset" data-h="${id}">OK</button> <button data-a="pcmd" data-u="${u}" data-op="rmchar" data-h="${id}">Retirer</button></td></tr>`).join('')}</table></div></div>`}).join('')
    :'<p class="mute">Pas encore d\'infos : ce joueur ne s\'est pas connecté pendant que tu avais le jeu ouvert.</p>'}
   <p class="small mute">Un changement s'applique tout de suite si le joueur est en ligne, sinon à sa prochaine connexion. Les infos d'un joueur hors ligne datent de la dernière fois où vous étiez connectés en même temps.</p></div>`;
 }
@@ -2496,7 +2502,7 @@ function ctlPanel(P,u){const pl=PLAYERS.find(x=>x.id===P.uid)||{},cb=(op,lab,r='
    <h3>🏰 Donjon infini</h3>${row('Record (vague)','cd','dj',pl.djr||0)}<div class="row">${cb('dj','Remettre le donjon à zéro','','0')}</div>
    <h3>🗺️ Aventure</h3><div class="row"><label class="grow">Région<select id="avr_${u}">${REG.map((R,i)=>`<option value="${i}">${R.ic} ${R.n}</option>`).join('')}</select></label><label class="grow">Niveaux faits (0 à 6)<input id="avl_${u}" type="number" min="0" max="6" value="0"></label><button data-a="pcmd" data-u="${u}" data-op="adv">Mettre</button></div>
     <div class="row"><button data-a="pcmd" data-u="${u}" data-op="adv" data-r="-1" data-v="99">Tout débloquer</button>${cb('adv','Remettre l\'Aventure à zéro','-1','0')}</div>
-   <h3>👑 Royaume</h3>${row('Or','ko','kg',0)}<div class="row"><label class="grow">Niveau du château<select id="kc_${u}">${[1,2,3,4,5].map(n=>`<option value="${n}">${n}</option>`).join('')}</select></label><button data-a="pcmd" data-u="${u}" data-op="kcl" data-f="kc">Mettre</button></div>
+   <h3>👑 Royaume</h3>${row('Or','ko','kg',0)}<div class="row"><label class="grow">Niveau du château<select id="kc_${u}">${Array.from({length:KMAXC},(_,i)=>`<option value="${i+1}">${i+1}</option>`).join('')}</select></label><button data-a="pcmd" data-u="${u}" data-op="kcl" data-f="kc">Mettre</button></div>
     <div class="row">${cb('kreset','Remettre le royaume à zéro')}</div>
    <h3>🎟️ Saison</h3><div class="row">${cb('sea','Remettre sa saison à zéro')}</div>
    <h3>⚠️ Tout le compte</h3><p class="small mute">Remet tout à zéro comme un nouveau joueur. Il garde seulement son pseudo et son code.</p><div class="row">${cb('wipe','Tout réinitialiser')}</div></details>`}
@@ -2532,7 +2538,7 @@ function applyCmds(items){
     if(it.op==='pts'){S.pts=Math.max(0,S.pts+v);if(v>0){S.total+=v;gp+=v}}
     else if(it.op==='arena')S.arena=Math.max(1,Math.min(999,v||1));
     else if(it.op==='rid'){S.solved={};S.failed={};S.hint={};S.streak=0;S.daily=''}
-    else if(it.op==='hlvl'&&o){o.lvl=Math.max(1,Math.min(20,o.lvl+v));o.xp=0}
+    else if(it.op==='hlvl'&&o){o.lvl=Math.max(1,Math.min(HMAX,o.lvl+v));o.xp=0}
     else if(it.op==='setpts')S.pts=Math.max(0,v);
     else if(it.op==='settot')S.total=Math.max(0,v);
     else if(it.op==='streak')S.streak=Math.max(0,v);
@@ -2541,9 +2547,9 @@ function applyCmds(items){
       else if(REG[r]){S.adv={...(S.adv||{}),[r]:Math.max(0,Math.min(REG[r].lv.length,v))};S.advU={...(S.advU||{}),[r]:1}}}
     else if(it.op==='kreset')S.kd=null;
     else if(it.op==='kg')kdom().g=Math.max(0,v);
-    else if(it.op==='kcl'){const c=kdom().b.find(b=>b.t==='castle');if(c)c.l=Math.max(1,Math.min(5,v||1))}
+    else if(it.op==='kcl'){const c=kdom().b.find(b=>b.t==='castle');if(c)c.l=Math.max(1,Math.min(KMAXC,v||1))}
     else if(it.op==='sea')S.sea=null;
-    else if(it.op==='hset'&&o){o.lvl=Math.max(1,Math.min(20,v||1));o.st=Math.max(1,Math.min(3,Math.floor(+it.s)||1));o.xp=0}
+    else if(it.op==='hset'&&o){o.lvl=Math.max(1,Math.min(HMAX,v||1));o.st=Math.max(1,Math.min(3,Math.floor(+it.s)||1));o.xp=0}
     else if(it.op==='wipe'){const keep={nick:S.nick,code:S.code,joined:S.joined,lang:S.lang,snd:S.snd,gifted:S.gifted};S=Object.assign(JSON.parse(JSON.stringify(DEF)),keep)}
     else if(it.op==='rmchar'&&o){if(Object.keys(S.chars).length>1){delete S.chars[it.h];if(S.sel===it.h)S.sel=Object.keys(S.chars)[0];if(S.craft&&S.craft.out===it.h&&S.craft.evo)S.craft=null}else{o.n=1;o.lvl=1;o.st=1;o.xp=0}}
   }
